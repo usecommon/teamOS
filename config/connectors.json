@@ -1,11 +1,17 @@
 {
   "config_version": "0.1",
+  "inference": {
+    "mode": "owned",
+    "backend": "api_key",
+    "excludes_claude": true
+  },
   "allowlist": [],
   "sources": [
     {
       "source_id": "local-claude-footprint",
       "type": "local-folder",
       "workspace": "~/.claude",
+      "credential_domain": "teamos_plane_a",
       "enabled": false,
       "dm_email": false
     },
@@ -13,6 +19,7 @@
       "source_id": "example-side-project-slack",
       "type": "slack",
       "workspace": "sideproject.slack.com",
+      "credential_domain": "teamos_plane_a",
       "enabled": false,
       "dm_email": false
     }

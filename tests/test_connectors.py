@@ -26,6 +26,58 @@ class ShippedConfigNeutral(unittest.TestCase):
         for ch in SHIPPED["notification_channels"]:
             self.assertFalse(ch["enabled"], ch["channel_id"])
 
+    def test_sources_are_teamos_plane_a_on_owned_inference(self):
+        # teamOS has its OWN connections; runs on owned inference, excludes Claude
+        self.assertEqual(SHIPPED["inference"]["mode"], "owned")
+        self.assertTrue(SHIPPED["inference"].get("excludes_claude"))
+        for s in SHIPPED["sources"]:
+            self.assertEqual(s["credential_domain"], "teamos_plane_a", s["source_id"])
+
+
+class CredentialDomains(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.d = Path(self.tmp.name)
+        self.cfg_path = self.d / "connectors.json"
+        cfg = copy.deepcopy(SHIPPED)
+        for s in cfg["sources"]:
+            s["enabled"] = True  # isolate the domain/inference gates
+        self.cfg = cfg
+        connectors.save_config(cfg, self.cfg_path)
+        self.sid = "local-claude-footprint"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_plane_a_source_reachable_by_path_a_loop(self):
+        eligible, rule = connectors.eligibility(self.cfg, self.sid, runtime="path_a")
+        self.assertTrue(eligible, rule)
+
+    def test_plane_a_source_not_reachable_by_cloud_path_b(self):
+        # non-interchangeable: cloud path (b) reaches no direct teamOS source
+        eligible, rule = connectors.eligibility(self.cfg, self.sid, runtime="path_b")
+        self.assertFalse(eligible)
+        self.assertEqual(rule, "credential-domain-mismatch")
+
+    def test_claude_account_source_not_reachable_by_path_a(self):
+        cfg = copy.deepcopy(self.cfg)
+        connectors._source(cfg, self.sid)["credential_domain"] = "claude_account"
+        eligible, rule = connectors.eligibility(cfg, self.sid, runtime="path_a")
+        self.assertFalse(eligible)
+        self.assertEqual(rule, "credential-domain-mismatch")
+
+    def test_plane_a_blocked_without_owned_inference(self):
+        cfg = copy.deepcopy(self.cfg)
+        cfg["inference"] = {"mode": "subscription", "backend": "claude_subscription"}
+        eligible, rule = connectors.eligibility(cfg, self.sid, runtime="path_a")
+        self.assertFalse(eligible)
+        self.assertEqual(rule, "plane-a-needs-owned-inference")
+
+    def test_provenance_carries_credential_domain(self):
+        out = connectors.ingest(self.sid, [{"x": 1}], config_path=self.cfg_path,
+                                ledger_dir=self.d)
+        self.assertEqual(out[0]["provenance"]["credential_domain"], "teamos_plane_a")
+
 
 class OptInGate(unittest.TestCase):
     def setUp(self):

@@ -6,6 +6,16 @@
   "type": "object",
   "properties": {
     "config_version": { "type": "string" },
+    "inference": {
+      "type": "object",
+      "description": "fork §9: Plane-A (teamOS's own) sources require OWNED inference — an API key or a local model + always-on runtime — so teamOS can run independent of, and excluding, the Claude account.",
+      "properties": {
+        "mode": { "type": "string", "enum": ["owned", "subscription"], "description": "owned = API key or local model (Plane A eligible); subscription = Claude account (reduced-trust, path b only)" },
+        "backend": { "type": "string", "enum": ["api_key", "local_model", "claude_subscription"], "description": "how loops get tokens" },
+        "excludes_claude": { "type": "boolean", "description": "true when the user has chosen a backend with no Claude dependency" }
+      },
+      "required": ["mode", "backend"]
+    },
     "allowlist": {
       "type": "array",
       "description": "The neutral configuration point. Empty = no allowlist constraint applied (no opinion). Non-empty = only these source_ids (or workspaces) may be ingested, even when enabled. Holds the user's/org's rule; ships empty.",
@@ -19,10 +29,15 @@
           "source_id": { "type": "string", "description": "Stable id used in allowlist + provenance" },
           "type": { "type": "string", "description": "e.g. mcp, slack, gmail, drive, local-folder" },
           "workspace": { "type": "string", "description": "Provenance: which workspace/account this source draws from (Ledger 3 answers 'which workspace did this come from')" },
+          "credential_domain": {
+            "type": "string",
+            "enum": ["teamos_plane_a", "claude_account", "door_oauth"],
+            "description": "fork §9, never interchangeable. teamos_plane_a = teamOS holds the grant, reachable by teamOS loops on owned inference, full trust. claude_account = Anthropic's grant, Claude sessions only, reduced trust. door_oauth = client→teamOS, any MCP client. A teamOS source is teamos_plane_a; a claude_account entry is recorded for provenance/fencing, never read by path-(a) loops."
+          },
           "enabled": { "type": "boolean", "description": "Opt-in gate. Default false: nothing is read until the responsible party toggles it (the toggle IS them exercising policy)." },
           "dm_email": { "type": "boolean", "description": "arch: DMs/email are opt-in sources — nothing reads them until this is true (FK3b toggle, ledgered)" }
         },
-        "required": ["source_id", "type", "workspace", "enabled"]
+        "required": ["source_id", "type", "workspace", "credential_domain", "enabled"]
       }
     },
     "notification_channels": {
@@ -40,5 +55,5 @@
       }
     }
   },
-  "required": ["config_version", "allowlist", "sources", "notification_channels"]
+  "required": ["config_version", "inference", "allowlist", "sources", "notification_channels"]
 }

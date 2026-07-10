@@ -45,11 +45,29 @@ def _source(config, source_id):
     return None
 
 
-def eligibility(config, source_id):
-    """Return (eligible, rule_id). Pure policy evaluation, no side effects."""
+# fork §9: which credential domains each runtime may reach (never interchangeable)
+RUNTIME_DOMAINS = {
+    "path_a": {"teamos_plane_a"},      # loops/daemon on owned inference, full trust
+    "path_b": set(),                   # cloud sessions: door only, no direct teamOS source
+    "door": {"door_oauth"},            # MCP clients through the door
+}
+
+
+def eligibility(config, source_id, runtime="path_a"):
+    """Return (eligible, rule_id). Pure policy evaluation, no side effects.
+
+    Enforces fork §9 credential domains: a runtime may only reach sources in its
+    permitted domain(s), and Plane-A sources require OWNED inference (API key or
+    local model) — so teamOS runs independent of the Claude account.
+    """
     source = _source(config, source_id)
     if source is None:
         return False, "unknown-source"
+    domain = source.get("credential_domain", "teamos_plane_a")
+    if domain not in RUNTIME_DOMAINS.get(runtime, set()):
+        return False, "credential-domain-mismatch"
+    if domain == "teamos_plane_a" and config.get("inference", {}).get("mode") != "owned":
+        return False, "plane-a-needs-owned-inference"
     allowlist = config.get("allowlist", [])
     if allowlist and source_id not in allowlist and source["workspace"] not in allowlist:
         return False, "allowlist-block"
@@ -88,16 +106,17 @@ def toggle(source_id, enabled, config=None, config_path=None, ledger_dir=None,
     return config
 
 
-def ingest(source_id, items, config=None, config_path=None, ledger_dir=None):
+def ingest(source_id, items, config=None, config_path=None, ledger_dir=None,
+           runtime="path_a"):
     """Return items tagged with provenance IF the source is eligible, else [].
 
     Ineligible sources provably return nothing (F-test). Eligible ingestion
-    stamps every item with {source_id, type, workspace} and ledgers L3
-    provenance.
+    stamps every item with {source_id, type, workspace, credential_domain} and
+    ledgers L3 provenance. `runtime` enforces the credential-domain rule.
     """
     ledger_dir = Path(ledger_dir or REPO_ROOT / "ledgers")
     config = config or load_config(config_path)
-    eligible, rule_id = eligibility(config, source_id)
+    eligible, rule_id = eligibility(config, source_id, runtime)
     if not eligible:
         return []
     source = _source(config, source_id)
@@ -105,6 +124,7 @@ def ingest(source_id, items, config=None, config_path=None, ledger_dir=None):
         "source_id": source_id,
         "type": source["type"],
         "workspace": source["workspace"],
+        "credential_domain": source.get("credential_domain", "teamos_plane_a"),
     }
     tagged = []
     for i, item in enumerate(items):
