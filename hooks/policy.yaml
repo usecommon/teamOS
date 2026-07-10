@@ -23,6 +23,7 @@ protected_paths:
   - CLAUDE.md
   - .github/workflows/
   - docs/team-os-fork-harness-native.md   # divergence log — append via PR only
+  - config/envelope-policy.json           # envelope ceiling — script can never touch its own ceiling
 
 # Reads of these escalate (verdict: ask)
 sensitive_read_paths:

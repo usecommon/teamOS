@@ -1,0 +1,14 @@
+{
+  "_comment": "Autonomy envelope CEILINGS + thresholds. PROTECTED PATH (CLAUDE.md): human approval to edit; the envelope script may widen levels only WITHIN these ceilings and can never touch this file (its own ceiling). Levels: 0 = ask always; higher = more autonomous, capped at ceiling.",
+  "policy_version_note": "hash of this file is the policy_version stamped into L2 on every envelope change",
+  "widen_threshold": 3,
+  "fk6_widen_multiplier": 2,
+  "narrow_edit_severity": 0.5,
+  "categories": {
+    "read":     { "ceiling": 2, "base": 0 },
+    "write":    { "ceiling": 2, "base": 0 },
+    "send":     { "ceiling": 1, "base": 0 },
+    "execute":  { "ceiling": 1, "base": 0 },
+    "schedule": { "ceiling": 1, "base": 0 }
+  }
+}
