@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "connector-config.schema.json",
+  "title": "Connector config + policy surfaces (FK3b)",
+  "description": "Fork-native operational config — NOT part of the canonical docs/schemas store-model extraction. Policy-neutral (fork §3a): the tool enforces whatever this holds and ships holding no opinion. Two gates on ingestion: opt-in `enabled` (default false, always active) and the optional `allowlist` (empty = no constraint; populated = only listed sources permitted — the user's/org's rule).",
+  "type": "object",
+  "properties": {
+    "config_version": { "type": "string" },
+    "allowlist": {
+      "type": "array",
+      "description": "The neutral configuration point. Empty = no allowlist constraint applied (no opinion). Non-empty = only these source_ids (or workspaces) may be ingested, even when enabled. Holds the user's/org's rule; ships empty.",
+      "items": { "type": "string" }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_id": { "type": "string", "description": "Stable id used in allowlist + provenance" },
+          "type": { "type": "string", "description": "e.g. mcp, slack, gmail, drive, local-folder" },
+          "workspace": { "type": "string", "description": "Provenance: which workspace/account this source draws from (Ledger 3 answers 'which workspace did this come from')" },
+          "enabled": { "type": "boolean", "description": "Opt-in gate. Default false: nothing is read until the responsible party toggles it (the toggle IS them exercising policy)." },
+          "dm_email": { "type": "boolean", "description": "arch: DMs/email are opt-in sources — nothing reads them until this is true (FK3b toggle, ledgered)" }
+        },
+        "required": ["source_id", "type", "workspace", "enabled"]
+      }
+    },
+    "notification_channels": {
+      "type": "array",
+      "description": "Outbound channels (FK5 Brief delivery). Slack DM for the pilot.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "channel_id": { "type": "string" },
+          "type": { "type": "string", "enum": ["slack_dm"] },
+          "target": { "type": "string", "description": "Principal's authenticated Slack user id (CN-1) or DM target" },
+          "enabled": { "type": "boolean" }
+        },
+        "required": ["channel_id", "type", "target", "enabled"]
+      }
+    }
+  },
+  "required": ["config_version", "allowlist", "sources", "notification_channels"]
+}

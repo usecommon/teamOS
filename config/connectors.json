@@ -1,0 +1,28 @@
+{
+  "config_version": "0.1",
+  "allowlist": [],
+  "sources": [
+    {
+      "source_id": "local-claude-footprint",
+      "type": "local-folder",
+      "workspace": "~/.claude",
+      "enabled": false,
+      "dm_email": false
+    },
+    {
+      "source_id": "example-side-project-slack",
+      "type": "slack",
+      "workspace": "sideproject.slack.com",
+      "enabled": false,
+      "dm_email": false
+    }
+  ],
+  "notification_channels": [
+    {
+      "channel_id": "principal-dm",
+      "type": "slack_dm",
+      "target": "SET_PRINCIPAL_SLACK_USER_ID",
+      "enabled": false
+    }
+  ]
+}
