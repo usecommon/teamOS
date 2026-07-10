@@ -10,10 +10,14 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import hashchain  # noqa: E402 — the single chain implementation (FK2)
 
 SCHEMA_VERSION = "0.1"
 ADAPTER_AGENT_ID = "teamos-adapter/0.1"
@@ -88,16 +92,11 @@ def _canonical(obj):
 
 
 def chain_envelope(record, prev_hash, record_id, ts):
-    """Attach the ledger-common envelope with hash chaining (FK2 pattern)."""
-    record.update(
-        record_id=record_id,
-        ts=ts,
-        schema_version=SCHEMA_VERSION,
-        agent_id=ADAPTER_AGENT_ID,
-        prev_hash=prev_hash,
+    """Attach the ledger-common envelope with hash chaining (delegates to the
+    single chain implementation in scripts/hashchain.py)."""
+    return hashchain.envelope(
+        record, prev_hash, record_id, ts, ADAPTER_AGENT_ID, SCHEMA_VERSION
     )
-    record["hash"] = _sha256((prev_hash or "") + _canonical(record))
-    return record
 
 
 def _sidecar(entity_id, source_path, content, transformation):

@@ -1,0 +1,16 @@
+{
+  "_comment": "Merge into .claude/settings.json (project) or ~/.claude/settings.json (user) to activate the gate. Activation is the principal's explicit step; review hooks/gate.py against hooks/BEHAVIOR.md first (X-1).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/hooks/gate.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

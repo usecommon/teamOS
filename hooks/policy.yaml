@@ -1,0 +1,66 @@
+# Gate policy (FK2). policy_version in L2 records = sha256 of this file.
+# Protected path: changes require human approval (CLAUDE.md).
+
+action_classes:
+  Read: read
+  Glob: read
+  Grep: read
+  NotebookRead: read
+  Write: write
+  Edit: edit
+  NotebookEdit: write
+  Bash: execute
+  WebFetch: send
+  WebSearch: send
+
+# Tool-name substrings classed as sends (outbound-content scan mandatory, AT-6)
+send_tool_markers: [send, post, message, mail, publish, upload, share]
+
+# Writes here require human approval (verdict: ask)
+protected_paths:
+  - hooks/
+  - adapter/
+  - CLAUDE.md
+  - .github/workflows/
+  - docs/team-os-fork-harness-native.md   # divergence log — append via PR only
+
+# Reads of these escalate (verdict: ask)
+sensitive_read_paths:
+  - .ssh/
+  - .claude.json
+  - .aws/
+  - .gnupg/
+  - .env
+  - id_rsa
+  - credentials
+
+# Writes under declared cloud-synced roots are SENDS, not local writes (FR2)
+synced_paths:
+  - Library/Mobile Documents
+  - Dropbox
+  - Google Drive
+  - OneDrive
+
+# Bash egress markers (command scan)
+egress_patterns:
+  - curl
+  - wget
+  - "nc "
+  - ncat
+  - netcat
+  - scp
+  - sftp
+  - /dev/tcp
+  - python -c import socket
+  - python3 -c import socket
+  - base64
+
+# Outbound-content scan (mandatory on every send — X-2: catches VERBATIM
+# secrets/identifiers only; paraphrase-exfil is carried by taint + send gate)
+secret_patterns:
+  - "AKIA[0-9A-Z]{16}"
+  - "-----BEGIN [A-Z ]*PRIVATE KEY-----"
+  - "ghp_[A-Za-z0-9]{20,}"
+  - "sk-ant-[A-Za-z0-9-]{20,}"
+  - "xox[bap]-[A-Za-z0-9-]{10,}"
+  - "eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+"   # JWT: header.payload, both base64url of a JSON object ({"...)
