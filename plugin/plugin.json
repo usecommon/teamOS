@@ -1,0 +1,26 @@
+{
+  "name": "team-os",
+  "version": "0.1.0",
+  "description": "Team OS kit — proactive personal agent: gate/ledger hooks, compilation, loops, and the read+propose door. One installable unit.",
+  "hooks": "../hooks/settings-fragment.json",
+  "mcpServers": {
+    "teamos_door": {
+      "command": "python3",
+      "args": ["../scripts/door_server.py"],
+      "_note": "read tools (readOnlyHint) + propose_* to the inbox, never the corpus"
+    }
+  },
+  "components": {
+    "hooks": ["../hooks/gate.py"],
+    "adapter": "../adapter",
+    "schedule_templates": "schedule-templates/",
+    "compile_on_install": "../stores/skills/compile/SKILL.md"
+  },
+  "signing_lite": {
+    "signed_commits": true,
+    "reproducible_build": true,
+    "hook_diff_review_required": true,
+    "hook_behavior_spec": "../hooks/BEHAVIOR.md",
+    "_note": "CN-3 / X-1: builder runs with hook privilege on collaborator machines; the hook-diff review is the collaborator's control over their own TCB. Review gate.py against BEHAVIOR.md before install."
+  }
+}

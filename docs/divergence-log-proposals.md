@@ -32,6 +32,27 @@ field-miss list mechanically). Classes per fork spec §6: field-miss entries are
   company/team/individual. A scope-level gap, not a field gap — revisit at
   merge-back.
 
+## class: experiment note (FK6c — PENDING, require a live cloud platform)
+
+Both need a real Cowork/Routines surface + a remote-driven session; not runnable
+in this build environment. Recorded here; results fill in when run on the pinned
+surface.
+
+- **FK6c experiment #1** — can an *ordinary* (non-privileged) cloud session
+  *create* scheduled tasks via the platform's own tools, or only `update` them?
+  Determines whether "one guided chat sets up schedules" is achievable or the
+  reconciliation task must be seeded another way. STATUS: pending.
+- **FK6c experiment #2** — do *remote-driven* Claude Code sessions (mobile app
+  driving a local CLI) execute the local FK2 hooks? If yes, that posture is
+  full-trust from the phone (upgrade ladder rung 2). STATUS: pending.
+
+## class: path-(b) surface tests (FK6c — PENDING, require a live cloud run)
+
+Deterministic fences are tested (loop-prompt linter, proposal-parser probes).
+The three live-surface checks — one real cloud-scheduled run end-to-end through
+the door; missed-run catch-up on the cloud tier; caps-exhaustion behavior — need
+the actual platform and are pending, not closeable by CI.
+
 ## Counting-rule note for A-FK1 (human review requested)
 
 The gate counts `fork-native` fields (values authored by fork writers — ledger

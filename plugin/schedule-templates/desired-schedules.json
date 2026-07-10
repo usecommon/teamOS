@@ -1,0 +1,22 @@
+[
+  {
+    "name": "morning-brief",
+    "cron": "0 7 * * *",
+    "prompt": "Run the Day One Brief: use read_job_graph and propose_corpus_entry via the Team OS door only."
+  },
+  {
+    "name": "daily-digest",
+    "cron": "0 18 * * *",
+    "prompt": "Compile the daily digest of shadow deliverables using read_corpus and read_job_graph."
+  },
+  {
+    "name": "nightly-corpus-compile",
+    "cron": "0 2 * * *",
+    "prompt": "Recompile the corpus from eligible sources; propose new entries with propose_corpus_entry."
+  },
+  {
+    "name": "weekly-gap-fill",
+    "cron": "0 9 * * 1",
+    "prompt": "Review the week; list_desired_schedules and propose_schedule for any recurring gap."
+  }
+]

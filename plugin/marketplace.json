@@ -1,0 +1,12 @@
+{
+  "name": "team-os-marketplace",
+  "owner": "usecommon",
+  "plugins": [
+    {
+      "name": "team-os",
+      "source": "./plugin",
+      "description": "Team OS kit (fork): hooks, loops, compilation, door.",
+      "version": "0.1.0"
+    }
+  ]
+}
