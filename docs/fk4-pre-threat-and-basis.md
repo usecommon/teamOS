@@ -42,9 +42,15 @@ The trust substrate (hooks, gates, ledgers) executes **inside** the harness; a c
 - **LIA coverage:** own footprint + collaborators' shared spaces. Names third-party exposure in shared spaces as a known, bounded risk (mitigated by shared-space-default sourcing + working erasure).
 - **Objection/erasure rights:** any subject may object; FK3 deletion is the mechanism.
 
-## 5. Pilot-source decision (PRINCIPAL'S CHOICE — pending, §3a)
+## 5. Source basis — study-scope note only (NOT a product policy, NOT a functional gate)
 
-The tool is policy-neutral; this is the responsible party exercising policy, not a product gate. **To be recorded here with rationale before FK4 runs.** See the choices posed to the principal alongside this draft. Default framing (fork §3a precedent): personal accounts + side-project workspaces eligible; employer workspaces excluded by the pilot user's own decision (personal-risk position + evidence portability — data you're not entitled to process yields results you can't demo or cite). **A-C2 scope limit (F11):** a green A-C2 on this source set validates compilability of *non-employment* footprints only.
+**No product policy exists or is needed here.** The tool is policy-neutral (§3a): it reads whatever the user configures and holds no opinion about eligible sources. FK4's compiler has **zero functional dependency** on anything in this section — it does not read it or branch on it.
+
+This section is a **research footnote**, and it only carries weight when *other people's* data is processed (that is §6, collaborators). For the single-user product on the **principal's own footprint**, basis is trivial (self-consent) and this collapses to a one-liner:
+
+> *Source basis: principal's own footprint, self-consented. Nothing else applies at single-user scope.*
+
+The only residue is interpretive, not gating: when an A-C2 *number is later reported*, note which data produced it so the claim is honest — e.g. a result on non-employment footprints supports the non-employment claim only (F11). That is describing the experiment, not permitting the product.
 
 ## 6. Collaborator data notice (sign-off pending)
 
@@ -52,4 +58,6 @@ Before any collaborator footprint flows, each signs a one-page notice including 
 
 ---
 
-**Exit (FK4-pre):** document exists ✅ · every FK item maps to ≥1 persona ✅ · pilot-source decision recorded ⛔ (pending principal) · collaborators sign the notice ⛔ (pending recruitment). **FK4 must not ingest real data until the two ⛔ close.**
+**Exit (FK4-pre):** document exists ✅ · every FK item maps to ≥1 persona ✅ · source basis for own data = self-consent, no policy needed ✅ · collaborators sign the notice ⛔ (pending recruitment — required only before *others'* data flows, i.e. FK7).
+
+**Gating, precisely:** FK4/FK5/FK6 on the **principal's own footprint** have no open blocker here. Only the moment **another person's** data enters shared scope (FK7) requires §6 sign-off. Building FK4 on synthetic fixtures needs nothing.
