@@ -1,0 +1,170 @@
+"""Day One Brief (FK5). A scheduled headless run assembles, unrequested:
+  1. a digest (summary-level, links back into the store — m2),
+  2. a ✓/✗ job draft from the compiled job graph,
+  3. the first compiled deliverable (rendered into the store, linked from the DM),
+and delivers it to a Slack DM. The send traverses the FK2 gate (emits L2). ✓/✗
+reactions are harvested deterministically (SE-1: reactions.get only, no language
+model, principal-authenticated per CN-1) into L8. Missed schedule => catch-up.
+"""
+
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "hooks"))
+
+import hashchain  # noqa: E402
+import gate  # noqa: E402
+
+BRIEF_AGENT_ID = "teamos-brief/0.1"
+# Slack emoji -> signal
+ACCEPT_EMOJI = "white_check_mark"
+REJECT_EMOJI = "x"
+
+
+# --- 1. assembly (summary-level with links; compiled content stays in store) ---
+
+def assemble_brief(job_graph, out_dir, store_prefix="stores"):
+    """Build the brief structure + render the first deliverable into the store.
+
+    The DM carries a digest + job draft + a LINK to the deliverable; the full
+    compiled content lives in the governed store, not in the message (m2).
+    """
+    out_dir = Path(out_dir)
+    (out_dir / "deliverables").mkdir(parents=True, exist_ok=True)
+    nodes = job_graph.get("nodes", [])
+
+    digest = [f"{n['task_type']}: {n['occurrences']} seen, {n['cadence']}, "
+              f"source {', '.join(n['sources'])}" for n in nodes]
+
+    job_draft = [{
+        "task_type": n["task_type"],
+        "cadence": n["cadence"],
+        "default": "propose",   # principal taps ✓ to accept / ✗ to reject
+        "link": f"{store_prefix}/job_graph.json#{n['task_type']}",
+    } for n in nodes]
+
+    first_deliverable = None
+    if nodes:
+        top = max(nodes, key=lambda n: n["occurrences"])
+        draft_path = out_dir / "deliverables" / f"{top['task_type']}-draft.md"
+        # rendered from the node's exemplar REFERENCES (no raw bodies inlined)
+        draft_path.write_text(
+            f"# {top['task_type']} (compiled draft)\n\n"
+            f"cadence: {top['cadence']} · sources: {', '.join(top['sources'])}\n"
+            f"built from {top['occurrences']} prior exemplars "
+            f"(see job_graph.json#{top['task_type']}).\n")
+        first_deliverable = {
+            "task_type": top["task_type"],
+            "link": f"{store_prefix}/deliverables/{top['task_type']}-draft.md",
+            "summary": f"First {top['task_type']} drafted from {top['occurrences']} exemplars.",
+        }
+
+    return {"digest": digest, "job_draft": job_draft,
+            "first_deliverable": first_deliverable}
+
+
+def render_dm(brief):
+    """Render the brief to DM text — summary + links only, never raw content."""
+    lines = ["*Day One Brief* (unrequested)", "", "*Recurring work found:*"]
+    lines += [f"• {d}" for d in brief["digest"]]
+    lines += ["", "*Job draft* — ✓ to accept, ✗ to reject:"]
+    lines += [f"• {j['task_type']} ({j['cadence']}) → {j['link']}" for j in brief["job_draft"]]
+    if brief["first_deliverable"]:
+        fd = brief["first_deliverable"]
+        lines += ["", f"*First deliverable:* {fd['summary']}", f"→ {fd['link']}"]
+    return "\n".join(lines)
+
+
+# --- 2. delivery (through the gate; emits L2) ---------------------------------
+
+def deliver(brief, channel, slack, ledger_dir, policy=None):
+    """Send the brief DM. The send traverses the FK2 gate (L2) before posting.
+
+    Returns (ts, l2_record). Raises if the gate blocks the send.
+    """
+    ledger_dir = Path(ledger_dir)
+    text = render_dm(brief)
+    tool_input = {"channel": channel, "text": text, "blocks": []}
+
+    prev_ledger = gate.LEDGER_DIR
+    gate.LEDGER_DIR = ledger_dir
+    try:
+        decision = gate.process(
+            {"tool_name": "slack_post_message", "tool_input": tool_input},
+            policy or gate.load_policy())
+    finally:
+        gate.LEDGER_DIR = prev_ledger
+    l2 = json.loads((ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
+    if decision["hookSpecificOutput"]["permissionDecision"] != "allow":
+        raise PermissionError(f"gate blocked the brief send: {l2['rule_id']}")
+
+    ts = slack.post_message(channel, text=text)
+    return ts, l2
+
+
+# --- 3. reaction harvest (deterministic, principal-authenticated) -------------
+
+def harvest_reactions(channel, ts, principal_user_id, slack, ledger_dir,
+                      artifact_link="brief"):
+    """Read reactions via the API only; count ✓/✗ ONLY from the principal's
+    authenticated user id (CN-1). Others logged as unattributed, never counted.
+    Point-in-time (OB-4): a later removal does not retract. No language model."""
+    ledger_dir = Path(ledger_dir)
+    reactions = slack.reactions_get(channel, ts)  # API, not message text (SE-1)
+    harvested_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    records = []
+    for r in reactions:
+        if r["name"] not in (ACCEPT_EMOJI, REJECT_EMOJI):
+            continue
+        for user in r["users"]:
+            principal = (user == principal_user_id)
+            signal = "endorsement" if r["name"] == ACCEPT_EMOJI else "rejection"
+            outcome = "accepted" if r["name"] == ACCEPT_EMOJI else "rejected"
+            rec = hashchain.append(ledger_dir / "l8.jsonl", {
+                "signal_type": signal,
+                "artifact_ref": {"store": "brief", "path": f"{channel}/{ts}",
+                                 "content_hash": hashchain.sha256_str(artifact_link)},
+                "principal_id": user,
+                "attribution": "principal_authenticated" if principal else "unattributed",
+                "outcome": outcome,
+                "harvest": {"method": "slack-reactions-get", "harvested_at": harvested_at},
+            }, BRIEF_AGENT_ID)
+            records.append(rec)
+    return records
+
+
+def count_accepted(records):
+    """Count only principal-authenticated acceptances (the envelope's input)."""
+    return sum(1 for r in records
+               if r["attribution"] == "principal_authenticated"
+               and r["outcome"] == "accepted")
+
+
+# --- 4. scheduled catch-up (never a silent skip) ------------------------------
+
+def run_if_due(task_name, interval_seconds, state_dir, action, now=None):
+    """Run `action` if due or if a scheduled run was MISSED (catch-up). Never
+    silently skips a missed run. Returns (ran, catch_up, result)."""
+    state_dir = Path(state_dir)
+    state_dir.mkdir(parents=True, exist_ok=True)
+    state_file = state_dir / f"{task_name}.state.json"
+    now = now or datetime.now(timezone.utc)
+    last = None
+    if state_file.exists():
+        last = datetime.fromisoformat(json.loads(state_file.read_text())["last_run"])
+    if last is None:
+        due, catch_up = True, False
+    else:
+        elapsed = (now - last).total_seconds()
+        due = elapsed >= interval_seconds
+        catch_up = elapsed > interval_seconds * 1.5  # a scheduled slot was missed
+    if not due:
+        return False, False, None
+    result = action()
+    state_file.write_text(json.dumps({"last_run": now.isoformat(), "catch_up": catch_up}))
+    return True, catch_up, result
