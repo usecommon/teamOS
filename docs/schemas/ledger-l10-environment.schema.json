@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l10-environment.schema.json",
+  "title": "Ledger 10 — Environment state (what world did it run in?)",
+  "description": "arch §5 L10: per invocation — model+version, connector versions & schema hashes, dependency health, index freshness. Joins to L7 for causal attribution (environment failures masquerade as skill regressions, arch §6).",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "invocation_id": { "type": "string", "description": "L1 trace id this environment snapshot belongs to (join key to L7)" },
+    "model": { "type": "string", "description": "Model name in use" },
+    "model_version": { "type": "string", "description": "Exact model version/id" },
+    "harness_version": { "type": "string", "description": "Pinned harness version in force (FR5 — fork addition, the version+surface pin)" },
+    "harness_surface": { "type": "string", "description": "Pinned harness surface (FR5), e.g. claude-code-desktop+local-scheduled-tasks" },
+    "connectors": {
+      "type": "array",
+      "description": "Connector/MCP environment at invocation time",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "schema_hash": { "type": "string", "description": "Hash of the connector's tool schema (drift detection)" },
+          "health": { "type": "string", "enum": ["healthy", "degraded", "down", "unknown"] }
+        },
+        "required": ["name", "version", "schema_hash", "health"]
+      }
+    },
+    "index_freshness": { "type": "string", "format": "date-time", "description": "Last derived-index rebuild time (UTC)" }
+  },
+  "required": ["invocation_id", "model", "model_version", "harness_version", "harness_surface", "connectors", "index_freshness"]
+}

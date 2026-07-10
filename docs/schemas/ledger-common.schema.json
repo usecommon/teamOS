@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-common.schema.json",
+  "title": "Ledger record envelope (shared by L1-L10)",
+  "description": "arch §5.2: structured records (timestamp, agent identity, action, context), tamper-evident via cryptography; fork FK2: hash-chaining on all ledgers. Every ledger record carries this envelope.",
+  "$defs": {
+    "envelope": {
+      "type": "object",
+      "properties": {
+        "record_id": { "type": "string", "description": "Unique id of this ledger record" },
+        "ts": { "type": "string", "format": "date-time", "description": "ISO-8601 UTC timestamp of the event" },
+        "schema_version": { "type": "string", "description": "Version of the ledger schema this record was written under" },
+        "agent_id": { "type": "string", "description": "Identity of the agent/component that wrote the record (arch §5.2 practitioner bar)" },
+        "prev_hash": { "type": ["string", "null"], "description": "Hash of the previous record in this ledger file (null for genesis) — FK2 hash-chaining" },
+        "hash": { "type": "string", "description": "Hash of this record's canonical serialization including prev_hash — tamper-evidence (arch §5.2)" }
+      },
+      "required": ["record_id", "ts", "schema_version", "agent_id", "prev_hash", "hash"]
+    },
+    "ref": {
+      "type": "object",
+      "description": "Content-by-reference pointer (arch §5 minimization: content stored externally with references, never inline)",
+      "properties": {
+        "store": { "type": "string", "description": "Which store/side-store holds the content" },
+        "path": { "type": "string", "description": "Path or locator within the store" },
+        "content_hash": { "type": "string", "description": "Hash of the referenced content (chain hashes references — fork SE-2)" }
+      },
+      "required": ["store", "path", "content_hash"]
+    }
+  }
+}

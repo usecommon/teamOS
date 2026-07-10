@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l7-eval.schema.json",
+  "title": "Ledger 7 — Evaluation scores (is this skill improving?)",
+  "description": "arch §5 L7: per-invocation scores, pass^k aggregates, cost-of-pass, ASR samples — keyed to Ledger 6 so performance attributes to versions. The skill_id+skill_version key and evidence links are load-bearing (must-map).",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "skill_id": { "type": "string", "description": "Load-bearing (must-map): the skill being scored" },
+    "skill_version": { "type": "string", "description": "Load-bearing (must-map): L6 version key — performance attributes to versions" },
+    "invocation_id": { "type": "string", "description": "L1 trace/span id of the scored invocation (evidence link, load-bearing)" },
+    "metric": { "type": "string", "description": "What is being measured (e.g. edit_distance_normalized, acceptance, pass_k, cost_of_pass)" },
+    "score": { "type": "number", "description": "The measured value" },
+    "aggregate": {
+      "type": "object",
+      "description": "Optional aggregate context for this record",
+      "properties": {
+        "kind": { "type": "string", "description": "e.g. pass^k, mean, rolling-window" },
+        "n": { "type": "integer", "description": "Sample size behind the aggregate" }
+      }
+    },
+    "sample_ref": { "$ref": "ledger-common.schema.json#/$defs/ref", "description": "Reference to the scored artifact/sample (evidence link)" }
+  },
+  "required": ["skill_id", "skill_version", "invocation_id", "metric", "score", "sample_ref"]
+}

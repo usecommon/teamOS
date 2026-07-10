@@ -1,0 +1,50 @@
+{
+  "manifest_version": "0.1",
+  "stores": [
+    {
+      "store_id": "scoped_corpus",
+      "contents": "context / profile / experience files + promoted knowledge entries",
+      "owner": "org_team_curated",
+      "format": "git: markdown + PROV/JSON-LD lineage sidecars",
+      "portability": "portable as a repo; fork/audit/migrate; survives turnover",
+      "path": "stores/corpus",
+      "encrypted": false
+    },
+    {
+      "store_id": "skill_registry",
+      "contents": "skills at all scopes incl. personal namespaces",
+      "owner": "org_personal_co_owned",
+      "format": "git: versioned skill folders (SKILL.md pattern) + capability manifest per skill",
+      "portability": "portable; version history = Ledger 6",
+      "path": "stores/skills",
+      "encrypted": false
+    },
+    {
+      "store_id": "personal_memory",
+      "contents": "episodic memory, discovery observation corpus, calibration state",
+      "owner": "principal",
+      "format": "encrypted DB, lineage metadata per write (Ledger 3), principal-keyed",
+      "portability": "moves with the person per policy",
+      "path": "stores/profile",
+      "encrypted": true
+    },
+    {
+      "store_id": "telemetry_ledger",
+      "contents": "Ledgers 1-10",
+      "owner": "org_l8_restricted",
+      "format": "append-only JSONL, hash-chained, OTel/OTLP-native field mapping",
+      "portability": "exportable (Art. 12/19 compliance)",
+      "path": "ledgers",
+      "encrypted": false
+    },
+    {
+      "store_id": "role_template_registry",
+      "contents": "predetermined skill sets + knowledge pointers per role",
+      "owner": "org",
+      "format": "git",
+      "portability": "the provisioning unit (mainline scope; declared, unused at fork scale)",
+      "path": "stores/templates",
+      "encrypted": false
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l5-delegation.schema.json",
+  "title": "Ledger 5 — Delegation/identity (on whose authority?)",
+  "description": "arch §5 L5: user-ID / agent-ID / delegation-token chains with scopes (OIDC / W3C VC adaptation per authenticated-delegation framework).",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "principal_id": { "type": "string", "description": "The human principal at the root of the authority chain" },
+    "acting_agent_id": { "type": "string", "description": "The agent acting under this delegation" },
+    "delegation_chain": {
+      "type": "array",
+      "description": "Ordered token chain from principal to acting agent",
+      "items": {
+        "type": "object",
+        "properties": {
+          "issuer": { "type": "string", "description": "Who granted this link (user or agent id)" },
+          "subject": { "type": "string", "description": "Who received the delegation" },
+          "scopes": { "type": "array", "items": { "type": "string" }, "description": "Capability scopes granted at this link" },
+          "token_ref": { "type": "string", "description": "Reference to the delegation token/credential" }
+        },
+        "required": ["issuer", "subject", "scopes"]
+      }
+    }
+  },
+  "required": ["principal_id", "acting_agent_id", "delegation_chain"]
+}

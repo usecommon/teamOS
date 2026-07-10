@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l4-knowledge-exchange.schema.json",
+  "title": "Ledger 4 — Knowledge exchange (who told whom; were they allowed?)",
+  "description": "arch §5 L4: every inter-agent transfer — content, source→recipient principals, disclosure policy applied, lineage to origin. Payloads referenced, not copied, where sensitive (§5 minimization). Fork: written only at FK7+ (A2A beyond two hand-configured peers is deferred); schema extracted now so nothing needs revalidating at merge-back.",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "content_ref": { "$ref": "ledger-common.schema.json#/$defs/ref", "description": "The transferred content, by reference where sensitive" },
+    "source_principal": { "type": "string", "description": "Principal whose agent sent the knowledge" },
+    "recipient_principal": { "type": "string", "description": "Principal whose agent received it" },
+    "disclosure_policy": { "type": "string", "description": "The disclosure policy applied to permit the transfer (arch §3.2.3)" },
+    "origin_lineage": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lineage chain back to the content's origin (L3 target ids)"
+    },
+    "taint_mark": { "type": "string", "description": "Taint tier carried to the receiver (arch §7.7: cross-agent taint via L4)" }
+  },
+  "required": ["content_ref", "source_principal", "recipient_principal", "disclosure_policy", "origin_lineage"]
+}

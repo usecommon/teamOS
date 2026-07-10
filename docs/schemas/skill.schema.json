@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skill.schema.json",
+  "title": "Skill registry entry",
+  "description": "arch §10.2 store 2: versioned skill folders (SKILL.md pattern) + capability manifest per skill (declared capture-surface requirements, checked at load, graceful degradation on lesser tiers). Version history = Ledger 6; evaluation evidence keys via L7. version and evidence_links are load-bearing (must-map).",
+  "type": "object",
+  "properties": {
+    "skill_id": { "type": "string", "description": "Stable id: namespace-qualified skill name" },
+    "name": { "type": "string", "description": "Skill name as invoked" },
+    "description": { "type": "string", "description": "What the skill does / when it triggers (SKILL.md frontmatter)" },
+    "namespace": {
+      "type": "string",
+      "enum": ["personal", "team", "org", "company"],
+      "description": "Registry scope (arch §10.2: skills at all scopes incl. personal namespaces; personal co-owned)"
+    },
+    "version": { "type": "string", "description": "Load-bearing (must-map): current version — L6 key (git sha of the skill folder)" },
+    "capability_manifest": {
+      "type": "object",
+      "description": "arch §10.2: declared capture-surface requirements; checked at load; graceful degradation on lesser tiers",
+      "properties": {
+        "capture_surface": {
+          "type": "string",
+          "enum": ["cloud-only", "cloud+synced", "cloud+synced+local-folders"],
+          "description": "Which capture tier the skill requires"
+        },
+        "tools": { "type": "array", "items": { "type": "string" }, "description": "Tools the skill declares it uses (gate cross-checks at run time)" }
+      },
+      "required": ["capture_surface", "tools"]
+    },
+    "evidence_links": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Load-bearing (must-map): L7 record ids attributing performance to this skill's versions"
+    },
+    "body_path": { "type": "string", "description": "Path to the SKILL.md body within the skill folder" },
+    "lineage_sidecar": { "type": "string", "description": "Path to the skill's PROV-lite lineage sidecar (promotion gates read it — arch §10.5)" }
+  },
+  "required": ["skill_id", "name", "description", "namespace", "version", "capability_manifest", "evidence_links", "body_path", "lineage_sidecar"]
+}

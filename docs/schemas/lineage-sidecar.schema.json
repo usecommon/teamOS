@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lineage-sidecar.schema.json",
+  "title": "Lineage sidecar (PROV-lite JSON)",
+  "description": "Mainline F1: lineage sidecar format (PROV-lite JSON) carried by corpus/skill/profile files. W3C PROV core classes (arch §5.1): Entity (the file/block), Activity (the transformation), Agent (the author). Field set mirrors the L3 lineage set (§3.2.1: every entry carries author, source type, evidence, transformation, confidence, update history) so a sidecar and its L3 record agree by construction.",
+  "type": "object",
+  "properties": {
+    "entity_id": { "type": "string", "description": "PROV Entity: the corpus entry / skill / profile object (or entry_id#block_id for block-level lineage, §3.3.2)" },
+    "generated_by": {
+      "type": "object",
+      "description": "PROV Activity: the transformation that produced the entity",
+      "properties": {
+        "transformation": { "type": "string", "description": "Operation name (e.g. adapter-translation, compilation-distill, human-authored)" },
+        "at": { "type": "string", "format": "date-time", "description": "UTC time of generation" }
+      },
+      "required": ["transformation", "at"]
+    },
+    "agent": { "type": "string", "description": "PROV Agent: authoring agent/human (load-bearing lineage field)" },
+    "sources": {
+      "type": "array",
+      "description": "The entities this one was derived from (lineage-DAG edges; L9 deletion walks these)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_type": { "type": "string", "description": "Load-bearing lineage field: kind of source (principal-direct, harness-artifact, connector:<name>, agent-derivation, external-untrusted)" },
+          "locator": { "type": "string", "description": "Where the source is/was (path, id, URL)" },
+          "content_hash": { "type": "string", "description": "Hash of the source content as used (evidence integrity)" }
+        },
+        "required": ["source_type", "locator", "content_hash"]
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Load-bearing lineage field: block-level citations supporting the content (entry_id#block_id refs or external locators)"
+    },
+    "confidence": { "type": "string", "description": "Load-bearing lineage field: graded label or 'unrated'" },
+    "update_history": {
+      "type": "array",
+      "description": "Load-bearing lineage field: prior generations of this entity",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "description": "L6 version key (git sha)" },
+          "at": { "type": "string", "format": "date-time" },
+          "agent": { "type": "string" }
+        },
+        "required": ["version", "at", "agent"]
+      }
+    }
+  },
+  "required": ["entity_id", "generated_by", "agent", "sources", "evidence", "confidence", "update_history"]
+}

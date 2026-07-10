@@ -1,0 +1,7 @@
+{
+  "surface": "claude-code-desktop+local-scheduled-tasks",
+  "version": "2.1.202",
+  "version_match": "major.minor",
+  "pinned_at": "2026-07-10",
+  "note": "FR5: runtime of record. On harness update, re-run the FK1 adapter suite and the FK2 headless-hook test before anything else; update this pin only after both pass."
+}

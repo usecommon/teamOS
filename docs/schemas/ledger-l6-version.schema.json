@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l6-version.schema.json",
+  "title": "Ledger 6 — Version history (which config produced this?)",
+  "description": "arch §5 L6: git-backed skills, context files, profiles, prompts; model versions; dataset lineage. Fork: git history IS L6; records here are the normalized view over it. skill version is a load-bearing field (must-map) — L7 scores key to it.",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "object_type": {
+      "type": "string",
+      "enum": ["skill", "context", "profile", "experience", "prompt", "model", "dataset", "policy", "hook", "schema"],
+      "description": "What kind of versioned object this is"
+    },
+    "object_id": { "type": "string", "description": "Stable id of the versioned object (e.g. skill name + scope)" },
+    "version": { "type": "string", "description": "Load-bearing field (must-map): the version identifier — fork: git commit sha of the object's file(s)" },
+    "prev_version": { "type": ["string", "null"], "description": "Prior version (null for first)" },
+    "change_ref": { "type": "string", "description": "Reference to the change itself (git ref / diff locator)" }
+  },
+  "required": ["object_type", "object_id", "version", "prev_version", "change_ref"]
+}

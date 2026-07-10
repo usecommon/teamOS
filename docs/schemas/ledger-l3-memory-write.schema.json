@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l3-memory-write.schema.json",
+  "title": "Ledger 3 — Memory write (can this memory be trusted?)",
+  "description": "arch §5 L3: per write — source type, timestamp, authoring agent, supporting evidence, transformation operation, confidence, update history. Trust labels surviving LLM-mediated derivation (MemLineage pattern). The full lineage set is load-bearing (must-map): FK2 rejects any memory/corpus write missing a field; FK3's deletion DAG walks these edges.",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "target_id": { "type": "string", "description": "Id of the memory/corpus object written (entry id or entry_id#block_id — block-level atomicity, arch §3.3.2)" },
+    "source_type": {
+      "type": "string",
+      "description": "Load-bearing lineage field: where the content came from (e.g. principal-direct, harness-artifact, connector:<name>, agent-derivation, external-untrusted) — drives taint tier (arch §7.7) and export separation (arch §10.3)"
+    },
+    "authoring_agent": { "type": "string", "description": "Load-bearing lineage field: which agent/component authored the write" },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "ledger-common.schema.json#/$defs/ref" },
+      "description": "Load-bearing lineage field: supporting evidence, cited at block level (arch §3.3.2)"
+    },
+    "transformation": { "type": "string", "description": "Load-bearing lineage field: the operation that produced this content from its sources (e.g. adapter-translation, compilation-distill, verbatim-copy)" },
+    "confidence": { "type": "string", "description": "Load-bearing lineage field: writer's confidence in the content (graded label or 'unrated')" },
+    "update_history_ref": { "$ref": "ledger-common.schema.json#/$defs/ref", "description": "Load-bearing lineage field: reference to prior versions of the target (fork: git history, L6)" },
+    "trust_label": { "type": "string", "description": "Cryptographic trust label surviving derivation and cross-session persistence (MemLineage)" },
+    "parent_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Ids of memory/corpus objects this write derives from — the lineage-DAG edges L9 deletion propagation walks (arch §5.3)"
+    }
+  },
+  "required": ["target_id", "source_type", "authoring_agent", "evidence", "transformation", "confidence", "update_history_ref", "parent_ids"]
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "corpus-entry.schema.json",
+  "title": "Corpus entry (typed frontmatter + atomic blocks)",
+  "description": "arch §3.3: typed entries (§3.3.4, Tana supertag pattern — schema-on-write); block-level atomicity (§3.3.2 — lineage/confidence/citations attach to atoms); links computed, never stored (§3.3.1 — this schema deliberately has NO backlink field; backlink/graph indexes are derived and rebuildable). The markdown file is the system of record; this schema describes its frontmatter + block structure as parsed.",
+  "type": "object",
+  "properties": {
+    "entry_id": { "type": "string", "description": "Stable id of the entry (also the lineage-sidecar entity id)" },
+    "entry_type": {
+      "type": "string",
+      "enum": ["decision", "definition", "owner", "norm", "context", "profile", "experience"],
+      "description": "§3.3.4 typed entries: decision/definition/owner/norm make the corpus queryable; context/profile/experience are the scope object types (§3.1)"
+    },
+    "title": { "type": "string", "description": "Human-readable title" },
+    "scope": {
+      "type": "string",
+      "enum": ["company", "division", "org", "team", "individual"],
+      "description": "Which cascade scope the entry lives at (§3.1)"
+    },
+    "status": { "type": "string", "enum": ["active", "superseded", "archived", "tombstoned"], "description": "Lifecycle state; tombstoned = L9 deletion marker" },
+    "created": { "type": "string", "format": "date-time", "description": "UTC creation time" },
+    "updated": { "type": "string", "format": "date-time", "description": "UTC last-update time" },
+    "owner": { "type": "string", "description": "Directory-first indexing (§3.2.4): who knows/owns this" },
+    "blocks": {
+      "type": "array",
+      "description": "§3.3.2 block-level atomicity: the addressable atoms of the entry",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block_id": { "type": "string", "description": "Stable block id — lineage and citations attach here" },
+          "text": { "type": "string", "description": "The block's markdown content" }
+        },
+        "required": ["block_id", "text"]
+      }
+    },
+    "lineage_sidecar": { "type": "string", "description": "Path to the entry's PROV-lite lineage sidecar (lineage-sidecar.schema.json) — every entry carries memory-write metadata (§3.2.1)" }
+  },
+  "required": ["entry_id", "entry_type", "title", "scope", "status", "created", "updated", "blocks", "lineage_sidecar"]
+}

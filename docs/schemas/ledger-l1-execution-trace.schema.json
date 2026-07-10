@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l1-execution-trace.schema.json",
+  "title": "Ledger 1 — Execution trace (what did the agent do?)",
+  "description": "arch §5 L1: OTel GenAI + MCP semantic-convention spans (gen_ai.* attributes; invoke_agent / execute_tool). Content stored externally with span references, never inline.",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "trace_id": { "type": "string", "description": "OTel trace id — one per session/run" },
+    "span_id": { "type": "string", "description": "OTel span id" },
+    "parent_span_id": { "type": ["string", "null"], "description": "Parent span (null for root)" },
+    "name": { "type": "string", "description": "Span name, e.g. the tool or operation invoked" },
+    "operation": {
+      "type": "string",
+      "enum": ["invoke_agent", "execute_tool", "chat", "embeddings", "create_agent"],
+      "description": "OTel GenAI operation class (gen_ai.operation.name)"
+    },
+    "start_time": { "type": "string", "format": "date-time", "description": "Span start, UTC" },
+    "end_time": { "type": "string", "format": "date-time", "description": "Span end, UTC" },
+    "status": { "type": "string", "enum": ["ok", "error", "denied"], "description": "Span outcome" },
+    "session_id": { "type": "string", "description": "Harness session/conversation id (gen_ai.conversation.id)" },
+    "attributes": {
+      "type": "object",
+      "description": "OTel gen_ai.* semantic-convention attributes",
+      "properties": {
+        "gen_ai_request_model": { "type": "string", "description": "gen_ai.request.model" },
+        "gen_ai_response_model": { "type": "string", "description": "gen_ai.response.model" },
+        "gen_ai_usage_input_tokens": { "type": "integer", "description": "gen_ai.usage.input_tokens" },
+        "gen_ai_usage_output_tokens": { "type": "integer", "description": "gen_ai.usage.output_tokens" },
+        "gen_ai_tool_name": { "type": "string", "description": "gen_ai.tool.name — set for execute_tool spans" }
+      }
+    },
+    "content_ref": {
+      "$ref": "ledger-common.schema.json#/$defs/ref",
+      "description": "Reference to span content (prompt/completion/tool payload) stored externally — the only pattern that scales across privacy, retention, cost (arch §5 L1)"
+    }
+  },
+  "required": ["trace_id", "span_id", "parent_span_id", "name", "operation", "start_time", "end_time", "status", "session_id", "content_ref"]
+}

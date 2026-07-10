@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l9-deletion.schema.json",
+  "title": "Ledger 9 — Retention/deletion (did forgetting happen?)",
+  "description": "arch §5 L9 + §5.3: GDPR deletion propagation over the lineage DAG. Tombstones at origin; propagation walks L3 derivation edges; promoted-skill ancestors flagged for re-derivation, never silently killed; third-party erasure enters identically; tombstones durable (offline nodes complete on reconnect); deadline-bound (one month).",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "request_id": { "type": "string", "description": "The erasure request this record belongs to" },
+    "requester_type": {
+      "type": "string",
+      "enum": ["principal", "third_party_dsar", "policy_retention"],
+      "description": "Who/what triggered erasure (arch §5.3 third-party erasure entry)"
+    },
+    "event": {
+      "type": "string",
+      "enum": ["tombstone_written", "descendant_marked", "skill_flagged_for_rederivation", "content_shredded", "purge_completed", "deadline_report"],
+      "description": "Which step of the propagation this record captures"
+    },
+    "origin_node": { "type": "string", "description": "L3 target_id where the tombstone was planted" },
+    "affected_node": { "type": "string", "description": "The node this event applies to (descendant, skill, side-store ref)" },
+    "deletion_kind": {
+      "type": "string",
+      "enum": ["content_traceable", "statistical_influence"],
+      "description": "arch §5.3: a distilled pattern no longer containing the datum may survive; a memory quoting it does not"
+    },
+    "deadline": { "type": "string", "format": "date-time", "description": "The one-month GDPR clock for this request (UTC)" },
+    "status": { "type": "string", "enum": ["pending", "in_progress", "complete", "overdue"], "description": "Request-level completion status" }
+  },
+  "required": ["request_id", "requester_type", "event", "origin_node", "affected_node", "deletion_kind", "deadline", "status"]
+}

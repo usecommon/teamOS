@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stores.schema.json",
+  "title": "Store manifest (the five stores)",
+  "description": "arch §10.2: the five stores — scoped corpus repos, skill registry, personal memory store, telemetry/ledger store, role template registry. Everything file-based and open-standard; no store locked to a harness or vendor. An instance of this schema (stores/manifest.json) declares which stores exist in a deployment and where.",
+  "type": "object",
+  "properties": {
+    "manifest_version": { "type": "string", "description": "Version of this manifest instance" },
+    "stores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "store_id": {
+            "type": "string",
+            "enum": ["scoped_corpus", "skill_registry", "personal_memory", "telemetry_ledger", "role_template_registry"],
+            "description": "Which of the five stores (§10.2 #1-#5)"
+          },
+          "contents": { "type": "string", "description": "What lives here (§10.2 'Contents' column)" },
+          "owner": {
+            "type": "string",
+            "enum": ["org", "principal", "org_team_curated", "org_personal_co_owned", "org_l8_restricted"],
+            "description": "§10.2 'Owner' column: org / principal / co-owned variants"
+          },
+          "format": { "type": "string", "description": "§10.2 'Format' column (git+markdown+PROV sidecars; git skill folders; encrypted DB w/ L3 metadata; append-only OTLP-native; git)" },
+          "portability": { "type": "string", "description": "§10.2 'Portability property' column (portable as repo / moves with person / exportable / provisioning unit)" },
+          "path": { "type": "string", "description": "Where this store lives in this deployment (fork: repo-relative path or external locator)" },
+          "encrypted": { "type": "boolean", "description": "Encryption at rest (required true for personal_memory — §10.2 store 3; enforced per-principal at FK7-pre)" }
+        },
+        "required": ["store_id", "contents", "owner", "format", "portability", "path", "encrypted"]
+      }
+    }
+  },
+  "required": ["manifest_version", "stores"]
+}

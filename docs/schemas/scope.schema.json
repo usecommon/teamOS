@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scope.schema.json",
+  "title": "Scope node (cascade)",
+  "description": "arch §3.1: five nested scopes (company → division → org → team → individual), each holding three object types — context, profile, experience. An agent's working context = composition of its path down the tree, narrower overriding broader (CLAUDE.md-style cascade). The adapter maps the harness cascade (enterprise/project/user CLAUDE.md) onto these nodes.",
+  "type": "object",
+  "properties": {
+    "scope_id": { "type": "string", "description": "Stable id of the scope node" },
+    "level": {
+      "type": "string",
+      "enum": ["company", "division", "org", "team", "individual"],
+      "description": "Position in the five-level cascade (§3.1)"
+    },
+    "parent_scope_id": { "type": ["string", "null"], "description": "The enclosing scope (null at company level)" },
+    "context": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Entry ids/paths of context objects at this level — what exists and matters here (§3.1)"
+    },
+    "profile": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Entry ids/paths of profile objects — role/relationships/priorities/voice at individual scope; roster/ownership/rituals at team scope (§3.1)"
+    },
+    "experience": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Entry ids/paths of experience objects — output conventions per scope (§3.1)"
+    },
+    "disclosure_default": { "type": "string", "description": "§3.2.3: scope sets disclosure defaults (same-team free; cross-org hits explicit policy)" }
+  },
+  "required": ["scope_id", "level", "parent_scope_id", "context", "profile", "experience"]
+}

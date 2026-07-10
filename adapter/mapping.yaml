@@ -1,0 +1,413 @@
+# FR1 field mapping — adapter annotations over the mechanical inventory
+# (scripts/field_inventory.py). Every inventory field must appear in exactly one
+# group; scripts/mapping_report.py enforces completeness, computes the
+# percentage, and checks the must-map set.
+#
+# Status semantics (the A-FK1 counting rule, subject to human review):
+#   harness-mapped — the value derives from a harness artifact or primitive
+#                    (files under ~/.claude, transcripts, git, hook I/O,
+#                    `claude --version`) with a documented, loss-free derivation.
+#   fork-native    — the value is authored by fork code running at the runtime
+#                    of record (ledger writers, scoring, deletion engine). The
+#                    harness was never the source of the datum, so nothing can
+#                    be lost in translation; counts as mapped for FR1.
+#   unmapped       — the mainline contract expects a datum the fork runtime
+#                    cannot supply. Counts against the percentage and is logged
+#                    to the divergence log as a field-miss.
+
+must_map:
+  # Ledger-3 lineage set (validation plan FK1)
+  - ledger-l3-memory-write.schema.json#/source_type
+  - ledger-l3-memory-write.schema.json#/authoring_agent
+  - ledger-l3-memory-write.schema.json#/evidence
+  - ledger-l3-memory-write.schema.json#/transformation
+  - ledger-l3-memory-write.schema.json#/confidence
+  - ledger-l3-memory-write.schema.json#/update_history_ref
+  - lineage-sidecar.schema.json#/sources[]/source_type
+  - lineage-sidecar.schema.json#/agent
+  - lineage-sidecar.schema.json#/evidence
+  - lineage-sidecar.schema.json#/generated_by/transformation
+  - lineage-sidecar.schema.json#/confidence
+  - lineage-sidecar.schema.json#/update_history[]/version
+  # Gate-verdict fields
+  - ledger-l2-gate.schema.json#/proposed_action/tool
+  - ledger-l2-gate.schema.json#/proposed_action/action_class
+  - ledger-l2-gate.schema.json#/proposed_action/target
+  - ledger-l2-gate.schema.json#/proposed_action/payload_digest
+  - ledger-l2-gate.schema.json#/verdict
+  - ledger-l2-gate.schema.json#/policy_version
+  # Skill version / evidence links
+  - skill.schema.json#/version
+  - skill.schema.json#/evidence_links
+  - ledger-l6-version.schema.json#/version
+  - ledger-l7-eval.schema.json#/skill_id
+  - ledger-l7-eval.schema.json#/skill_version
+  - ledger-l7-eval.schema.json#/invocation_id
+
+groups:
+  - name: envelope-and-refs
+    status: fork-native
+    source: >
+      Ledger writers generate record identity, UTC timestamps, and the hash
+      chain at write time (FK2); content-by-reference pointers are built from
+      the referenced store path + content hash.
+    fields:
+      - ledger-common.schema.json#$defs/envelope/agent_id
+      - ledger-common.schema.json#$defs/envelope/hash
+      - ledger-common.schema.json#$defs/envelope/prev_hash
+      - ledger-common.schema.json#$defs/envelope/record_id
+      - ledger-common.schema.json#$defs/envelope/schema_version
+      - ledger-common.schema.json#$defs/envelope/ts
+      - ledger-common.schema.json#$defs/ref/content_hash
+      - ledger-common.schema.json#$defs/ref/path
+      - ledger-common.schema.json#$defs/ref/store
+
+  - name: l1-from-transcripts
+    status: harness-mapped
+    source: >
+      Session transcripts (~/.claude/projects/*/session-*.jsonl):
+      sessionId -> trace_id/session_id; uuid/parentUuid -> span ids;
+      timestamp -> start_time (next event -> end_time); message.model ->
+      gen_ai request/response model; message.usage -> token attributes;
+      tool_use blocks -> execute_tool spans + gen_ai_tool_name;
+      tool_result.is_error -> status; content_ref = transcript path#line +
+      content hash (never inlined). Implemented: adapter.transcript_to_l1_spans.
+    fields:
+      - ledger-l1-execution-trace.schema.json#/attributes/gen_ai_request_model
+      - ledger-l1-execution-trace.schema.json#/attributes/gen_ai_response_model
+      - ledger-l1-execution-trace.schema.json#/attributes/gen_ai_tool_name
+      - ledger-l1-execution-trace.schema.json#/attributes/gen_ai_usage_input_tokens
+      - ledger-l1-execution-trace.schema.json#/attributes/gen_ai_usage_output_tokens
+      - ledger-l1-execution-trace.schema.json#/content_ref
+      - ledger-l1-execution-trace.schema.json#/end_time
+      - ledger-l1-execution-trace.schema.json#/name
+      - ledger-l1-execution-trace.schema.json#/operation
+      - ledger-l1-execution-trace.schema.json#/parent_span_id
+      - ledger-l1-execution-trace.schema.json#/session_id
+      - ledger-l1-execution-trace.schema.json#/span_id
+      - ledger-l1-execution-trace.schema.json#/start_time
+      - ledger-l1-execution-trace.schema.json#/status
+      - ledger-l1-execution-trace.schema.json#/trace_id
+
+  - name: l2-from-hook-io
+    status: harness-mapped
+    source: >
+      Harness hook primitive (PreToolUse): hook input carries tool name +
+      full parameters -> proposed_action (tool, target, payload digest;
+      action_class by tool-category table); hook decision -> verdict;
+      settings.json content hash -> policy_version; matching rule -> rule_id.
+      Writer lands at FK2; the primitive and derivation are fixed here.
+    fields:
+      - ledger-l2-gate.schema.json#/proposed_action/action_class
+      - ledger-l2-gate.schema.json#/proposed_action/payload_digest
+      - ledger-l2-gate.schema.json#/proposed_action/target
+      - ledger-l2-gate.schema.json#/proposed_action/tool
+      - ledger-l2-gate.schema.json#/policy_version
+      - ledger-l2-gate.schema.json#/rule_id
+      - ledger-l2-gate.schema.json#/verdict
+
+  - name: l2-fork-gate-logic
+    status: fork-native
+    source: >
+      The fork's own gate adds payload inspection results, distinct outcome
+      recording (gate_passed vs posture_narrowed), session taint tier, and the
+      declared run posture (FK2, R-13, S1).
+    fields:
+      - ledger-l2-gate.schema.json#/inspection/checks_run
+      - ledger-l2-gate.schema.json#/inspection/findings
+      - ledger-l2-gate.schema.json#/outcome
+      - ledger-l2-gate.schema.json#/posture
+      - ledger-l2-gate.schema.json#/taint_tier
+
+  - name: l3-lineage-from-artifacts
+    status: harness-mapped
+    source: >
+      For adapter-produced writes: target_id = translated object id; source_type
+      = harness-artifact; evidence = artifact path + content hash. Implemented
+      in adapter._sidecar for every translation.
+    fields:
+      - ledger-l3-memory-write.schema.json#/evidence
+      - ledger-l3-memory-write.schema.json#/source_type
+      - ledger-l3-memory-write.schema.json#/target_id
+
+  - name: l3-writer-supplied
+    status: fork-native
+    source: >
+      The L3 writer (FK2) supplies authoring agent, transformation name,
+      confidence grade, update-history ref (git/L6), parent DAG edges, and the
+      chain-derived trust label; a write missing any is rejected by
+      construction.
+    fields:
+      - ledger-l3-memory-write.schema.json#/authoring_agent
+      - ledger-l3-memory-write.schema.json#/confidence
+      - ledger-l3-memory-write.schema.json#/parent_ids
+      - ledger-l3-memory-write.schema.json#/transformation
+      - ledger-l3-memory-write.schema.json#/trust_label
+      - ledger-l3-memory-write.schema.json#/update_history_ref
+
+  - name: l4-deferred-writer
+    status: fork-native
+    source: >
+      Written only at FK7+ (door/promotion path); all values originate in fork
+      components (door log, disclosure config, L3 lineage chains). No harness
+      translation involved.
+    fields:
+      - ledger-l4-knowledge-exchange.schema.json#/content_ref
+      - ledger-l4-knowledge-exchange.schema.json#/disclosure_policy
+      - ledger-l4-knowledge-exchange.schema.json#/origin_lineage
+      - ledger-l4-knowledge-exchange.schema.json#/recipient_principal
+      - ledger-l4-knowledge-exchange.schema.json#/source_principal
+      - ledger-l4-knowledge-exchange.schema.json#/taint_mark
+
+  - name: l5-identity-config
+    status: fork-native
+    source: >
+      Single-principal pilot: principal/agent identity and scope grants come
+      from fork config (FK3b policy surfaces); chain links recorded from the
+      granting config event.
+    fields:
+      - ledger-l5-delegation.schema.json#/acting_agent_id
+      - ledger-l5-delegation.schema.json#/delegation_chain[]/issuer
+      - ledger-l5-delegation.schema.json#/delegation_chain[]/scopes
+      - ledger-l5-delegation.schema.json#/delegation_chain[]/subject
+      - ledger-l5-delegation.schema.json#/principal_id
+
+  - name: l5-token-ref
+    status: unmapped
+    source: >
+      FIELD-MISS: mainline expects OIDC / W3C VC delegation tokens; neither the
+      harness nor the fork pilot has a token-credential primitive. Chains are
+      recorded without cryptographic tokens until mainline's authenticated-
+      delegation framework lands.
+    fields:
+      - ledger-l5-delegation.schema.json#/delegation_chain[]/token_ref
+
+  - name: l6-from-git
+    status: harness-mapped
+    source: >
+      Git IS Ledger 6 (fork spec §2): version/prev_version = commit shas of the
+      object's files; change_ref = git ref. Object identity derived from store
+      path conventions.
+    fields:
+      - ledger-l6-version.schema.json#/change_ref
+      - ledger-l6-version.schema.json#/object_id
+      - ledger-l6-version.schema.json#/object_type
+      - ledger-l6-version.schema.json#/prev_version
+      - ledger-l6-version.schema.json#/version
+
+  - name: l7-scoring
+    status: fork-native
+    source: >
+      The FK6 scoring script computes metrics/scores/aggregates; skill_id and
+      skill_version key to L6 (git); invocation_id joins to L1 span ids
+      compiled from transcripts; sample_ref points into the stores.
+    fields:
+      - ledger-l7-eval.schema.json#/aggregate/kind
+      - ledger-l7-eval.schema.json#/aggregate/n
+      - ledger-l7-eval.schema.json#/invocation_id
+      - ledger-l7-eval.schema.json#/metric
+      - ledger-l7-eval.schema.json#/sample_ref
+      - ledger-l7-eval.schema.json#/score
+      - ledger-l7-eval.schema.json#/skill_id
+      - ledger-l7-eval.schema.json#/skill_version
+
+  - name: l8-signal-capture
+    status: fork-native
+    source: >
+      Deterministic capture paths (FK5/FK6: reactions.get harvest, edit-diff
+      capture): signal type/outcome/attribution from the harvest script;
+      principal_id from the authenticated Slack user id (CN-1); edit distance
+      computed; diff_ref into the erasable side-store (SE-2).
+    fields:
+      - ledger-l8-human-signal.schema.json#/artifact_ref
+      - ledger-l8-human-signal.schema.json#/attribution
+      - ledger-l8-human-signal.schema.json#/diff_ref
+      - ledger-l8-human-signal.schema.json#/edit_distance_normalized
+      - ledger-l8-human-signal.schema.json#/harvest/harvested_at
+      - ledger-l8-human-signal.schema.json#/harvest/method
+      - ledger-l8-human-signal.schema.json#/outcome
+      - ledger-l8-human-signal.schema.json#/principal_id
+      - ledger-l8-human-signal.schema.json#/signal_type
+
+  - name: l9-deletion-engine
+    status: fork-native
+    source: >
+      The FK3 deletion engine generates all fields while walking the L3 lineage
+      DAG (tombstones, descendant marks, skill flags, deadline clock).
+    fields:
+      - ledger-l9-deletion.schema.json#/affected_node
+      - ledger-l9-deletion.schema.json#/deadline
+      - ledger-l9-deletion.schema.json#/deletion_kind
+      - ledger-l9-deletion.schema.json#/event
+      - ledger-l9-deletion.schema.json#/origin_node
+      - ledger-l9-deletion.schema.json#/request_id
+      - ledger-l9-deletion.schema.json#/requester_type
+      - ledger-l9-deletion.schema.json#/status
+
+  - name: l10-from-harness
+    status: harness-mapped
+    source: >
+      harness_version from `claude --version` (pin-asserted); harness_surface
+      from the pin; model/model_version from transcript assistant messages;
+      invocation_id = session/trace id.
+    fields:
+      - ledger-l10-environment.schema.json#/harness_surface
+      - ledger-l10-environment.schema.json#/harness_version
+      - ledger-l10-environment.schema.json#/invocation_id
+      - ledger-l10-environment.schema.json#/model
+      - ledger-l10-environment.schema.json#/model_version
+
+  - name: l10-fork-telemetry
+    status: fork-native
+    source: >
+      Connector inventory from FK3b connector config; health/schema hashes
+      captured by the fork's own connector probes (Plane A); index freshness
+      from derived-index build metadata.
+    fields:
+      - ledger-l10-environment.schema.json#/connectors[]/health
+      - ledger-l10-environment.schema.json#/connectors[]/name
+      - ledger-l10-environment.schema.json#/connectors[]/schema_hash
+      - ledger-l10-environment.schema.json#/connectors[]/version
+      - ledger-l10-environment.schema.json#/index_freshness
+
+  - name: corpus-from-claude-md
+    status: harness-mapped
+    source: >
+      CLAUDE.md cascade files: title from first heading; scope + entry_type
+      from cascade position (user -> individual/profile, project ->
+      team/context); created/updated from file mtime (UTC); block text from
+      heading-split sections; status derived (present = active). Implemented:
+      adapter.claude_md_to_scopes.
+    fields:
+      - corpus-entry.schema.json#/blocks[]/text
+      - corpus-entry.schema.json#/created
+      - corpus-entry.schema.json#/entry_id
+      - corpus-entry.schema.json#/entry_type
+      - corpus-entry.schema.json#/scope
+      - corpus-entry.schema.json#/status
+      - corpus-entry.schema.json#/title
+      - corpus-entry.schema.json#/updated
+
+  - name: corpus-adapter-generated
+    status: fork-native
+    source: >
+      Block ids are assigned at translation (stable within an entry version);
+      the sidecar path is a store-layout convention.
+    fields:
+      - corpus-entry.schema.json#/blocks[]/block_id
+      - corpus-entry.schema.json#/lineage_sidecar
+
+  - name: corpus-owner
+    status: unmapped
+    source: >
+      FIELD-MISS: directory-first indexing (§3.2.4) wants an owner per entry;
+      harness artifacts carry no ownership metadata. Single-principal pilot
+      defaults every entry to the principal; the field maps only when FK4
+      compilation or multi-user scope assignment supplies it.
+    fields:
+      - corpus-entry.schema.json#/owner
+
+  - name: sidecar-from-artifacts
+    status: harness-mapped
+    source: >
+      Sidecar sources/evidence carry the harness artifact's path and content
+      hash; source_type = harness-artifact. Implemented: adapter._sidecar.
+    fields:
+      - lineage-sidecar.schema.json#/evidence
+      - lineage-sidecar.schema.json#/sources[]/content_hash
+      - lineage-sidecar.schema.json#/sources[]/locator
+      - lineage-sidecar.schema.json#/sources[]/source_type
+
+  - name: sidecar-writer-supplied
+    status: fork-native
+    source: >
+      Entity id, transformation, generation time, authoring agent, confidence
+      grade, and update history (git/L6) are supplied by the writer performing
+      the translation; a sidecar missing any field fails schema validation.
+    fields:
+      - lineage-sidecar.schema.json#/agent
+      - lineage-sidecar.schema.json#/confidence
+      - lineage-sidecar.schema.json#/entity_id
+      - lineage-sidecar.schema.json#/generated_by/at
+      - lineage-sidecar.schema.json#/generated_by/transformation
+      - lineage-sidecar.schema.json#/update_history[]/agent
+      - lineage-sidecar.schema.json#/update_history[]/at
+      - lineage-sidecar.schema.json#/update_history[]/version
+
+  - name: scope-from-cascade
+    status: harness-mapped
+    source: >
+      CLAUDE.md cascade position -> level (user -> individual, project -> team,
+      enterprise -> company); nesting -> parent_scope_id; the file's translated
+      entry ids populate context/profile/experience. Division/org levels have
+      no harness counterpart at fork scale — a scope-LEVEL gap logged in the
+      divergence proposals, not a field gap.
+    fields:
+      - scope.schema.json#/context
+      - scope.schema.json#/experience
+      - scope.schema.json#/level
+      - scope.schema.json#/parent_scope_id
+      - scope.schema.json#/profile
+      - scope.schema.json#/scope_id
+
+  - name: scope-disclosure-default
+    status: unmapped
+    source: >
+      FIELD-MISS: the harness cascade carries no disclosure policy. Default-
+      deny stands in structurally (nothing leaves personal scope except via the
+      FK7 promotion gate); the field populates when FK3b/FK7 policy config
+      exists.
+    fields:
+      - scope.schema.json#/disclosure_default
+
+  - name: skills-from-commands
+    status: harness-mapped
+    source: >
+      ~/.claude/commands/*.md: filename -> name/skill_id; frontmatter
+      description (or first body line) -> description; allowed-tools ->
+      capability_manifest.tools; user-dir location -> personal namespace;
+      content hash (git sha post-import) -> version; body -> SKILL.md.
+      Implemented: adapter.commands_to_skills (+ skill_to_command_md back).
+    fields:
+      - skill.schema.json#/body_path
+      - skill.schema.json#/capability_manifest/tools
+      - skill.schema.json#/description
+      - skill.schema.json#/lineage_sidecar
+      - skill.schema.json#/name
+      - skill.schema.json#/namespace
+      - skill.schema.json#/skill_id
+      - skill.schema.json#/version
+
+  - name: skill-evidence-links
+    status: fork-native
+    source: >
+      Populated by L7 records as they accumulate (FK6 scoring); empty-but-
+      present at import. The mechanism (L7 -> skill evidence) is the mapping.
+    fields:
+      - skill.schema.json#/evidence_links
+
+  - name: skill-capture-surface
+    status: unmapped
+    source: >
+      FIELD-MISS: the harness command format declares no capture-surface tier
+      (§10.2 capability manifest). Import DEFAULTS to
+      cloud+synced+local-folders (commands execute with local file access);
+      a default is not a mapping. Tier portability checks need mainline's
+      capability-manifest authoring.
+    fields:
+      - skill.schema.json#/capability_manifest/capture_surface
+
+  - name: stores-manifest
+    status: fork-native
+    source: >
+      stores/manifest.json is authored as fork configuration declaring the
+      five stores' deployment locations (arch §10.2 rows transcribed).
+    fields:
+      - stores.schema.json#/manifest_version
+      - stores.schema.json#/stores[]/contents
+      - stores.schema.json#/stores[]/encrypted
+      - stores.schema.json#/stores[]/format
+      - stores.schema.json#/stores[]/owner
+      - stores.schema.json#/stores[]/path
+      - stores.schema.json#/stores[]/portability
+      - stores.schema.json#/stores[]/store_id

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-l2-gate.schema.json",
+  "title": "Ledger 2 — Decision/gate (why was this permitted?)",
+  "description": "arch §5 L2 + §7.3: every proposed action + permit/deny verdict + policy version in force at execution. Same artifact as the action manifest. Mainline S1: 'gate passed' and 'posture narrowed' are distinct recorded outcomes.",
+  "allOf": [{ "$ref": "ledger-common.schema.json#/$defs/envelope" }],
+  "type": "object",
+  "properties": {
+    "proposed_action": {
+      "type": "object",
+      "description": "The action as proposed, before the verdict (gate-verdict field set — load-bearing, must-map)",
+      "properties": {
+        "tool": { "type": "string", "description": "Tool/capability name" },
+        "action_class": { "type": "string", "description": "Action category (read / write / send / execute / schedule) — the envelope's (FK6b) unit" },
+        "target": { "type": "string", "description": "Target of the action (path, recipient, URL, resource)" },
+        "payload_digest": { "type": "string", "description": "Hash of the full payload; payload stored by reference, inspected by the gate (FR2 payload inspection)" }
+      },
+      "required": ["tool", "action_class", "target", "payload_digest"]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["permit", "deny", "ask", "escalate"],
+      "description": "The gate's decision (load-bearing, must-map)"
+    },
+    "policy_version": { "type": "string", "description": "Version of the policy/rule set in force at execution (load-bearing, must-map — the EU AI Act traceability core, arch §5.2)" },
+    "rule_id": { "type": "string", "description": "Which rule produced the verdict" },
+    "inspection": {
+      "type": "object",
+      "description": "Payload-inspection result (FR2: the gate looks inside the action)",
+      "properties": {
+        "checks_run": { "type": "array", "items": { "type": "string" }, "description": "e.g. bash-egress-scan, synced-path, tool-parameter-scan, outbound-content-scan" },
+        "findings": { "type": "array", "items": { "type": "string" }, "description": "What the inspection flagged (empty = clean)" }
+      },
+      "required": ["checks_run", "findings"]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["gate_passed", "gate_blocked", "posture_narrowed", "escalated_to_human"],
+      "description": "Distinct from verdict: what actually happened. A miss converts to a narrowing only as an explicit logged decision, never silently (mainline S1 / A-FK2)"
+    },
+    "taint_tier": { "type": "string", "description": "Trust tier of sources touched by the session at decision time (arch §7.7, session-granular in the fork)" },
+    "posture": { "type": "string", "description": "Run posture in force (attended / unattended-guarded / unattended-allowlisted) — R-13" }
+  },
+  "required": ["proposed_action", "verdict", "policy_version", "rule_id", "inspection", "outcome"]
+}
