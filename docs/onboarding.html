@@ -77,6 +77,9 @@ h1,h2,h3{text-wrap:balance; line-height:1.15; letter-spacing:-.012em}
 .brand .glyph{width:22px; height:22px; flex:none}
 .brand .glyph rect{fill:none; stroke:var(--accent); stroke-width:2}
 .brand .glyph line{stroke:var(--accent-2); stroke-width:2}
+.brand-tag{font-size:.82rem; color:var(--ink-soft); padding-left:.9rem;
+  margin-left:.3rem; border-left:1px solid var(--rule)}
+@media(max-width:720px){.brand-tag{display:none}}
 .tag-sub{margin-left:auto; font-family:var(--mono); font-size:.7rem;
   letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
   border:1px solid var(--rule-strong); padding:.24rem .55rem; border-radius:999px}
@@ -223,6 +226,7 @@ footer .mono{color:var(--ink-soft)}
       </svg>
       Team&nbsp;OS
     </span>
+    <span class="brand-tag">A tool for human teams — one agent per person</span>
     <span class="tag-sub">Subscription setup</span>
   </div>
 </div>
