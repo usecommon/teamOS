@@ -1,0 +1,45 @@
+{
+  "_comment": "Agent members (arch §3.5 — a member need not be human). Each owns a slice of the work. Profiles are config; live stats come from the work log + ledgers.",
+  "agents": [
+    {
+      "id": "compiler",
+      "name": "Compiler",
+      "role": "Compiles your job from history into a job graph, profile, and skills",
+      "scope": "your eligible footprint",
+      "skills": ["compile"],
+      "inference_domain": "teamos_plane_a"
+    },
+    {
+      "id": "loops",
+      "name": "Daily loops",
+      "role": "Drafts recurring deliverables on schedule, unprompted",
+      "scope": "the job graph",
+      "skills": ["weekly-digest", "standup", "status-update", "meeting-summary", "release-notes"],
+      "inference_domain": "teamos_plane_a"
+    },
+    {
+      "id": "brief",
+      "name": "Day One Brief",
+      "role": "Assembles and delivers the unrequested brief; harvests your ✓/✗",
+      "scope": "Slack DM",
+      "skills": ["brief"],
+      "inference_domain": "teamos_plane_a"
+    },
+    {
+      "id": "scout",
+      "name": "Discovery scout",
+      "role": "Surfaces recurring patterns as proposals (post-gates, low volume)",
+      "scope": "the corpus",
+      "skills": ["scout"],
+      "inference_domain": "teamos_plane_a"
+    },
+    {
+      "id": "gate",
+      "name": "Gatekeeper",
+      "role": "Inspects and permits every tool call; writes the ledger",
+      "scope": "all actions",
+      "skills": ["payload-inspection"],
+      "inference_domain": "deterministic"
+    }
+  ]
+}

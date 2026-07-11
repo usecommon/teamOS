@@ -93,6 +93,20 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .approve{font-family:var(--mono);font-size:.7rem;padding:.2rem .5rem;border:1px solid var(--rule);border-radius:6px;color:var(--ink-soft);background:var(--surface-2)}
 .tag{font-family:var(--mono);font-size:.64rem;padding:.12rem .4rem;border-radius:5px;background:var(--surface-2);border:1px solid var(--rule);color:var(--ink-soft)}
 .v-permit{color:var(--good)}.v-deny{color:var(--crit)}.v-ask,.v-escalate{color:var(--warn)}
+.agentgrid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.agentcard{background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.5rem}
+.agenthead{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.agentcard h3{margin:0;font-size:1.02rem}
+.agentcard .role{margin:0;font-size:.85rem;color:var(--ink-soft)}
+.agentcard .meta{display:flex;flex-direction:column;gap:.1rem}
+.agentcard .skills{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem}
+.agentcard .stat{color:var(--accent);border-top:1px solid var(--rule);padding-top:.5rem;margin-top:.2rem}
+.workrow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule)}
+.workrow:last-child{border-bottom:none}
+.spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent-2);
+display:inline-block;flex:none;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
 footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.74rem;color:var(--faint);font-family:var(--mono)}
 """
 
@@ -267,11 +281,57 @@ def _audit(demo):
       mutated record breaks the chain.</p></div>"""
 
 
+def _agents(demo):
+    roster = json.loads((REPO/"config"/"agents.json").read_text())["agents"]
+    working, completed = __import__("worklog").current_and_completed(demo)
+    working_agents = {w["agent"] for w in working}
+    done_by = Counter(c["agent"] for c in completed)
+    l8 = _read(demo/"l8.jsonl")
+    accepted = sum(1 for r in l8 if r.get("signal_type") == "endorsement"
+                   and r.get("attribution") == "principal_authenticated")
+    cards = ""
+    for a in roster:
+        busy = a["id"] in working_agents
+        chip = '<span class="chip warn">working</span>' if busy else '<span class="chip good">idle</span>'
+        skills = "".join(f'<span class="tag">{_esc(s)}</span> ' for s in a["skills"])
+        acc = f' · {accepted} accepted' if a["id"] in ("loops", "brief") else ""
+        cards += f"""<div class="agentcard">
+          <div class="agenthead"><h3>{_esc(a['name'])}</h3>{chip}</div>
+          <p class="role">{_esc(a['role'])}</p>
+          <div class="meta"><span class="mono small faint">scope: {_esc(a['scope'])}</span>
+            <span class="mono small faint">inference: {_esc(a['inference_domain'])}</span></div>
+          <div class="skills">{skills}</div>
+          <div class="stat mono small">{done_by.get(a['id'],0)} completed{acc}</div>
+        </div>"""
+    return f'<div class="agentgrid">{cards}</div>'
+
+
+def _activity(demo):
+    working, completed = __import__("worklog").current_and_completed(demo)
+    wrows = "".join(f"""<div class="workrow">
+        <span class="spin"></span>
+        <span><b>{_esc(w['agent'])}</b> — {_esc(w['task'])}</span>
+        <span class="mono small faint" style="margin-left:auto">{_esc(w['ts'][11:19])}</span></div>"""
+        for w in working) or '<p class="faint small">No agent is working right now.</p>'
+    OUT = {"accepted": "good", "pending": "warn", "rejected": "crit", "done": ""}
+    crows = "".join(f"""<tr><td class="mono small faint">{_esc(c['ts'][11:19])}</td>
+        <td><b>{_esc(c['agent'])}</b></td><td class="small">{_esc(c['task'])}</td>
+        <td class="mono small faint">{_esc(c.get('artifact') or '—')}</td>
+        <td><span class="chip {OUT.get(c.get('outcome'),'')}">{_esc(c.get('outcome') or 'done')}</span></td></tr>"""
+        for c in reversed(completed)) or '<tr><td colspan="5" class="faint">nothing yet</td></tr>'
+    return f"""<div class="panel"><h2>Working now</h2>{wrows}</div>
+      <div class="panel"><h2>Completed</h2><table>
+        <thead><tr><th>Time</th><th>Agent</th><th>Task</th><th>Artifact</th><th>Outcome</th></tr></thead>
+        <tbody>{crows}</tbody></table></div>"""
+
+
 def render_console(demo, est, pol, jg):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    tabs = [("overview", "Overview"), ("brief", "Brief"), ("inbox", "Inbox"),
-            ("corpus", "Corpus"), ("skills", "Skills"), ("envelope", "Envelope"), ("audit", "Audit")]
-    surfaces = {"overview": _overview(demo), "brief": _brief(demo, jg), "inbox": _inbox(demo),
+    tabs = [("overview", "Overview"), ("agents", "Agents"), ("activity", "Activity"),
+            ("brief", "Brief"), ("inbox", "Inbox"), ("corpus", "Corpus"),
+            ("skills", "Skills"), ("envelope", "Envelope"), ("audit", "Audit")]
+    surfaces = {"overview": _overview(demo), "agents": _agents(demo), "activity": _activity(demo),
+                "brief": _brief(demo, jg), "inbox": _inbox(demo),
                 "corpus": _corpus(demo), "skills": _skills(demo),
                 "envelope": _envelope(demo, est, pol), "audit": _audit(demo)}
     navbtns = "".join(f'<button data-s="{k}"{" class=active" if i==0 else ""}>{lbl}</button>'
@@ -299,10 +359,23 @@ def build_demo():
 
     demo = Path(tempfile.mkdtemp(prefix="teamos-ui-"))
     out = demo/"stores"
+    import worklog
     items = cf.load_footprint(REPO/"fixtures"/"footprint"/"artifacts")
+    worklog.start(demo, "compiler", "Compile footprint")
     jg = cf.compile_footprint(items, out, demo,
                               cc_footprint_dir=REPO/"fixtures/harness-footprint/dot-claude")["job_graph"]
-    loopmod.run_daily_loop(jg, out, demo, demo/"anchors", "demo-run", skill_version="a1b2c3d")
+    worklog.done(demo, "compiler", "Compile footprint", artifact="stores/job_graph.json", outcome="done")
+    m = loopmod.run_daily_loop(jg, out, demo, demo/"anchors", "demo-run", skill_version="a1b2c3d")
+    acc_cycle = ["accepted", "accepted", "accepted", "rejected"]
+    for i, (name, dv) in enumerate(m["deliverables"].items()):
+        task = f"Draft {name.split(':',1)[1]}"
+        worklog.start(demo, "loops", task)
+        worklog.done(demo, "loops", task, artifact=dv["path"].split("stores/")[-1]
+                     if "stores/" in dv["path"] else dv["path"], outcome=acc_cycle[i % len(acc_cycle)])
+    worklog.done(demo, "brief", "Deliver Day One Brief", artifact="Slack DM", outcome="accepted")
+    worklog.done(demo, "scout", "Propose: weekly gap fill", artifact="inbox/proposals", outcome="pending")
+    # one item still in progress (no matching done)
+    worklog.start(demo, "loops", "Draft nightly-corpus-compile")
     gate.LEDGER_DIR = demo
     pol = gate.load_policy()
     gate.process({"tool_name": "Read", "tool_input": {"file_path": "notes.md"}}, pol)
