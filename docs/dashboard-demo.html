@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Team OS · Dashboard</title><style>
+*{box-sizing:border-box}
+:root{--bg:#EAEDF1;--surface:#FBFCFD;--surface-2:#F1F4F8;--ink:#131820;--ink-soft:#47505E;
+--faint:#8A93A0;--rule:#D4DAE2;--accent:#2F4B7C;--accent-2:#3B67C4;
+--good:#2E7D5B;--good-bg:#E4F1EA;--warn:#8F6210;--warn-bg:#F6ECD8;--crit:#AF3A3A;--crit-bg:#F6E1E1;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0C0F15;--surface:#141A23;--surface-2:#1A212C;
+--ink:#E7ECF3;--ink-soft:#A4AFBE;--faint:#6D7787;--rule:#28313D;--accent:#7C9CE0;--accent-2:#93B2F3;
+--good:#5DBE90;--good-bg:#16271F;--warn:#D6A64E;--warn-bg:#2A2314;--crit:#E0716B;--crit-bg:#2C1717}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:1.5rem}
+header{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1rem}
+h1{font-size:1.3rem;margin:0;letter-spacing:-.01em}
+.eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.stamp{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:.3rem;border-bottom:1px solid var(--rule);margin-bottom:1.4rem}
+nav.tabs button{font:inherit;font-size:.82rem;background:none;border:none;color:var(--ink-soft);
+padding:.55rem .8rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.surface{display:none}.surface.active{display:block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.tile{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem}
+.tile.good{border-color:var(--good)}.tile.warn{border-color:var(--warn)}
+.tile .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.tile .v{font-size:1.9rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.tile .v .sub{font-size:.85rem;font-weight:500;color:var(--faint);margin-left:.3rem}
+.tile .note{font-size:.77rem;color:var(--faint)}
+.chips{display:flex;gap:.35rem;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:.66rem;padding:.16rem .45rem;border-radius:999px;font-weight:600}
+.chip.good{background:var(--good-bg);color:var(--good)}.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.grid2{display:grid;gap:1.1rem}@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:1.1rem}
+.panel h2{font-size:.82rem;margin:0 0 .7rem;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:.44rem .35rem;border-bottom:1px solid var(--rule);vertical-align:middle}
+th{font-family:var(--mono);font-size:.63rem;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600}
+tr:last-child td{border-bottom:none}
+.mono{font-family:var(--mono)}.faint{color:var(--faint)}.small{font-size:.85rem}
+.bar{display:inline-block;width:78px;height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;vertical-align:middle;margin-right:.5rem;border:1px solid var(--rule)}
+.bar span{display:block;height:100%;background:var(--accent-2)}
+.bar.good span{background:var(--good)}.bar.warn span{background:var(--warn)}
+.numcell{white-space:nowrap;font-variant-numeric:tabular-nums}
+ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem 0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1.3rem 1.4rem;max-width:640px}
+.card .from{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.card h3{margin:.2rem 0 .8rem;font-size:1.15rem}
+.card .sec{font-family:var(--mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:1rem 0 .3rem}
+.jobrow{display:flex;align-items:center;gap:.6rem;padding:.35rem 0;border-bottom:1px solid var(--rule)}
+.jobrow:last-child{border-bottom:none}
+.react{font-family:var(--mono);font-size:.8rem}
+.approve{font-family:var(--mono);font-size:.7rem;padding:.2rem .5rem;border:1px solid var(--rule);border-radius:6px;color:var(--ink-soft);background:var(--surface-2)}
+.tag{font-family:var(--mono);font-size:.64rem;padding:.12rem .4rem;border-radius:5px;background:var(--surface-2);border:1px solid var(--rule);color:var(--ink-soft)}
+.v-permit{color:var(--good)}.v-deny{color:var(--crit)}.v-ask,.v-escalate{color:var(--warn)}
+footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.74rem;color:var(--faint);font-family:var(--mono)}
+</style></head><body><div class=wrap><header><div><p class="eyebrow">Mission control</p><h1>Team OS — the agent fabric</h1></div></header><div class="tiles">
+      <div class="tile good"><span class="k">Unprompted, accepted</span>
+        <span class="v">4<span class="sub">/ 3 floor</span></span><div class="bar good"><span style="width:100%"></span></div>
+        <span class="note">kept, principal-authenticated</span></div>
+      <div class="tile"><span class="k">Gate decisions</span><span class="v">7</span>
+        <span class="chips"><span class="chip good">5 permit</span>
+        <span class="chip warn">1 ask</span>
+        <span class="chip crit">1 deny</span></span></div>
+      <div class="tile"><span class="k">Skills scored</span><span class="v">1</span>
+        <span class="note">4 invocations logged</span></div>
+      <div class="tile"><span class="k">Human signals</span><span class="v">5</span>
+        <span class="chips"><span class="chip good">4 ✓</span>
+        <span class="chip crit">1 ✗</span></span></div></div><div class="grid2">
+      <div class="panel"><h2>Per-skill scores (L7 → L6)</h2><table>
+        <thead><tr><th>Skill</th><th>n</th><th>Mean</th></tr></thead><tbody><tr><td class="mono">compile</td><td>4</td><td class="numcell"><div class="bar "><span style="width:100%"></span></div><span class="mono">1.00</span></td></tr></tbody></table></div>
+      <div class="panel"><h2>Blocked / escalated</h2><ul class="plain"><li><span class="mono v-deny">bash-exfil</span> — egress:curl, sensitive-read:.ssh/, sensitive-read:id_rsa</li></ul></div></div></div></body></html>
