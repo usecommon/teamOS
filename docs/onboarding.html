@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team OS — Onboarding (Subscription Setup)</title>
+<style>
+:root{
+  --bg:#EAEDF1; --surface:#FBFCFD; --surface-2:#F1F4F8; --raise:#FFFFFF;
+  --ink:#131820; --ink-soft:#47505E; --ink-faint:#7B838F;
+  --rule:#D4DAE2; --rule-strong:#BAC3CE;
+  --accent:#2F4B7C; --accent-2:#3B67C4; --on-accent:#FFFFFF;
+  --good:#2E7D5B; --good-bg:#E4F1EA;
+  --warn:#8F6210; --warn-bg:#F6ECD8;
+  --crit:#AF3A3A; --crit-bg:#F6E1E1;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --maxw:1160px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0C0F15; --surface:#141A23; --surface-2:#1A212C; --raise:#1E2632;
+    --ink:#E7ECF3; --ink-soft:#A4AFBE; --ink-faint:#6D7787;
+    --rule:#28313D; --rule-strong:#374252;
+    --accent:#7C9CE0; --accent-2:#93B2F3; --on-accent:#0C0F15;
+    --good:#5DBE90; --good-bg:#16271F;
+    --warn:#D6A64E; --warn-bg:#2A2314;
+    --crit:#E0716B; --crit-bg:#2C1717;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C0F15; --surface:#141A23; --surface-2:#1A212C; --raise:#1E2632;
+  --ink:#E7ECF3; --ink-soft:#A4AFBE; --ink-faint:#6D7787;
+  --rule:#28313D; --rule-strong:#374252;
+  --accent:#7C9CE0; --accent-2:#93B2F3; --on-accent:#0C0F15;
+  --good:#5DBE90; --good-bg:#16271F;
+  --warn:#D6A64E; --warn-bg:#2A2314;
+  --crit:#E0716B; --crit-bg:#2C1717;
+}
+:root[data-theme="light"]{
+  --bg:#EAEDF1; --surface:#FBFCFD; --surface-2:#F1F4F8; --raise:#FFFFFF;
+  --ink:#131820; --ink-soft:#47505E; --ink-faint:#7B838F;
+  --rule:#D4DAE2; --rule-strong:#BAC3CE;
+  --accent:#2F4B7C; --accent-2:#3B67C4; --on-accent:#FFFFFF;
+  --good:#2E7D5B; --good-bg:#E4F1EA;
+  --warn:#8F6210; --warn-bg:#F6ECD8;
+  --crit:#AF3A3A; --crit-bg:#F6E1E1;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent-2); text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent-2); outline-offset:2px; border-radius:3px}
+code,kbd,.mono{font-family:var(--mono)}
+h1,h2,h3{text-wrap:balance; line-height:1.15; letter-spacing:-.012em}
+
+.eyebrow{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); font-weight:600;
+}
+
+/* top bar */
+.topbar{
+  position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--rule);
+}
+.topbar .in{max-width:var(--maxw); margin:0 auto; padding:.7rem 1.5rem;
+  display:flex; align-items:center; gap:.8rem}
+.brand{display:flex; align-items:center; gap:.6rem; font-weight:700; letter-spacing:-.02em}
+.brand .glyph{width:22px; height:22px; flex:none}
+.brand .glyph rect{fill:none; stroke:var(--accent); stroke-width:2}
+.brand .glyph line{stroke:var(--accent-2); stroke-width:2}
+.tag-sub{margin-left:auto; font-family:var(--mono); font-size:.7rem;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  border:1px solid var(--rule-strong); padding:.24rem .55rem; border-radius:999px}
+
+/* hero */
+.hero{max-width:var(--maxw); margin:0 auto; padding:4rem 1.5rem 2.4rem}
+.hero h1{font-size:clamp(2.1rem,5vw,3.3rem); font-weight:800; margin:.6rem 0 .5rem}
+.hero .lede{font-size:1.18rem; color:var(--ink-soft); max-width:60ch; margin:0}
+.hero .facts{display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.6rem}
+.fact{font-family:var(--mono); font-size:.78rem; color:var(--ink-soft);
+  background:var(--surface-2); border:1px solid var(--rule); padding:.34rem .6rem;
+  border-radius:6px}
+.fact b{color:var(--ink); font-weight:600}
+
+/* layout with sticky index */
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 1.5rem 5rem;
+  display:grid; grid-template-columns:1fr; gap:2.5rem}
+@media(min-width:1000px){
+  .wrap{grid-template-columns:minmax(0,1fr) 216px; align-items:start; gap:3rem}
+  .toc{position:sticky; top:70px; order:2}
+  .main{order:1; min-width:0}
+}
+.toc nav{display:flex; flex-direction:column; gap:.1rem; font-size:.85rem;
+  border-left:1px solid var(--rule); padding-left:1rem}
+.toc .eyebrow{margin:0 0 .5rem}
+.toc a{color:var(--ink-soft); padding:.2rem 0}
+.toc a:hover{color:var(--ink); text-decoration:none}
+@media(max-width:999px){.toc{display:none}}
+
+section{padding-top:2.4rem; margin-top:1rem; border-top:1px solid var(--rule)}
+section:first-child{border-top:none; margin-top:0}
+section h2{font-size:1.55rem; font-weight:750; margin:.4rem 0 1rem}
+section h3{font-size:1.08rem; margin:1.8rem 0 .5rem}
+p{margin:.7rem 0; max-width:66ch}
+.small{font-size:.9rem; color:var(--ink-soft)}
+
+/* cards */
+.grid{display:grid; gap:1rem}
+@media(min-width:640px){.grid.two{grid-template-columns:1fr 1fr}
+  .grid.three{grid-template-columns:1fr 1fr 1fr}}
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+  padding:1.15rem 1.2rem}
+.card h3{margin:.1rem 0 .35rem; font-size:1rem}
+.card p{margin:.3rem 0; font-size:.92rem; color:var(--ink-soft)}
+.card .fk{font-family:var(--mono); font-size:.68rem; color:var(--ink-faint);
+  letter-spacing:.06em; text-transform:uppercase}
+
+/* mode comparison */
+.modes{display:grid; gap:1.1rem}
+@media(min-width:760px){.modes{grid-template-columns:1fr 1fr}}
+.mode{background:var(--surface); border:1px solid var(--rule-strong); border-radius:12px;
+  padding:1.4rem; display:flex; flex-direction:column; gap:.5rem}
+.mode.recommended{border-color:var(--accent)}
+.mode-head{display:flex; align-items:center; justify-content:space-between; gap:.5rem}
+.mode h3{margin:0; font-size:1.15rem}
+.chip{font-family:var(--mono); font-size:.66rem; letter-spacing:.06em;
+  text-transform:uppercase; padding:.24rem .5rem; border-radius:999px; font-weight:600;
+  white-space:nowrap}
+.chip.good{background:var(--good-bg); color:var(--good)}
+.chip.warn{background:var(--warn-bg); color:var(--warn)}
+.mode ul{margin:.4rem 0 0; padding-left:1.1rem}
+.mode li{margin:.3rem 0; font-size:.92rem; color:var(--ink-soft)}
+.mode li b{color:var(--ink); font-weight:600}
+.rec-tag{font-family:var(--mono); font-size:.66rem; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--accent)}
+
+/* steps */
+ol.steps{list-style:none; counter-reset:s; margin:0; padding:0}
+ol.steps>li{counter-increment:s; position:relative; padding:0 0 1.5rem 3rem;
+  border-left:1px solid var(--rule); margin-left:.9rem}
+ol.steps>li:last-child{border-left:1px solid transparent}
+ol.steps>li::before{content:counter(s,decimal-leading-zero);
+  position:absolute; left:-.95rem; top:-.15rem; width:1.9rem; height:1.9rem;
+  background:var(--surface); border:1px solid var(--rule-strong); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.72rem; color:var(--accent); font-weight:600}
+ol.steps h3{margin:.05rem 0 .3rem; font-size:1.05rem}
+ol.steps p{margin:.35rem 0}
+
+/* code */
+pre{background:var(--surface-2); border:1px solid var(--rule); border-radius:8px;
+  padding:.85rem 1rem; overflow-x:auto; font-size:.86rem; line-height:1.55; margin:.6rem 0}
+pre code{color:var(--ink)}
+.cmd .p{color:var(--ink-faint)}
+:not(pre)>code{background:var(--surface-2); border:1px solid var(--rule);
+  padding:.08em .38em; border-radius:5px; font-size:.86em}
+
+/* tables */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:10px; margin:.8rem 0}
+table{border-collapse:collapse; width:100%; font-size:.9rem; min-width:520px}
+th,td{text-align:left; padding:.7rem .9rem; border-bottom:1px solid var(--rule);
+  vertical-align:top}
+thead th{background:var(--surface-2); font-family:var(--mono); font-weight:600;
+  font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft)}
+tbody tr:last-child td{border-bottom:none}
+td .mono{font-size:.85em}
+
+/* callout */
+.callout{border-radius:10px; padding:1.05rem 1.2rem; margin:1.1rem 0;
+  border:1px solid var(--rule); background:var(--surface)}
+.callout.warn{border-color:var(--warn); background:var(--warn-bg)}
+.callout .lbl{font-family:var(--mono); font-size:.7rem; letter-spacing:.1em;
+  text-transform:uppercase; font-weight:600; color:var(--warn)}
+.callout.warn p{color:var(--ink)}
+.callout .disclosure{font-style:italic; border-left:3px solid var(--warn);
+  padding-left:.9rem; margin-top:.6rem; color:var(--ink)}
+
+.opt-key{font-family:var(--mono); color:var(--accent); font-size:.85em}
+.pill{display:inline-block; font-family:var(--mono); font-size:.68rem;
+  padding:.14rem .45rem; border-radius:5px; background:var(--surface-2);
+  border:1px solid var(--rule); color:var(--ink-soft)}
+
+footer{max-width:var(--maxw); margin:0 auto; padding:2.4rem 1.5rem 4rem;
+  border-top:1px solid var(--rule); color:var(--ink-faint); font-size:.85rem}
+footer .mono{color:var(--ink-soft)}
+.tick{color:var(--good); font-weight:700}
+.no{color:var(--crit); font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="in">
+    <span class="brand">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <line x1="3" y1="9" x2="21" y2="9"></line>
+        <line x1="9" y1="9" x2="9" y2="21"></line>
+      </svg>
+      Team&nbsp;OS
+    </span>
+    <span class="tag-sub">Subscription setup</span>
+  </div>
+</div>
+
+<header class="hero">
+  <p class="eyebrow">Onboarding &amp; install</p>
+  <h1>A proactive agent that works on your behalf — under gates, on the record.</h1>
+  <p class="lede">Team OS compiles your recurring work, drafts things before you ask,
+  and runs on a schedule — every action inspected, permitted, and ledgered. This guide
+  sets it up on your <b>Claude subscription</b>, no API key required.</p>
+  <div class="facts">
+    <span class="fact"><b>No API key</b> — runs on your subscription</span>
+    <span class="fact"><b>Files are the system of record</b></span>
+    <span class="fact"><b>Opt-in sources</b> — nothing read until you toggle</span>
+    <span class="fact"><b>Exit = clone</b> — your data stays yours</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside class="toc">
+    <nav>
+      <p class="eyebrow">On this page</p>
+      <a href="#what">What you're installing</a>
+      <a href="#modes">Two ways to run</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup &amp; onboarding</a>
+      <a href="#connect">Connecting sources</a>
+      <a href="#options">Options &amp; settings</a>
+      <a href="#trust">Trust &amp; disclosure</a>
+      <a href="#privacy">Data &amp; privacy</a>
+      <a href="#cheatsheet">Command reference</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <section id="what">
+      <p class="eyebrow">Overview</p>
+      <h2>What you're installing</h2>
+      <p>Team OS is a <b>proactive, action-driven</b> personal agent — not a memory or
+      search product. It installs into Claude Code as files, hooks, scheduled runs, and a
+      small connector (the "door"). The stores are how it knows; the initiative is what it
+      <i>is</i>: drafts arrive done, loops fire on their own schedule, proposals appear
+      unrequested — always behind a gate, always written to an append-only ledger you can
+      audit and roll back.</p>
+      <p class="small">Everything here runs on <b>your own footprint</b>. Team OS holds no
+      opinion about what you may connect — it reads only the sources you configure and
+      switch on.</p>
+    </section>
+
+    <section id="modes">
+      <p class="eyebrow">Choose one</p>
+      <h2>Two ways to run on a subscription</h2>
+      <p>Both use your Claude subscription for inference — no API key. They differ in
+      <b>where the loops run</b>, which decides how much of the work your own gate and
+      ledger can see.</p>
+
+      <div class="modes">
+        <div class="mode recommended">
+          <div class="mode-head">
+            <h3>A · Local scheduled tasks</h3>
+            <span class="chip good">Full trust</span>
+          </div>
+          <span class="rec-tag">Recommended</span>
+          <p class="small">Claude Code Desktop, signed in with your subscription, runs the
+          loops <b>headless on your own always-on machine</b> as local scheduled tasks.</p>
+          <ul>
+            <li>Your <b>hooks fire locally</b> — every action is gated and ledgered.</li>
+            <li>Transcripts on your disk; L1/L2/L8 records complete.</li>
+            <li>What defines full trust is that the hooks run here — <b>not who bills the
+            tokens</b>. A subscription qualifies.</li>
+            <li>Needs a machine that stays on for scheduled runs.</li>
+          </ul>
+        </div>
+
+        <div class="mode">
+          <div class="mode-head">
+            <h3>B · Cloud scheduled tasks</h3>
+            <span class="chip warn">Reduced trust</span>
+          </div>
+          <span class="rec-tag">No machine required</span>
+          <p class="small">Loops run as Cowork Scheduled Tasks / Routines on Anthropic's
+          cloud, on your subscription — no daemon, no always-on box.</p>
+          <ul>
+            <li>Your hooks <b>do not demonstrably run</b> there; only Team OS <b>door</b>
+            actions are gated and recorded.</li>
+            <li>Scheduled prompts may use the <b>Team OS door only</b> — no third-party
+            connectors (enforced by the loop-prompt linter before install).</li>
+            <li>Convenience for phone-only / no-machine use; see
+            <a href="#trust">Trust &amp; disclosure</a> before choosing it.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="small">You can start on B and upgrade to A later — installing the CLI is
+      detected and the posture upgrade is itself ledgered.</p>
+    </section>
+
+    <section id="features">
+      <p class="eyebrow">Capabilities</p>
+      <h2>What it does</h2>
+      <div class="grid three">
+        <div class="card"><span class="fk">Compiler · FK4</span>
+          <h3>Compiles your job</h3>
+          <p>Turns your history into a map of recurring work plus a first draft "built from
+          your last N." Injected/imperative content is quarantined, never compiled.</p></div>
+        <div class="card"><span class="fk">Brief · FK5</span>
+          <h3>Day One Brief</h3>
+          <p>An unrequested digest + ✓/✗ job draft + first deliverable, delivered to your
+          Slack DM. Your ✓/✗ reactions are recorded as signal.</p></div>
+        <div class="card"><span class="fk">Loops · FK6</span>
+          <h3>Works while you don't</h3>
+          <p>Daily digest and recurring deliverables drafted on schedule as shadow drafts,
+          scored over time. Resumes cleanly if the machine restarts mid-run.</p></div>
+        <div class="card"><span class="fk">Gate · FK2</span>
+          <h3>Every action inspected</h3>
+          <p>A hook looks <i>inside</i> each action — commands, paths, payloads — and
+          permits, asks, or blocks. Exfiltration attempts are caught and logged.</p></div>
+        <div class="card"><span class="fk">Ledgers · FK2</span>
+          <h3>On the record</h3>
+          <p>Hash-chained, append-only logs of what ran, why it was permitted, and every
+          memory write's lineage. Tampering breaks the chain.</p></div>
+        <div class="card"><span class="fk">Envelope · FK6b</span>
+          <h3>Autonomy you earn</h3>
+          <p>Permissions widen slowly on your own approvals and narrow instantly on a
+          rejection. Every change is reversible and logged.</p></div>
+        <div class="card"><span class="fk">Door · FK6c</span>
+          <h3>Reach it from any client</h3>
+          <p>Read your corpus and check what the loops produced from any MCP client.
+          Writes only ever <i>propose</i> — into an inbox, never straight to the corpus.</p></div>
+        <div class="card"><span class="fk">Deletion · FK3</span>
+          <h3>Real forgetting</h3>
+          <p>A deletion walks the lineage graph and tombstones every derived copy; a
+          promoted skill is flagged for review, never silently kept.</p></div>
+        <div class="card"><span class="fk">Privacy · FK7-pre</span>
+          <h3>Your store, your key</h3>
+          <p>Your personal store is encrypted with a key that never enters the shared repo.
+          No one else can read it; any read lands in your own access feed.</p></div>
+      </div>
+    </section>
+
+    <section id="setup">
+      <p class="eyebrow">Install</p>
+      <h2>Setup &amp; onboarding</h2>
+      <p>The steps below are the hand-assembled path. Mode A (local) uses all of them;
+      Mode B (cloud) uses 1–5, then registers schedules in one guided chat instead of 8.</p>
+
+      <ol class="steps">
+        <li>
+          <h3>Check prerequisites</h3>
+          <p>Python 3.10+, git, and <b>Claude Code</b> signed in with your subscription.
+          For Mode A, a machine that stays on.</p>
+        </li>
+        <li>
+          <h3>Clone &amp; install</h3>
+<pre class="cmd"><code>git clone https://github.com/usecommon/teamOS.git
+cd teamOS
+python3 -m pip install -r requirements.txt
+make test          <span class="p"># 140 tests + gates should pass</span></code></pre>
+        </li>
+        <li>
+          <h3>Review the hooks — your security control</h3>
+          <p>The gate hook runs with hook privilege on your machine, so <b>you</b> verify it
+          before trusting it. Read <code>hooks/gate.py</code> (~190 lines, ~15 minutes)
+          against its spec <code>hooks/BEHAVIOR.md</code>. Confirm it makes no network calls
+          and uses no language model. Proceed only if the code matches the spec.</p>
+        </li>
+        <li>
+          <h3>Activate the gate</h3>
+          <p>Merge <code>hooks/settings-fragment.json</code> into
+          <code>.claude/settings.json</code> so every tool call is gated and ledgered, then
+          confirm:</p>
+<pre class="cmd"><code>python3 scripts/teamos.py doctor      <span class="p"># "gate activated: yes"</span></code></pre>
+        </li>
+        <li>
+          <h3>Configure sources &amp; delivery</h3>
+          <p>In <code>config/connectors.json</code>: set <code class="opt-key">inference.mode</code>
+          to <span class="pill">owned</span> (your local subscription session counts), add your
+          sources with <code class="opt-key">enabled:false</code>, and set the Slack DM
+          <code class="opt-key">target</code> to your own Slack user id. Nothing is read until
+          you toggle a source on. See <a href="#connect">Connecting sources</a>.</p>
+        </li>
+        <li>
+          <h3>Set your encryption key — outside the repo</h3>
+          <p>Your personal store is encrypted; the key must never be committable.</p>
+<pre class="cmd"><code>mkdir -p ~/.teamos/keys      <span class="p"># NOT inside the cloned repo</span></code></pre>
+          <p class="small">The tool refuses a key directory inside the repo by construction.</p>
+        </li>
+        <li>
+          <h3>Compile your footprint</h3>
+<pre class="cmd"><code>python3 scripts/teamos.py compile \
+    --footprint &lt;dir-of-your-artifacts&gt; \
+    --cc ~/.claude --out stores</code></pre>
+          <p>You get a job graph, skills imported from your Claude Code commands, and a
+          profile from your CLAUDE.md. Raw ingest is not retained.</p>
+        </li>
+        <li>
+          <h3>See the Brief, then schedule the loops</h3>
+<pre class="cmd"><code>python3 scripts/teamos.py brief --out stores   <span class="p"># dry-run render</span>
+python3 scripts/teamos.py loop  --out stores   <span class="p"># one pass</span></code></pre>
+          <p><b>Mode A:</b> register the loop as a local scheduled task on your always-on
+          machine. <b>Mode B:</b> open Claude and say "set up my Team OS schedules" — it reads
+          the desired set (<code>plugin/schedule-templates/</code>) and creates them via the
+          platform's own scheduling tools; a daily reconciliation task repairs any drift.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="connect">
+      <p class="eyebrow">Connections</p>
+      <h2>Connecting sources</h2>
+      <p>Team OS keeps three credential worlds separate. Connecting a source to Claude does
+      <b>not</b> connect it to Team OS, and vice versa — different owners, different
+      revocation.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Credential world</th><th>Who holds the grant</th><th>Reachable by</th><th>Trust</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Claude-account connectors</b><br><span class="small">Gmail, Drive, Calendar, Slack…</span></td>
+              <td>Anthropic, on your Claude account</td>
+              <td>Claude sessions only</td>
+              <td><span class="chip warn">Reduced</span></td>
+            </tr>
+            <tr>
+              <td><b>Team OS's own sources</b><br><span class="small">Plane A — the ones it reads</span></td>
+              <td>Team OS runtime, on your machine</td>
+              <td>Team OS loops / daemon</td>
+              <td><span class="chip good">Full</span></td>
+            </tr>
+            <tr>
+              <td><b>The door's OAuth</b><br><span class="small">read + propose</span></td>
+              <td>You authorize a client → Team OS</td>
+              <td>Any MCP client</td>
+              <td><span class="chip warn">Semi</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>How to connect, in practice</h3>
+      <p><b>Team OS sources (what it reads).</b> Add an entry to
+      <code>config/connectors.json</code> with a <code class="opt-key">credential_domain</code>
+      of <span class="pill">teamos_plane_a</span>, then toggle it on when you're ready:</p>
+<pre class="cmd"><code>{
+  "source_id": "my-team-slack",
+  "type": "slack",
+  "workspace": "myteam.slack.com",
+  "credential_domain": "teamos_plane_a",
+  "enabled": false          <span class="p">// opt-in: read nothing until true</span>
+}</code></pre>
+      <p><b>DMs &amp; email</b> are a separate opt-in — enabling a source does not enable its
+      DMs until you set <code class="opt-key">dm_email:true</code>. Every ingested item carries
+      its workspace as provenance.</p>
+      <p><b>The optional allowlist</b> (empty by default) holds any rule you or your org want
+      enforced. Empty means no constraint; populated means only listed sources are read, even
+      if enabled. It ships empty of opinion.</p>
+      <p><b>Slack DM for the Brief.</b> Set the notification channel <code class="opt-key">target</code>
+      to your authenticated Slack user id — the only identity whose ✓/✗ reactions count.</p>
+      <p class="small"><b>Note for Mode B:</b> connectors enabled on your Claude account are
+      reachable to cloud sessions and are <b>ungoverned</b> by Team OS. Keep those sessions on a
+      dedicated account with no other connectors enabled — see below.</p>
+    </section>
+
+    <section id="options">
+      <p class="eyebrow">Reference</p>
+      <h2>Options &amp; settings</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Where</th><th>Options</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr><td>Inference backend</td><td class="mono">connectors.json → inference</td>
+              <td><span class="pill">owned</span> (local subscription session / API key / local model) · <span class="pill">subscription</span> (cloud)</td>
+              <td class="mono">owned</td></tr>
+            <tr><td>Source enable</td><td class="mono">connectors.json → sources[].enabled</td>
+              <td><span class="pill">true</span> / <span class="pill">false</span> — opt-in</td>
+              <td class="mono">false</td></tr>
+            <tr><td>DMs &amp; email</td><td class="mono">sources[].dm_email</td>
+              <td>separate opt-in toggle, ledgered</td>
+              <td class="mono">false</td></tr>
+            <tr><td>Source allowlist</td><td class="mono">connectors.json → allowlist</td>
+              <td>empty = no constraint · list = only these read</td>
+              <td class="mono">[ ]</td></tr>
+            <tr><td>Unattended posture</td><td class="mono">TEAMOS_POSTURE / setup</td>
+              <td><span class="pill">attended</span> · <span class="pill">unattended-guarded</span> (default) · <span class="pill">+ egress allowlist</span> (recommended)</td>
+              <td class="mono">unattended-guarded</td></tr>
+            <tr><td>Autonomy envelope</td><td class="mono">envelope-policy.json</td>
+              <td>per-category ceilings; widens slowly on your ✓, narrows instantly on ✗; manual reset anytime</td>
+              <td class="mono">level 0</td></tr>
+            <tr><td>Schedule templates</td><td class="mono">plugin/schedule-templates/</td>
+              <td><span class="pill">morning-brief</span> · <span class="pill">daily-digest</span> · <span class="pill">nightly-corpus-compile</span> · <span class="pill">weekly-gap-fill</span></td>
+              <td>—</td></tr>
+            <tr><td>Posture ladder</td><td class="mono">auto-detected (~/.claude)</td>
+              <td><span class="pill">app-only</span> → <span class="pill">app + CLI</span> → <span class="pill">CLI-native</span>; upgrades are ledgered</td>
+              <td>detected</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="trust">
+      <p class="eyebrow">Read before Mode B</p>
+      <h2>Trust &amp; disclosure</h2>
+      <p>Mode A (local) is fully gated and ledgered. Mode B (cloud) trades some of that for
+      not needing a machine — and that trade is stated plainly, not buried.</p>
+
+      <div class="callout warn">
+        <span class="lbl">Cloud-mode disclosure</span>
+        <p class="disclosure">"Loops run on Anthropic's cloud; only their Team OS actions are
+        gated and recorded by Team OS; the session itself is governed by Anthropic, not by your
+        hooks — and other connectors enabled on your Claude account may be reachable to the
+        session and are ungoverned by Team OS."</p>
+      </div>
+
+      <h3>Cheap mitigations (offered in setup)</h3>
+      <p>Run Mode B on a <b>dedicated Claude account with no other connectors enabled</b>, and
+      let the door serve <b>summary-tier views</b> to cloud sessions. Together these remove
+      both the connectors an injection could invoke and the full-content payloads it could
+      carry.</p>
+      <p class="small">The loop-prompt linter enforces the door-only fence before a schedule is
+      installed: Team OS tools only, no third-party connector names, no raw URLs.</p>
+    </section>
+
+    <section id="privacy">
+      <p class="eyebrow">Guarantees</p>
+      <h2>Data &amp; privacy</h2>
+      <div class="grid two">
+        <div class="card"><h3>Files are the record</h3>
+          <p>Corpus, skills, and profile are plain files in git. Databases and indexes are
+          derived and rebuildable — never the source of truth.</p></div>
+        <div class="card"><h3>Opt-in by default</h3>
+          <p>Every source ships off. Nothing is read until you toggle it, and each toggle is
+          ledgered. DMs and email are a second, separate opt-in.</p></div>
+        <div class="card"><h3>Encrypted &amp; personal</h3>
+          <p>Your personal store is encrypted with your key, which never enters the shared
+          repo. A clone gives you your own decryptable scope — never anyone else's.</p></div>
+        <div class="card"><h3>Deletion that propagates</h3>
+          <p>A deletion walks the lineage graph and reaches every derived copy within the
+          deadline; third-party erasure enters the same way.</p></div>
+        <div class="card"><h3>No individuation</h3>
+          <p>Dashboards render per-skill, never per-person-comparative. There is no leaderboard
+          of people — enforced in code, not just policy.</p></div>
+        <div class="card"><h3>Untrusted stays inert</h3>
+          <p>Content from your sources can supply values, never plan structure. It can't add a
+          step, change a recipient, or trigger a tool without your confirmation.</p></div>
+      </div>
+    </section>
+
+    <section id="cheatsheet">
+      <p class="eyebrow">Reference</p>
+      <h2>Command reference</h2>
+<pre class="cmd"><code>python3 scripts/teamos.py doctor                       <span class="p"># check setup: deps, gate, sources, target</span>
+python3 scripts/teamos.py compile --footprint &lt;dir&gt;    <span class="p"># FK4 — build the job graph + skills</span>
+python3 scripts/teamos.py brief   --out stores         <span class="p"># FK5 — render the Day One Brief</span>
+python3 scripts/teamos.py loop    --out stores         <span class="p"># FK6 — one loop pass (shadow drafts)</span>
+python3 scripts/teamos.py verify                       <span class="p"># check every ledger chain</span>
+make test                                             <span class="p"># full suite + schema/mapping gates</span></code></pre>
+      <p class="small"><code>doctor</code> tells you exactly what's still undone — an inactive
+      gate, an unset Slack target, a missing dependency.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p class="mono">Team OS — harness-native fork · runs on your Claude subscription</p>
+  <p>Files are the system of record. Every action is gated and ledgered. Sources are opt-in.
+  Your keys stay yours. Repo: <span class="mono">github.com/usecommon/teamOS</span> ·
+  full manual: <span class="mono">docs/INSTALL.md</span></p>
+</footer>
+
+<script>
+// Respect a saved theme toggle if the host stamps data-theme; otherwise follow OS.
+(function(){
+  try{
+    var t = localStorage.getItem('teamos-theme');
+    if(t) document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
