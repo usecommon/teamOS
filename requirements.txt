@@ -1,3 +1,4 @@
 jsonschema>=4.20
 referencing>=0.30
 PyYAML>=6.0
+cryptography>=42
