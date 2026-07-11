@@ -184,6 +184,21 @@ td .mono{font-size:.85em}
 .callout .disclosure{font-style:italic; border-left:3px solid var(--warn);
   padding-left:.9rem; margin-top:.6rem; color:var(--ink)}
 
+.thesis{font-size:clamp(1.15rem,2.4vw,1.4rem); line-height:1.42; font-weight:500;
+  color:var(--ink); border-left:3px solid var(--accent); padding:.1rem 0 .1rem 1.15rem;
+  margin:1.1rem 0 1.5rem; max-width:62ch; letter-spacing:-.01em}
+.thesis b{color:var(--accent); font-weight:650}
+.ladder{display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0 .5rem}
+.rung{flex:1 1 132px; min-width:118px; background:var(--surface-2);
+  border:1px solid var(--rule); border-radius:8px; padding:.6rem .7rem; font-size:.82rem}
+.rung.team{border-color:var(--accent)}
+.rung .n{font-family:var(--mono); font-size:.64rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.15rem}
+.ladder-note{display:flex; gap:1.3rem; flex-wrap:wrap; font-family:var(--mono);
+  font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint);
+  margin-top:.2rem}
+.ladder-note b{color:var(--accent); font-weight:600}
+
 .opt-key{font-family:var(--mono); color:var(--accent); font-size:.85em}
 .pill{display:inline-block; font-family:var(--mono); font-size:.68rem;
   padding:.14rem .45rem; border-radius:5px; background:var(--surface-2);
@@ -230,7 +245,7 @@ footer .mono{color:var(--ink-soft)}
   <aside class="toc">
     <nav>
       <p class="eyebrow">On this page</p>
-      <a href="#what">What you're installing</a>
+      <a href="#what">What Team OS is</a>
       <a href="#modes">Two ways to run</a>
       <a href="#features">Features</a>
       <a href="#setup">Setup &amp; onboarding</a>
@@ -245,17 +260,66 @@ footer .mono{color:var(--ink-soft)}
   <main class="main">
 
     <section id="what">
-      <p class="eyebrow">Overview</p>
-      <h2>What you're installing</h2>
-      <p>Team OS is a <b>proactive, action-driven</b> personal agent — not a memory or
-      search product. It installs into Claude Code as files, hooks, scheduled runs, and a
-      small connector (the "door"). The stores are how it knows; the initiative is what it
-      <i>is</i>: drafts arrive done, loops fire on their own schedule, proposals appear
-      unrequested — always behind a gate, always written to an append-only ledger you can
-      audit and roll back.</p>
-      <p class="small">Everything here runs on <b>your own footprint</b>. Team OS holds no
-      opinion about what you may connect — it reads only the sources you configure and
-      switch on.</p>
+      <p class="eyebrow">The product</p>
+      <h2>What Team OS is</h2>
+      <p class="thesis">A team of governed, proactive agents — <b>one per person</b> (and,
+      for a team of one, agents themselves are the teammates) — that do your recurring work
+      unprompted, keep every action on the record, and get better across the whole team as
+      any one agent learns.</p>
+
+      <p>The core unit is the <b>per-person agent</b>. Team OS isn't one shared assistant the
+      group logs into — it's <i>N agents, one per human</i>, each compiled from that person's
+      own work, speaking in their voice, acting within their scope. The "team" is the network
+      of these human–agent pairs, not a chatbot with many seats.</p>
+
+      <div class="grid two">
+        <div class="card">
+          <span class="fk">Multi-user</span>
+          <h3>A team of agents</h3>
+          <p>Each teammate has their own agent. What one agent proves out can be promoted —
+          through a review gate — into the shared registry, so a second person's agent gets
+          better without that person doing the work. Knowledge transfers; toil doesn't
+          repeat. That cross-person compounding is the whitespace.</p>
+        </div>
+        <div class="card">
+          <span class="fk">Single-user</span>
+          <h3>A team of one</h3>
+          <p>A team of one still works, because a member need not be human. You plus agent
+          <b>members</b> — each a scoped, governed sub-agent owning a slice of your work (the
+          digest agent, the compile agent, the scout) — <i>is</i> the team. Add a second
+          human later and they just add another agent to a team that already existed.</p>
+        </div>
+      </div>
+
+      <h3>What makes it a team, not just personal agents</h3>
+      <p>Learning compounds across people <b>under governance</b>. Sharing rides on
+      protections built before any data mixes: each principal's store is encrypted with their
+      own key, reads are self-ledgered to the owner, and dashboards are per-skill — never a
+      leaderboard of people.</p>
+
+      <h3>What it is not</h3>
+      <p>Not a memory/RAG product, not a shared chatbot, not a dashboard that ranks people.
+      Memory and corpus are how it <i>knows</i>; the initiative is what it <b>is</b>. If it
+      ever ships recall without initiative, it has drifted into the crowded category and lost
+      the point.</p>
+
+      <h3>Ships as a ladder — stop on any rung with something real</h3>
+      <div class="ladder">
+        <div class="rung"><span class="n">01</span>Trustworthy solo agent</div>
+        <div class="rung"><span class="n">02</span>It knows your job</div>
+        <div class="rung"><span class="n">03</span>It works unasked</div>
+        <div class="rung"><span class="n">04</span>Reachable anywhere</div>
+        <div class="rung team"><span class="n">05</span>Transfer across people</div>
+        <div class="rung team"><span class="n">06</span>Safe sharing</div>
+        <div class="rung team"><span class="n">07</span>Compounding fleet</div>
+      </div>
+      <div class="ladder-note">
+        <span>01–04 · a complete single-user product</span>
+        <span><b>05–07 · Team OS proper</b></span>
+      </div>
+      <p class="small" style="margin-top:1rem">Everything here runs on <b>your own
+      footprint</b>. Team OS holds no opinion about what you may connect — it reads only the
+      sources you configure and switch on.</p>
     </section>
 
     <section id="modes">
