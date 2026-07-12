@@ -228,6 +228,7 @@ groups:
       - ledger-l8-human-signal.schema.json#/outcome
       - ledger-l8-human-signal.schema.json#/principal_id
       - ledger-l8-human-signal.schema.json#/signal_type
+      - ledger-l8-human-signal.schema.json#/unprompted
 
   - name: l9-deletion-engine
     status: fork-native
