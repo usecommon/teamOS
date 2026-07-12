@@ -48,7 +48,7 @@
     {
       "name": "jwt-in-nested-param-variant",
       "tool_name": "slack_post_message",
-      "tool_input": {"channel": "#x", "blocks": [{"text": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig"}]},
+      "tool_input": {"channel": "#x", "blocks": [{"text": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJlLXNpZw"}]},
       "expect_verdict": "deny",
       "expect_rule": "outbound-secret"
     }

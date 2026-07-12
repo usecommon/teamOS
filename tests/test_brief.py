@@ -152,6 +152,28 @@ class CatchUp(unittest.TestCase):
         self.assertTrue(catch_up)     # flagged as a catch-up
         self.assertEqual(len(self.calls), 2)
 
+    def test_crash_after_effect_never_double_sends(self):
+        # T13: the slot is claimed BEFORE the side effect; a crash after the
+        # effect (but before completion) must not re-send on the rerun
+        sent = []
+
+        def exploding_send():
+            sent.append(1)            # the observable side effect
+            raise RuntimeError("box died right after the send")
+
+        now = datetime.now(timezone.utc)
+        with self.assertRaises(RuntimeError):
+            brief.run_if_due("daily-brief", 86400, self.d, exploding_send, now=now)
+        self.assertEqual(len(sent), 1)
+        # rerun moments later: slot already claimed -> no second send
+        ran, _, _ = brief.run_if_due("daily-brief", 86400, self.d,
+                                     exploding_send, now=now + timedelta(seconds=5))
+        self.assertFalse(ran)
+        self.assertEqual(len(sent), 1)
+        # the failure is durably visible, not silent
+        state = json.loads((self.d / "daily-brief.state.json").read_text())
+        self.assertEqual(state["status"], "failed")
+
 
 if __name__ == "__main__":
     unittest.main()

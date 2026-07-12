@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+from fsutil import atomic_write_text  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEL_AGENT_ID = "teamos-deletion/0.1"
@@ -142,7 +143,7 @@ def request_erasure(origin_node, request_id, requester_type="principal",
             "flagged_skills": [],
             "status": "pending",
         }
-        req_path.write_text(json.dumps(state))
+        atomic_write_text(req_path, json.dumps(state))
         # tombstone at origin
         hashchain.append(l9, {
             "request_id": request_id, "requester_type": requester_type,
@@ -195,10 +196,10 @@ def request_erasure(origin_node, request_id, requester_type="principal",
                     }, DEL_AGENT_ID)
         processed.add(node_id)
         state["processed"] = sorted(processed)
-        req_path.write_text(json.dumps(state))  # durable after every node
+        atomic_write_text(req_path, json.dumps(state))  # durable after every node
 
     state["status"] = "complete"
-    req_path.write_text(json.dumps(state))
+    atomic_write_text(req_path, json.dumps(state))
     hashchain.append(l9, {
         "request_id": request_id, "requester_type": requester_type,
         "event": "purge_completed", "origin_node": origin_node,

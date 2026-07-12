@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
 import principal_auth  # noqa: E402
+from fsutil import atomic_write_text  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 POLICY_PATH = REPO_ROOT / "config" / "envelope-policy.json"
@@ -48,7 +49,7 @@ def load_state(state_path, policy):
 
 
 def _save(state, state_path):
-    Path(state_path).write_text(json.dumps(state, indent=2))
+    atomic_write_text(state_path, json.dumps(state, indent=2))
 
 
 def _ledger_change(ledger_dir, category, frm, to, rule, policy_path):

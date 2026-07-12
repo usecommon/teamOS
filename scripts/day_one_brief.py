@@ -104,7 +104,25 @@ def deliver(brief, channel, slack, ledger_dir, policy=None):
     if decision["hookSpecificOutput"]["permissionDecision"] != "allow":
         raise PermissionError(f"gate blocked the brief send: {l2['rule_id']}")
 
-    ts = slack.post_message(channel, text=text)
+    # T13 — record the OUTCOME, not only the decision: a permitted-but-failed
+    # or double send is visible in the ledger (send-receipt record).
+    try:
+        ts = slack.post_message(channel, text=text)
+        receipt_outcome, receipt_target = "send_succeeded", f"{channel}/{ts}"
+    except Exception as exc:
+        receipt_outcome, receipt_target = "send_failed", f"{channel}/{type(exc).__name__}"
+        ts = None
+    hashchain.append(ledger_dir / "l2.jsonl", {
+        "proposed_action": {"tool": "slack_post_message",
+                            "action_class": "send", "target": receipt_target,
+                            "payload_digest": hashchain.sha256_str(text)},
+        "verdict": "permit", "policy_version": l2["policy_version"],
+        "rule_id": "send-receipt",
+        "inspection": {"checks_run": ["send-receipt"], "findings": []},
+        "outcome": receipt_outcome,
+    }, BRIEF_AGENT_ID)
+    if ts is None:
+        raise PermissionError("send failed after permit — receipt ledgered")
     return ts, l2
 
 
@@ -173,6 +191,18 @@ def run_if_due(task_name, interval_seconds, state_dir, action, now=None):
         catch_up = elapsed > interval_seconds * 1.5  # a scheduled slot was missed
     if not due:
         return False, False, None
-    result = action()
-    state_file.write_text(json.dumps({"last_run": now.isoformat(), "catch_up": catch_up}))
+    # T13 — claim the slot BEFORE the side effect is observable: a crash after
+    # the action can no longer double-send on the rerun (at-most-once). The
+    # claim is atomic; a failed action leaves the claim + failure marker.
+    from fsutil import atomic_write_text
+    atomic_write_text(state_file, json.dumps(
+        {"last_run": now.isoformat(), "catch_up": catch_up, "status": "claimed"}))
+    try:
+        result = action()
+    except Exception:
+        atomic_write_text(state_file, json.dumps(
+            {"last_run": now.isoformat(), "catch_up": catch_up, "status": "failed"}))
+        raise
+    atomic_write_text(state_file, json.dumps(
+        {"last_run": now.isoformat(), "catch_up": catch_up, "status": "completed"}))
     return True, catch_up, result

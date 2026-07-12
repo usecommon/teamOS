@@ -69,6 +69,15 @@ class ProbeSet(GateBase):
             record = self._check(probe)
             self.assertEqual(record["verdict"], "permit", probe["name"])
 
+    def test_base64_json_pair_is_not_a_jwt_false_positive(self):
+        # T13: two dot-joined base64 JSON objects (no signature segment) must
+        # not deny as a JWT
+        record = self._check({
+            "name": "b64-json-pair", "tool_name": "WebSearch",
+            "tool_input": {"query": "eyJjb25maWciOiAxfQ.eyJvdGhlciI6IDJ9"},
+            "expect_verdict": "permit", "expect_rule": "send-scanned-clean"})
+        self.assertEqual(record["verdict"], "permit")
+
     def test_attacker_shaped_probes_blocked_and_ledgered(self):
         # T2: probes written the way an attacker writes them (quoting, base64,
         # ssh, git push, unknown tools) — never shaped to match the pattern.

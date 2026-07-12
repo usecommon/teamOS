@@ -86,7 +86,10 @@ secret_patterns:
   - "ghp_[A-Za-z0-9]{20,}"
   - "sk-ant-[A-Za-z0-9-]{20,}"
   - "xox[bap]-[A-Za-z0-9-]{10,}"
-  - "eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+"   # JWT: header.payload, both base64url of a JSON object ({"...)
+  # JWT: header.payload.signature — the 3rd segment requirement keeps plain
+  # dot-joined base64 JSON (e.g. two encoded config objects) from false-
+  # positive-denying (T13)
+  - "eyJ[A-Za-z0-9_-]{8,}\\.eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}"
 
 # --- taint (FR2 Layer A, session-granular, fork §7.7) ---
 # Reading any of these marks the session tainted: subsequent sends/schedules
