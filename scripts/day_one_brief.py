@@ -27,6 +27,14 @@ ACCEPT_EMOJI = "white_check_mark"
 REJECT_EMOJI = "x"
 
 
+class GateBlocked(PermissionError):
+    """The gate denied the send (e.g. circuit breaker open). A subclass of
+    PermissionError so existing `except PermissionError` handlers still catch it,
+    but run_if_due() distinguishes it (E3): a safety halt PAUSES the scheduled
+    loop gracefully instead of crashing it. A post-permit send FAILURE stays a
+    plain PermissionError — that is a real error, not a halt."""
+
+
 # --- 1. assembly (summary-level with links; compiled content stays in store) ---
 
 def assemble_brief(job_graph, out_dir, store_prefix="stores"):
@@ -83,10 +91,32 @@ def render_dm(brief):
 
 # --- 2. delivery (through the gate; emits L2) ---------------------------------
 
+def _prior_successful_send(ledger_dir, payload_digest):
+    """Return the ts of an already-succeeded send-receipt for this exact payload
+    (D3 idempotency), or None. Deterministic ledger read — no model in the path."""
+    l2 = Path(ledger_dir) / "l2.jsonl"
+    if not l2.exists():
+        return None
+    for line in l2.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if (r.get("rule_id") == "send-receipt"
+                and r.get("outcome") == "send_succeeded"
+                and r.get("proposed_action", {}).get("payload_digest") == payload_digest):
+            target = r["proposed_action"].get("target", "")
+            return target.split("/", 1)[1] if "/" in target else target
+    return None
+
+
 def deliver(brief, channel, slack, ledger_dir, policy=None):
     """Send the brief DM. The send traverses the FK2 gate (L2) before posting.
 
-    Returns (ts, l2_record). Raises if the gate blocks the send.
+    Returns (ts, l2_record). Raises GateBlocked if the gate blocks the send.
+    Idempotent: an identical payload already send-receipted returns the prior ts.
     """
     ledger_dir = Path(ledger_dir)
     text = render_dm(brief)
@@ -102,7 +132,18 @@ def deliver(brief, channel, slack, ledger_dir, policy=None):
         gate.LEDGER_DIR = prev_ledger
     l2 = json.loads((ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
     if decision["hookSpecificOutput"]["permissionDecision"] != "allow":
-        raise PermissionError(f"gate blocked the brief send: {l2['rule_id']}")
+        # E3: a gate deny (e.g. breaker open) is a HALT, not a failure — raise a
+        # distinct type so the scheduled loop can pause instead of crashing.
+        raise GateBlocked(f"gate blocked the brief send: {l2['rule_id']}")
+
+    # D3 — at-most-once at the send path: if a send-receipt for this exact
+    # payload already succeeded, a prior run (or a crash-after-effect rerun)
+    # already delivered it. Return that ts without re-posting. Scheduled-brief
+    # content varies per slot, so an identical payload is a true duplicate.
+    digest = hashchain.sha256_str(text)
+    prior_ts = _prior_successful_send(ledger_dir, digest)
+    if prior_ts is not None:
+        return prior_ts, l2
 
     # T13 — record the OUTCOME, not only the decision: a permitted-but-failed
     # or double send is visible in the ledger (send-receipt record).
@@ -195,10 +236,20 @@ def run_if_due(task_name, interval_seconds, state_dir, action, now=None):
     # the action can no longer double-send on the rerun (at-most-once). The
     # claim is atomic; a failed action leaves the claim + failure marker.
     from fsutil import atomic_write_text
+    prior_state = state_file.read_text() if state_file.exists() else None
     atomic_write_text(state_file, json.dumps(
         {"last_run": now.isoformat(), "catch_up": catch_up, "status": "claimed"}))
     try:
         result = action()
+    except GateBlocked:
+        # E3: a safety halt (breaker open) PAUSES the loop — it does not crash.
+        # Roll back the slot claim so the run stays due and retries once the
+        # breaker closes, instead of dying and retry-crashing every tick.
+        if prior_state is None:
+            state_file.unlink(missing_ok=True)
+        else:
+            atomic_write_text(state_file, prior_state)
+        return False, catch_up, None
     except Exception:
         atomic_write_text(state_file, json.dumps(
             {"last_run": now.isoformat(), "catch_up": catch_up, "status": "failed"}))

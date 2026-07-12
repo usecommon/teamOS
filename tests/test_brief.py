@@ -77,6 +77,61 @@ class GatedDelivery(BriefBase):
             brief.deliver(poisoned, CHANNEL, self.slack, self.d)
 
 
+class BreakerPause(BriefBase):
+    """E3: a tripped breaker PAUSES the scheduled loop, it does not crash it."""
+
+    def _set_breaker(self, state):
+        import os
+        p = self.d / "breaker.json"
+        p.write_text(json.dumps({"state": state}))
+        os.environ["TEAMOS_BREAKER"] = str(p)
+
+    def tearDown(self):
+        import os
+        os.environ.pop("TEAMOS_BREAKER", None)
+        super().tearDown()
+
+    def test_breaker_open_pauses_not_crashes(self):
+        self._set_breaker("open")
+        state_dir = self.d / "state"
+        act = lambda: brief.deliver(self.brief, CHANNEL, self.slack, self.d)
+        # must NOT raise — a graceful pause
+        ran, catch_up, result = brief.run_if_due("brief", 3600, state_dir, act,
+                                                 now=datetime(2026, 7, 1, 9, tzinfo=timezone.utc))
+        self.assertFalse(ran)
+        self.assertIsNone(result)
+        # slot not claimed => still due next tick
+        self.assertFalse((state_dir / "brief.state.json").exists())
+        # breaker closed => it now delivers
+        self._set_breaker("closed")
+        ran2, _, res2 = brief.run_if_due("brief", 3600, state_dir, act,
+                                         now=datetime(2026, 7, 1, 10, tzinfo=timezone.utc))
+        self.assertTrue(ran2)
+        self.assertIsNotNone(res2)
+
+    def test_deliver_raises_gateblocked_subclass_of_permissionerror(self):
+        self._set_breaker("open")
+        with self.assertRaises(PermissionError):        # base type still works
+            brief.deliver(self.brief, CHANNEL, self.slack, self.d)
+        with self.assertRaises(brief.GateBlocked):      # distinct halt type
+            brief.deliver(self.brief, CHANNEL, self.slack, self.d)
+
+
+class IdempotentSend(BriefBase):
+    """D3: deliver is at-most-once against its send-receipt for an identical payload."""
+
+    def test_second_identical_deliver_does_not_repost(self):
+        ts1, _ = brief.deliver(self.brief, CHANNEL, self.slack, self.d)
+        n_after_first = len(self.slack.messages)
+        ts2, _ = brief.deliver(self.brief, CHANNEL, self.slack, self.d)
+        self.assertEqual(ts2, ts1)                       # idempotent: same ts
+        self.assertEqual(len(self.slack.messages), n_after_first)  # no second post
+        receipts = [json.loads(l) for l in (self.d / "l2.jsonl").read_text().splitlines()
+                    if '"send-receipt"' in l]
+        succeeded = [r for r in receipts if r.get("outcome") == "send_succeeded"]
+        self.assertEqual(len(succeeded), 1)
+
+
 class ReactionHarvest(BriefBase):
     def _post(self):
         ts, _ = brief.deliver(self.brief, CHANNEL, self.slack, self.d)
