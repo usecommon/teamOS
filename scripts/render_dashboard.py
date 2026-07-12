@@ -300,28 +300,73 @@ def _audit(demo):
 
 def _agents(demo):
     roster = json.loads((REPO/"config"/"agents.json").read_text())["agents"]
-    working, completed = __import__("worklog").current_and_completed(demo)
-    working_agents = {w["agent"] for w in working}
-    done_by = Counter(c["agent"] for c in completed)
-    l8 = _read(demo/"l8.jsonl")
-    accepted = sum(1 for r in l8 if r.get("signal_type") == "endorsement"
-                   and r.get("attribution") == "principal_authenticated")
+    wl = __import__("worklog").load(demo)
+    working, _ = __import__("worklog").current_and_completed(demo)
+    working_ids = {w["agent"] for w in working}
+    spawns = _read(demo/"spawns.jsonl")
+    done = [w for w in wl if w["status"] == "done"]
+    st = json.loads((demo/"breaker.json").read_text()) if (demo/"breaker.json").exists() else {"state": "closed"}
+    halted = st.get("state") == "open"
+
+    def stats(aid):
+        d = [w for w in done if w["agent"] == aid]
+        acc = sum(1 for w in d if w.get("outcome") == "accepted")
+        rej = sum(1 for w in d if w.get("outcome") == "rejected")
+        inp = [w for w in working if w["agent"] == aid]
+        sp = [s for s in spawns if s["parent"] == aid or s["parent"].startswith(aid)]
+        last = max((w["ts"] for w in wl if w["agent"] == aid), default=None)
+        return len(d), acc, rej, len(inp), len(sp), last
+
+    total_done = len(done)
+    total_acc = sum(1 for w in done if w.get("outcome") == "accepted")
+    total_rej = sum(1 for w in done if w.get("outcome") == "rejected")
+    rate = f"{round(100*total_acc/(total_acc+total_rej))}%" if (total_acc+total_rej) else "—"
+    n_working = len({a["id"] for a in roster} & working_ids)
+
+    banner = ('<div class="callout warn" style="margin:0 0 1rem"><span class="lbl">Fleet halted</span>'
+              '<p>Circuit breaker is OPEN — side-effectful actions are denied across all agents.</p></div>') if halted else ""
+
+    tiles = f"""<div class="tiles">
+      <div class="tile"><span class="k">Agents</span><span class="v">{len(roster)}</span>
+        <span class="note">{n_working} working · {len(roster)-n_working} idle</span></div>
+      <div class="tile"><span class="k">Tasks completed</span><span class="v">{total_done}</span></div>
+      <div class="tile good"><span class="k">Acceptance</span><span class="v">{rate}</span>
+        <span class="note">{total_acc} ✓ · {total_rej} ✗</span></div>
+      <div class="tile"><span class="k">Subagents</span><span class="v">{len(spawns)}</span>
+        <span class="note">spawned, all ledgered</span></div></div>"""
+
+    rows = ""
+    for a in roster:
+        d, acc, rej, inp, sp, last = stats(a["id"])
+        status = ('<span class="chip warn">working</span>' if a["id"] in working_ids
+                  else '<span class="chip good">idle</span>')
+        health = ('<span class="chip crit">halted</span>' if halted else
+                  ('<span class="chip warn">review</span>' if rej else
+                   '<span class="chip good">healthy</span>'))
+        rows += f"""<tr>
+          <td><b>{_esc(a['name'])}</b>{' <span class="tag spec">spec</span>' if a.get('specialized') else ''}
+            <div class="small faint">{_esc(a['role'][:60])}</div></td>
+          <td>{status}</td><td class="numcell">{inp}</td><td class="numcell">{d}</td>
+          <td class="numcell">{acc}</td><td class="numcell">{rej}</td><td class="numcell">{sp}</td>
+          <td class="mono small faint">{_esc(last[11:16]) if last else '—'}</td>
+          <td>{health}</td></tr>"""
+
     cards = ""
     for a in roster:
-        busy = a["id"] in working_agents
-        chip = '<span class="chip warn">working</span>' if busy else '<span class="chip good">idle</span>'
-        spec = '<span class="tag spec">specialized</span> ' if a.get("specialized") else ''
         skills = "".join(f'<span class="tag">{_esc(s)}</span> ' for s in a["skills"])
-        acc = f' · {accepted} accepted' if a["id"] in ("loops", "brief") else ""
         cards += f"""<div class="agentcard">
-          <div class="agenthead"><h3>{_esc(a['name'])}</h3>{chip}</div>
-          <p class="role">{spec}{_esc(a['role'])}</p>
+          <div class="agenthead"><h3>{_esc(a['name'])}</h3>
+            {'<span class="tag spec">specialized</span>' if a.get('specialized') else ''}</div>
+          <p class="role">{_esc(a['role'])}</p>
           <div class="meta"><span class="mono small faint">scope: {_esc(a['scope'])}</span>
             <span class="mono small faint">inference: {_esc(a['inference_domain'])}</span></div>
-          <div class="skills">{skills}</div>
-          <div class="stat mono small">{done_by.get(a['id'],0)} completed{acc}</div>
-        </div>"""
-    return f'<div class="agentgrid">{cards}</div>'
+          <div class="skills">{skills}</div></div>"""
+
+    return banner + tiles + f"""<div class="panel"><h2>Fleet — every agent, at a glance</h2>
+      <table><thead><tr><th>Agent</th><th>Status</th><th>Doing</th><th>Done</th>
+        <th>✓</th><th>✗</th><th>Subagents</th><th>Last</th><th>Health</th></tr></thead>
+      <tbody>{rows}</tbody></table></div>
+    <h3>Roster</h3><div class="agentgrid">{cards}</div>"""
 
 
 def _templates(demo):
