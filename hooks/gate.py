@@ -123,7 +123,7 @@ def inspect(policy, tool_name, action_class, tool_input, known=True,
     texts = list(flatten_strings(tool_input))
     # scan through one base64 layer too (FR2 Layer B)
     texts += taint.decode_base64_blobs(texts)
-    tainted = taint.is_tainted(LEDGER_DIR / "taint", session_id)
+    tainted = taint.is_tainted(LEDGER_DIR / "taint", session_id) or taint.matches_corpus(policy, texts, REPO_ROOT)
 
     # tool-parameter scan — every call, every string param (FR2 probe #3)
     checks.append("tool-parameter-scan")

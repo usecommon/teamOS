@@ -101,3 +101,14 @@ taint_source_paths:
 taint_source_tools:
   - WebFetch
   - WebSearch
+
+# --- corpus-content egress (A7 / Option-B, protected change) ---
+# Flag a send carrying a distinctive run of STORED corpus text even on an
+# UNTAINTED first move (before any in-session corpus read) — the seam the taint
+# layer alone misses. Word-shingle overlap; folds into the taint-confirm ask.
+# Heuristic defense-in-depth; taint remains the primary control.
+corpus_fingerprint:
+  enabled: true
+  corpus_dir: stores/corpus
+  shingle_k: 6        # a 6-word verbatim run is distinctive, not incidental
+  min_shingles: 1

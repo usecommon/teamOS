@@ -84,6 +84,62 @@ def normalize_command(command, lower=True):
     return text.casefold() if lower else text
 
 
+_WORD = re.compile(r"[a-z0-9]+")
+_CORPUS_CACHE = {}  # (dir, files-mtime-signature) -> frozenset(shingle strings)
+
+
+def _shingles(text, k):
+    toks = _WORD.findall(str(text).lower())
+    return {" ".join(toks[i:i + k]) for i in range(len(toks) - k + 1)}
+
+
+def _corpus_shingles(corpus_dir, k):
+    """k-word shingle set of all stored corpus text, cached by file mtimes.
+    Rebuilt only when the corpus changes."""
+    p = Path(corpus_dir)
+    if not p.exists():
+        return frozenset()
+    files = sorted(f for f in p.rglob("*") if f.is_file())
+    sig = tuple((str(f), f.stat().st_mtime_ns) for f in files)
+    key = (str(corpus_dir), sig)
+    if key in _CORPUS_CACHE:
+        return _CORPUS_CACHE[key]
+    sh = set()
+    for f in files:
+        try:
+            sh |= _shingles(f.read_text(errors="ignore"), k)
+        except OSError:
+            continue
+    fs = frozenset(sh)
+    _CORPUS_CACHE.clear()          # keep only the latest corpus snapshot
+    _CORPUS_CACHE[key] = fs
+    return fs
+
+
+def matches_corpus(policy, texts, repo_root):
+    """A7 / Option-B: does outbound content carry a distinctive run of STORED
+    corpus text? Catches corpus exfil on an UNTAINTED first move — before any
+    in-session corpus read — which the taint layer alone misses (e.g. attacker-
+    injected WebFetch(url=...?d=<verbatim corpus>)). Word-shingle overlap, so
+    URL-encoding / underscores / casing collapse to the same tokens. Heuristic
+    defense-in-depth; the session taint layer remains the primary control. The
+    caller folds this into the taint-confirm ask (gate.py stays within budget)."""
+    cfg = policy.get("corpus_fingerprint") or {}
+    if not cfg.get("enabled"):
+        return False
+    k = cfg.get("shingle_k", 6)
+    need = cfg.get("min_shingles", 1)
+    corpus = _corpus_shingles(Path(repo_root) / cfg.get("corpus_dir", "stores/corpus"), k)
+    if not corpus:
+        return False
+    out = set()
+    for t in texts:
+        out |= _shingles(t, k)
+        if len(out & corpus) >= need:
+            return True
+    return False
+
+
 def decode_base64_blobs(texts, limit=32):
     """Best-effort decode of base64-looking runs so the secret scan sees
     through one encoding layer. Returns decoded strings (utf-8, lossy)."""
