@@ -44,23 +44,63 @@ def envelope(record, prev_hash, record_id, ts, agent_id, schema_version):
     return record
 
 
-def _tail_line(f, chunk=65536):
-    """Last non-empty line via seek from the end — O(tail), not O(file)."""
+def _iter_tail_lines(f, chunk=65536):
+    """Yield non-empty lines from the end backward (bytes). O(tail) per line."""
     f.seek(0, os.SEEK_END)
-    size = f.tell()
-    if size == 0:
-        return None
+    pos = f.tell()
     buf = b""
-    pos = size
     while pos > 0:
         step = min(chunk, pos)
         pos -= step
         f.seek(pos)
         buf = f.read(step) + buf
-        lines = [l for l in buf.split(b"\n") if l.strip()]
-        if len(lines) >= 2 or (lines and pos == 0):
-            return lines[-1].decode("utf-8")
+        parts = buf.split(b"\n")
+        buf = parts[0]  # possibly-incomplete leading fragment; carry to next read
+        for line in reversed(parts[1:]):
+            if line.strip():
+                yield line
+    if buf.strip():
+        yield buf
+
+
+def _last_valid_hash(f):
+    """Last record's hash, tolerant of a torn TRAILING fragment (E1): a crash
+    mid-append leaves a partial last line — skip trailing lines that don't parse
+    to a record with a "hash" and return the last valid one. Interior corruption
+    is NOT skipped here; verify() still catches it."""
+    for line in _iter_tail_lines(f):
+        try:
+            rec = json.loads(line)
+        except (ValueError, UnicodeDecodeError):
+            continue  # torn/partial fragment from a crashed write — skip
+        if isinstance(rec, dict) and "hash" in rec:
+            return rec["hash"]
     return None
+
+
+def _truncate_torn_tail(f):
+    """Remove trailing bytes with no terminating newline (E1). Complete records
+    are always '\\n'-terminated + fsynced; bytes after the final newline are a
+    crashed partial write — drop them so the chain stays clean and append can
+    proceed. Leaves all complete records (and any interior corruption) intact."""
+    f.seek(0, os.SEEK_END)
+    size = f.tell()
+    if size == 0:
+        return
+    f.seek(size - 1)
+    if f.read(1) == b"\n":
+        return  # ends cleanly on a record boundary
+    pos, chunk, buf = size, 65536, b""
+    while pos > 0:
+        step = min(chunk, pos)
+        pos -= step
+        f.seek(pos)
+        buf = f.read(step) + buf
+        idx = buf.rfind(b"\n")
+        if idx != -1:
+            f.truncate(pos + idx + 1)
+            return
+    f.truncate(0)  # no newline anywhere — the whole file is a torn fragment
 
 
 def last_hash(path):
@@ -68,22 +108,22 @@ def last_hash(path):
     if not path.exists() or path.stat().st_size == 0:
         return None
     with path.open("rb") as f:
-        last = _tail_line(f)
-    return json.loads(last)["hash"] if last else None
+        return _last_valid_hash(f)
 
 
 def append(path, body, agent_id, schema_version="0.1", record_id=None):
     """Chain `body` onto the ledger at `path`. Returns the full record.
 
     Serialized: an exclusive flock spans read-last-hash + write, so parallel
-    writers (subagents, hooks, loops) can never fork the chain (T5)."""
+    writers (subagents, hooks, loops) can never fork the chain (T5). A torn
+    trailing fragment from a crashed prior append is healed before writing (E1)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+b") as f:
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:
-            last = _tail_line(f)
-            prev = json.loads(last)["hash"] if last else None
+            _truncate_torn_tail(f)
+            prev = _last_valid_hash(f)
             record = envelope(
                 dict(body),
                 prev,
