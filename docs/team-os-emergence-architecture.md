@@ -1,4 +1,4 @@
-**`v0.2 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
+**`v0.3 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
 
 # Team OS — Emergence Architecture
 
@@ -43,18 +43,60 @@ total and cheap, letting behavior run wild is not reckless — it is free.
 The category: **the agent system that lets emergence run and can always take it
 back — a lab, not a cage.**
 
-## 2. The core principle — safety is unwind, not prevention
+## 2. The core principle — safety is observability; unwind is a decision on candidates
 
 A brake that halts a compounding trend **destroys the thing you wanted to
 study**. "Off the rails" is not a failure state to prevent; it is a *result to
 observe and then judge from outcomes*. Pre-defining "off the rails" with
 thresholds presumes you already know what is bad — the exact assumption that
-kills discovery.
+kills discovery. So the safety mechanism is not a governor that stops.
 
-So the safety mechanism is not a governor that stops. It is the **guaranteed
-ability to unwind**. Generate, let it play out, evaluate the *outcome*, keep
-what proved good, revert what proved bad. Judgment comes *after*, from results —
-never *before*, from rules.
+But it is not "unwind," either — unwind is not a guarantee you can make. In a
+live, coupled system the clean rewind degrades the instant other agents read a
+trail and act on it, and it is gone entirely for the things §4 catalogs. So the
+always-on safety property is the one thing that does *not* degrade under
+coupling or time:
+
+**Safety is observability.** Every emergent act, every token burned, every
+boundary-crossing is on the record and surfaceable — by construction (files as
+truth + lineage). Nothing happens invisibly. That is the promise the system can
+actually keep, and the honest one: *not "the agent never errs," but "no error is
+silent — you will see every one, with the receipts, and hold the switch."*
+
+**Unwind is demoted from guarantee to verb.** It is one option a human exercises
+**at the candidate stage** — when the Observatory surfaces something to decide
+on. Generate, observe, let the detector flag a candidate, then choose: promote,
+keep watching, or unwind. Judgment comes *after*, from results — never *before*,
+from rules. Unwind is real, but bounded (see the requirements below); it is a
+move you make, not a net that is always under you.
+
+### Safety splits at the reversibility line
+
+Observability is *sufficient* safety only where the act is reversible. Watching
+an irreversible act is not safety — it is forensics: the perfect audit log of a
+crash whose passengers are still dead. So:
+
+- **Interior (reversible): safety = observability + unwind-on-candidate.**
+- **Boundary (irreversible, §4): safety = prevention** — the gate still stands
+  ahead of the act. Observability is true inside and false at the door.
+
+### The three standing requirements
+
+For "safety is observability" to hold rather than degrade into excellent
+post-mortems, three things are load-bearing — requirements, not nice-to-haves:
+
+- **(a) Keep the boundary gate.** Irreversible acts (§4) are prevented, not
+  merely observed. The gate does not go away; it is confined to the door.
+- **(b) Two detectors, not one.** The Observatory needs a *curiosity* detector
+  (surface the novel/surprising) **and** a distinct *harm / irreversibility*
+  detector (surface the dangerous — especially the boring, slow, irreversible
+  trail a curiosity detector ignores by design). Novel ≠ harmful; harmful ≠
+  novel. See §7.
+- **(c) Detection latency under the reversibility half-life.** Unwind-on-
+  candidate only works if candidacy is caught while the rewind is still clean.
+  Detect too slow and you are "unwinding" a thing that already coupled. For
+  irreversible acts this collapses to (a): the harm detector must fire *ahead*
+  of the trigger, which makes it a gate, not an observer.
 
 ## 3. The one line that defines the field — reversible vs. irreversible
 
@@ -183,21 +225,34 @@ removes influence, never information.)
 Compounding is the engine *and* the source of the interesting anomalies. It is
 not the danger — under §2 there is no danger from a reversible trend, only data.
 
-## 7. The Observatory — an instrument, not a guardrail
+## 7. The Observatory — instrument and safety surface
 
-The Observatory does not stop anything. It is the laboratory bench.
+The Observatory studies emergence; it also *is* the safety surface, because
+safety is observability (§2) and this is where observability lives. That makes it
+load-bearing — not a deferrable v2 nicety (see §11).
 
-- **It studies.** Trends are preserved in full, never truncated — a trend cut
-  short cannot be learned from.
-- **Its detector is a curiosity function, not an alarm.** It surfaces what is
-  surprising, novel, or compounding *unexpectedly* — precisely *because* it is
-  unexpected. A system tuned to suppress outliers is a system that cannot
-  invent. The detector's bias is toward preserving anomalies.
+It runs **two detectors**, deliberately distinct:
+
+- **Curiosity detector** — surfaces what is surprising, novel, or compounding
+  *unexpectedly*, precisely *because* it is unexpected. A system tuned to
+  suppress outliers cannot invent; this detector's bias is to *preserve*
+  anomalies. This is the discovery half.
+- **Harm / irreversibility detector** — surfaces what is *dangerous*, with the
+  opposite bias: it must catch the **boring, slow, irreversible** trail the
+  curiosity detector ignores. Novel ≠ harmful; harmful ≠ novel. It is
+  latency-critical and boundary-facing — for irreversible acts (§4) it fires
+  *ahead* of the trigger, i.e. it is the gate of §2(a)/(c), not a rear-view. This
+  is the safety half.
+
+Shared discipline across both:
+
+- **It studies; it does not truncate.** Trends are preserved in full — a trend
+  cut short cannot be learned from.
 - **Its output is a candidate, not a verdict.** Interesting-but-unverified is
-  held for a human to examine — never auto-promoted, never auto-killed.
-- **It notifies; the user decides.** The guardrail is not that it halts
-  emergence. The guardrail is that *it sees emergence and tells you*, and unwind
-  is always available if you don't like what you see.
+  held for a human — never auto-promoted, never auto-killed.
+- **It notifies; the user decides** (promote / keep watching / unwind). The
+  guarantee is not that it halts emergence — it is that *nothing emerges
+  invisibly*, and the decision, and the switch, are yours.
 
 Read-only, derived, rebuildable — same discipline as every other surface. What
 it shows (topic clusters forming, skill ecology, self-organized division of
@@ -267,7 +322,11 @@ nobody else can explain what emerged. The safety and the emergence come from the
 - The **autocatalytic trail engine** (§6) is a near-term, buildable primitive
   that is useful *even with no emergence* — stigmergic coordination is real
   product at any scale. It could be scoped as a fork-adjacent item.
-- The **Observatory** (§7) earns its keep only at density; it is FK7+ / v2.
+- The **Observatory** (§7) is now *load-bearing for safety*, not a density-gated
+  nicety: because safety is observability (§2), its **harm-detector half must
+  ship with the boundary gate, day one**. Its **curiosity half** — the discovery
+  payoff — is what earns its keep only at density (FK7+ / v2). Split the two: the
+  safety detector is near-term; the discovery detector is later.
 - The **hard gates** (§8) already exist — this doc changes nothing about them; it
   only clarifies that they are the *boundary*, and the interior is free.
 
