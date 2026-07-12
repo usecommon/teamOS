@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+import principal_auth  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 POLICY_PATH = REPO_ROOT / "config" / "envelope-policy.json"
@@ -84,7 +85,9 @@ def process_signal(l8_record, category, ledger_dir, state_path,
     ceiling = policy["categories"][category]["ceiling"]
     level = state["levels"][category]
 
-    principal = l8_record.get("attribution") == "principal_authenticated"
+    # CN-1/T7: cryptographically verified when a principal keydir is
+    # configured; a bare attribution field is a claim, not evidence
+    principal = principal_auth.verified(l8_record)
     signal = l8_record.get("signal_type")
     dist = l8_record.get("edit_distance_normalized")
 

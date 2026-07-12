@@ -80,8 +80,30 @@ class Ledgers(unittest.TestCase):
         self.assertNotIn("SECRETSAUCE", json.dumps(rec))
         self.assertNotIn("parser fix", json.dumps(rec))
         self.assertEqual(rec["diff_ref"]["store"], "l8-sidestore")
-        self.assertEqual(rec["attribution"], "principal_authenticated")
+        # T7: no key, no principal stamp — attribution defaults unattributed
+        self.assertEqual(rec["attribution"], "unattributed")
         self.assertGreater(rec["edit_distance_normalized"], 0)
+
+    def test_l8_capture_stamps_principal_only_with_key(self):
+        draft, edited = self.d / "d2.md", self.d / "e2.md"
+        draft.write_text("hello world\n")
+        edited.write_text("hello world!\n")
+        keydir = self.d / "keys"
+        rec = l8_capture.capture_edit(draft, edited, "principal:jeff",
+                                      ledger_dir=self.d, keydir=keydir)
+        self.assertEqual(rec["attribution"], "principal_authenticated")
+        self.assertIn("auth_sig", rec)
+        # a light edit emits the CONSUMED signal type — local accepts are live
+        self.assertEqual(rec["signal_type"], "endorsement")
+
+    def test_l8_capture_heavy_edit_is_engagement_not_endorsement(self):
+        draft, edited = self.d / "d3.md", self.d / "e3.md"
+        draft.write_text("alpha\n")
+        edited.write_text("completely different content entirely\n")
+        rec = l8_capture.capture_edit(draft, edited, "principal:jeff",
+                                      ledger_dir=self.d)
+        self.assertEqual(rec["signal_type"], "edit")
+        self.assertEqual(rec["outcome"], "edited-heavily")
 
     def test_l8_erasure_of_sidestore_keeps_chain_verifiable(self):
         # SE-2: chain hashes the REFERENCE; deleting side-store content (DSAR

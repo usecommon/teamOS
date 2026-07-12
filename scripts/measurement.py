@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+import principal_auth  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCORER_AGENT_ID = "teamos-scorer/0.1"
@@ -94,8 +95,8 @@ def weekly_accepted(ledger_dir, since_iso=None, until_iso=None):
             continue
         if r["signal_type"] != "endorsement":
             continue
-        if r["attribution"] != "principal_authenticated":
-            continue
+        if not principal_auth.verified(r):
+            continue  # T7: crypto-verified when a keydir is configured
         if not r.get("unprompted", False):
             continue  # prompted work never inflates the floor
         dist = r.get("edit_distance_normalized")

@@ -19,6 +19,7 @@ sys.path.insert(0, str(REPO_ROOT / "hooks"))
 
 import hashchain  # noqa: E402
 import gate  # noqa: E402
+import principal_auth  # noqa: E402
 
 BRIEF_AGENT_ID = "teamos-brief/0.1"
 # Slack emoji -> signal
@@ -125,7 +126,7 @@ def harvest_reactions(channel, ts, principal_user_id, slack, ledger_dir,
             principal = (user == principal_user_id)
             signal = "endorsement" if r["name"] == ACCEPT_EMOJI else "rejection"
             outcome = "accepted" if r["name"] == ACCEPT_EMOJI else "rejected"
-            rec = hashchain.append(ledger_dir / "l8.jsonl", {
+            body = {
                 "signal_type": signal,
                 "artifact_ref": {"store": "brief", "path": f"{channel}/{ts}",
                                  "content_hash": hashchain.sha256_str(artifact_link)},
@@ -133,7 +134,14 @@ def harvest_reactions(channel, ts, principal_user_id, slack, ledger_dir,
                 "attribution": "principal_authenticated" if principal else "unattributed",
                 "outcome": outcome,
                 "harvest": {"method": "slack-reactions-get", "harvested_at": harvested_at},
-            }, BRIEF_AGENT_ID)
+            }
+            if principal:
+                # T7: API-verified identity gets the crypto stamp when a
+                # principal keydir is configured — consumers verify, not trust
+                sig = principal_auth.sign(body)
+                if sig:
+                    body["auth_sig"] = sig
+            rec = hashchain.append(ledger_dir / "l8.jsonl", body, BRIEF_AGENT_ID)
             records.append(rec)
     return records
 
