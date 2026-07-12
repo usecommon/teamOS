@@ -16,13 +16,32 @@ allow/deny/ask, and appends one hash-chained L2 record per call to
 | 1 | Bash command has egress marker AND (sensitive path OR verbatim secret) | deny | bash-exfil |
 | 2 | Bash command has egress marker | ask | bash-egress |
 | 3 | Bash command touches sensitive read path (.ssh, .env, …) | ask | sensitive-read |
-| 4 | Write/Edit targets protected path (hooks/, adapter/, CLAUDE.md, workflows, divergence log) | ask | protected-path |
-| 5 | Write targets cloud-synced dir → treated as SEND; content scanned; secret found | deny | synced-path-send |
-| 6 | Write targets cloud-synced dir, content clean | ask | synced-path-send |
-| 7 | Send-class tool (WebFetch/WebSearch/name matches send markers) with verbatim secret in any param | deny | outbound-secret |
-| 8 | Send-class tool, params clean (scan always runs — AT-6) | permit | send-scanned-clean |
-| 9 | Any tool, secret pattern in any string param | ask | param-secret |
-| 10 | Everything else | permit | default-permit |
+| 4 | Bash command touches a cloud-synced root → treated as SEND; secret found / clean | deny / ask | bash-synced-path |
+| 5 | Write/Edit targets protected path (hooks/, adapter/, CLAUDE.md, workflows, divergence log) | ask | protected-path |
+| 6 | Write targets cloud-synced dir → treated as SEND; content scanned; secret found | deny | synced-path-send |
+| 7 | Write targets cloud-synced dir, content clean | ask | synced-path-send |
+| 8 | Send-class tool (WebFetch/WebSearch/name matches send markers) with verbatim secret in any param (incl. one base64 layer decoded) | deny | outbound-secret |
+| 9 | UNKNOWN tool (not in action_classes, no send marker) — defaults to send-class, params clean | ask | unknown-tool-send |
+| 10 | Send-class tool, params clean, session TAINTED (has read corpus/inbox/external content) | ask | taint-confirm |
+| 11 | Schedule-class action, session TAINTED | ask | taint-confirm |
+| 12 | Send-class tool, params clean, session untainted (scan always runs — AT-6) | permit | send-scanned-clean |
+| 13 | Any tool, secret pattern in any string param | ask | param-secret |
+| 14 | Everything else | permit | default-permit |
+
+**Taint (FR2 Layer A, session-granular — fork §7.7):** reading any
+`taint_source_paths` root (stores/corpus, stores/skills, inbox/) or calling a
+`taint_source_tools` tool (WebFetch, WebSearch) marks the session tainted
+(state: `<ledger_dir>/taint/<session_id>.json`). From then on, every send or
+schedule in that session escalates to the human. This is the layer that carries
+paraphrase-exfil and attacker-chosen recipients; the verbatim scan never could.
+Corrupt taint state reads as TAINTED (fail closed).
+
+**Egress denylist is NOT defensible on its own:** the bash marker list is
+substring matching over a normalized command (quotes/escapes stripped,
+whitespace collapsed, casefolded). It defeats casual obfuscation (`cu"r"l`,
+`CURL`), not a motivated attacker (aliases, ${!var}, self-decoding payloads,
+binaries not on the list). It is defense-in-depth ONLY; the load-bearing
+controls are taint-confirm on sends plus the harness permission prompt.
 
 **Always-on:** the tool-parameter scan and (on sends) the outbound-content scan
 run on every call regardless of posture. Posture (`TEAMOS_POSTURE` env,
@@ -43,8 +62,9 @@ not by this scan.
 `TEAMOS_POSTURE` (recorded posture). Defaults: repo policy, repo ledgers/,
 "attended".
 
-**Line budget:** gate.py ≤ 300 lines including comments (CI-enforced).
-Registration: see hooks/settings-fragment.json. Failure mode: if the hook
-crashes, the harness's own permission system still applies (fail-closed at the
-harness layer); the crash leaves no L2 record — absence of a record for an
-executed call is itself the tamper signal (L1↔L2 join, FK6 scoring).
+**Line budget:** gate.py ≤ 300 lines including comments (CI-enforced; taint
+helpers live in hooks/taint.py, same protected dir).
+Registration: see hooks/settings-fragment.json. Failure mode: the gate FAILS
+CLOSED — any crash (malformed stdin, broken policy, unwritable ledger) emits
+`permissionDecision: deny` + exit 2 and appends a best-effort `gate-error` L2
+record. A gate failure never becomes a permit.

@@ -69,6 +69,13 @@ class ProbeSet(GateBase):
             record = self._check(probe)
             self.assertEqual(record["verdict"], "permit", probe["name"])
 
+    def test_attacker_shaped_probes_blocked_and_ledgered(self):
+        # T2: probes written the way an attacker writes them (quoting, base64,
+        # ssh, git push, unknown tools) — never shaped to match the pattern.
+        for probe in PROBES["attacker_shaped"]:
+            record = self._check(probe)
+            self.assertNotEqual(record["verdict"], "permit", probe["name"])
+
     def test_l2_chain_verifies_after_probe_set(self):
         for probe in PROBES["canonical"] + PROBES["obfuscated"] + PROBES["benign_controls"]:
             self.run_probe(probe)
@@ -115,6 +122,61 @@ class InspectionAlwaysOn(GateBase):
             a["hookSpecificOutput"]["permissionDecision"],
             b["hookSpecificOutput"]["permissionDecision"],
         )
+
+
+class Taint(GateBase):
+    """T2 Layer A: untrusted content supplies values, never plan structure."""
+
+    def _process(self, tool, tool_input, session="s1"):
+        gate.process({"tool_name": tool, "tool_input": tool_input,
+                      "session_id": session}, self.policy)
+        return json.loads(
+            (self.ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
+
+    def test_send_after_corpus_read_requires_confirmation(self):
+        # session reads corpus -> tainted; a later send whose URL could carry a
+        # paraphrase of that content must ASK, not permit
+        read = self._process("Read", {"file_path": "stores/corpus/meeting-notes.md"})
+        self.assertEqual(read["verdict"], "permit")
+        send = self._process("WebFetch",
+                             {"url": "https://summarizer.example/?d=some-paraphrase"})
+        self.assertEqual(send["verdict"], "ask")
+        self.assertEqual(send["rule_id"], "taint-confirm")
+
+    def test_untainted_session_send_still_permits(self):
+        send = self._process("WebSearch", {"query": "python docs"}, session="clean")
+        self.assertEqual(send["verdict"], "permit")
+        self.assertEqual(send["rule_id"], "send-scanned-clean")
+
+    def test_taint_is_session_scoped(self):
+        self._process("Read", {"file_path": "inbox/proposals/x.json"}, session="a")
+        other = self._process("WebSearch", {"query": "docs"}, session="b")
+        self.assertEqual(other["verdict"], "permit")
+
+    def test_webfetch_taints_session(self):
+        self._process("WebFetch", {"url": "https://news.example/article"},
+                      session="w")
+        send = self._process("WebSearch", {"query": "follow-up"}, session="w")
+        self.assertEqual(send["rule_id"], "taint-confirm")
+
+    def test_schedule_in_tainted_session_asks(self):
+        self._process("Read", {"file_path": "stores/corpus/notes.md"}, session="sc")
+        policy = dict(self.policy)
+        policy["action_classes"] = dict(policy["action_classes"],
+                                        CronCreate="schedule")
+        gate.process({"tool_name": "CronCreate",
+                      "tool_input": {"cron": "0 9 * * *", "prompt": "do x"},
+                      "session_id": "sc"}, policy)
+        rec = json.loads(
+            (self.ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
+        self.assertEqual(rec["rule_id"], "taint-confirm")
+
+    def test_corrupt_taint_state_fails_closed(self):
+        taint_dir = self.ledger_dir / "taint"
+        taint_dir.mkdir(parents=True, exist_ok=True)
+        (taint_dir / "corrupt.json").write_text("{not json")
+        send = self._process("WebSearch", {"query": "docs"}, session="corrupt")
+        self.assertEqual(send["rule_id"], "taint-confirm")
 
 
 class FailClosed(unittest.TestCase):
