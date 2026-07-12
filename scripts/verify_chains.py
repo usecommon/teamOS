@@ -9,12 +9,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+import anchor  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-def main(ledger_dir=None):
+def main(ledger_dir=None, anchor_dir=None):
     ledger_dir = Path(ledger_dir or os.environ.get("TEAMOS_LEDGER_DIR", REPO_ROOT / "ledgers"))
+    anchor_dir = Path(anchor_dir or os.environ.get("TEAMOS_ANCHOR_DIR", ledger_dir / "anchors"))
     files = sorted(ledger_dir.glob("*.jsonl"))
     if not files:
         print(f"no ledgers under {ledger_dir} — nothing to verify")
@@ -27,6 +29,13 @@ def main(ledger_dir=None):
         except ValueError as exc:
             failures += 1
             print(f"FAIL: {exc}")
+    # E2/SE-6: a whole-file deletion starts a fresh chain that verify() passes.
+    # Cross-check the off-box anchor: an anchored head absent from the current
+    # chain means history was truncated/rewritten — surface it, don't pass.
+    truncated = anchor.detect_truncation(ledger_dir, anchor_dir)
+    for name in truncated:
+        failures += 1
+        print(f"FAIL: {name}: anchored head absent — history truncated since last anchor (E2)")
     return 1 if failures else 0
 
 
