@@ -4,6 +4,7 @@ they never fabricate a result (A-tests are earned, not faked). No language model
 """
 
 import json
+import math
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -101,6 +102,32 @@ def weekly_accepted(ledger_dir, since_iso=None, until_iso=None):
 
 def floor_met(count, floor=3):
     return count >= floor
+
+
+def proxy_behavior_correlation(pairs):
+    """A-A4 primary (ME-1): correlation between the production proxy and
+    downstream-use behavior, reported WITH its interval (pre-registered: never
+    a bare point estimate). pairs: [(proxy_score, behavior_value), ...].
+    Pearson r + Fisher-z 95% CI; n<4 or zero variance => inconclusive."""
+    n = len(pairs)
+    out = {"n": n, "r": None, "interval": None, "result": "inconclusive"}
+    if n < 4:
+        return out
+    xs, ys = [p[0] for p in pairs], [p[1] for p in pairs]
+    mx, my = sum(xs) / n, sum(ys) / n
+    sxx = sum((x - mx) ** 2 for x in xs)
+    syy = sum((y - my) ** 2 for y in ys)
+    if sxx == 0 or syy == 0:
+        return out
+    r = sum((x - mx) * (y - my) for x, y in pairs) / math.sqrt(sxx * syy)
+    r = max(-0.999999, min(0.999999, r))
+    z = 0.5 * math.log((1 + r) / (1 - r))
+    se = 1 / math.sqrt(n - 3)
+    lo, hi = math.tanh(z - 1.96 * se), math.tanh(z + 1.96 * se)
+    out.update(r=round(r, 4), interval=[round(lo, 4), round(hi, 4)])
+    if lo > 0:
+        out["result"] = "correlated"
+    return out
 
 
 def _utc():

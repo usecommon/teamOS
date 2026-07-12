@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import hashchain  # noqa: E402
+import measurement  # noqa: E402
 import promotion_gate as pg  # noqa: E402
 import transfer  # noqa: E402
 
@@ -101,11 +102,50 @@ class Measurement(unittest.TestCase):
     def test_preregistered_rule_needs_two_positive_receivers(self):
         one = transfer.passes_preregistered_rule({"a": 0.2, "b": None})
         self.assertEqual(one["result"], "inconclusive")
-        two = transfer.passes_preregistered_rule({"a": 0.2, "b": 0.1})
-        self.assertEqual(two["result"], "pass")
+
+    def test_interval_spanning_zero_is_inconclusive_not_pass(self):
+        # small positive deltas, wide dispersion at n=2 -> interval spans zero.
+        # The weakened `pooled > 0` rule would have called this "pass".
+        verdict = transfer.passes_preregistered_rule({"a": 0.2, "b": 0.1})
+        self.assertEqual(verdict["result"], "inconclusive")
+        self.assertLess(verdict["interval"][0], 0)
+        self.assertGreater(verdict["pooled"], 0)
+
+    def test_tight_consistent_deltas_pass(self):
+        verdict = transfer.passes_preregistered_rule(
+            {"a": 0.20, "b": 0.21, "c": 0.19})
+        self.assertEqual(verdict["result"], "pass")
+        self.assertGreater(verdict["interval"][0], 0)
+
+    def test_mixed_sign_deltas_inconclusive(self):
         mixed = transfer.passes_preregistered_rule({"a": 0.2, "b": -0.3, "c": 0.05})
-        # pooled must exceed zero AND >=2 positive
-        self.assertIn(mixed["result"], ("pass", "inconclusive"))
+        self.assertEqual(mixed["result"], "inconclusive")
+
+    def test_no_interval_at_single_receiver(self):
+        one = transfer.passes_preregistered_rule({"a": 0.5})
+        self.assertEqual(one["result"], "inconclusive")
+        self.assertIsNone(one["interval"])
+
+
+class AA4Correlation(unittest.TestCase):
+    def test_reports_interval_not_bare_point_estimate(self):
+        pairs = [(0.1, 0.12), (0.5, 0.49), (0.8, 0.83), (0.3, 0.28),
+                 (0.9, 0.91), (0.2, 0.22), (0.7, 0.68), (0.6, 0.61)]
+        out = measurement.proxy_behavior_correlation(pairs)
+        self.assertEqual(out["result"], "correlated")
+        self.assertIsNotNone(out["interval"])
+        self.assertGreater(out["interval"][0], 0)
+
+    def test_weak_noisy_correlation_is_inconclusive(self):
+        pairs = [(0.1, 0.9), (0.5, 0.1), (0.8, 0.85), (0.3, 0.6),
+                 (0.9, 0.2), (0.2, 0.4)]
+        out = measurement.proxy_behavior_correlation(pairs)
+        self.assertEqual(out["result"], "inconclusive")
+
+    def test_tiny_n_is_inconclusive(self):
+        out = measurement.proxy_behavior_correlation([(0.1, 0.1), (0.9, 0.9)])
+        self.assertEqual(out["result"], "inconclusive")
+        self.assertIsNone(out["r"])
 
 
 class Rollback(unittest.TestCase):
