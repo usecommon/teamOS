@@ -104,6 +104,13 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .tag.spec{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
 .tag.missing{opacity:.42}
 .tsec{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:.6rem 0 .2rem}
+.recrow{display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid var(--rule)}
+.recrow:last-child{border-bottom:none}.recmain{flex:1}
+.recaction{font-weight:600;margin:.15rem 0}
+.recside{display:flex;flex-direction:column;gap:.4rem;align-items:flex-end;white-space:nowrap}
+.vers{white-space:normal}.ver{display:inline-block;font-family:var(--mono);font-size:.8rem;
+background:var(--surface-2);border:1px solid var(--rule);border-radius:6px;padding:.15rem .45rem;margin:.15rem .3rem .15rem 0}
+.up{color:var(--good)}.dn{color:var(--crit)}
 .workrow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule)}
 .workrow:last-child{border-bottom:none}
 .spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent-2);
@@ -354,14 +361,87 @@ def _activity(demo):
         <tbody>{crows}</tbody></table></div>"""
 
 
+def _recommendations(demo):
+    recs = __import__("recommend").load(demo)
+    openr = [r for r in recs if r.get("status") == "open"]
+    CONF = {"high": "good", "medium": "warn", "low": ""}
+    if not openr:
+        return '<div class="panel"><h2>Recommendations</h2><p class="faint">No open recommendations.</p></div>'
+    rows = ""
+    for r in openr:
+        rows += f"""<div class="recrow">
+          <div class="recmain"><span class="mono small faint">{_esc(r['agent'])} recommends</span>
+            <div class="recaction">{_esc(r['action'])}</div>
+            <div class="small faint">{_esc(r['rationale'])}</div></div>
+          <div class="recside">
+            <span class="chip {CONF.get(r['confidence'],'')}">{_esc(r['confidence'])}</span>
+            <div><span class="approve">Accept</span> <span class="approve">Dismiss</span></div>
+          </div></div>"""
+    return f"""<div class="panel"><h2>Recommended actions — your agents → you</h2>{rows}
+      <p class="small faint" style="margin-top:.8rem">Recommendations never act on their own —
+      they wait for your Accept. This is the initiative surface: the agents propose, you
+      decide.</p></div>"""
+
+
+def _learning(demo, est):
+    l7 = _read(demo/"l7.jsonl")
+    # skill improvement: mean score per version, in order of appearance
+    by, order = {}, {}
+    for r in l7:
+        sid, ver = r["skill_id"], r["skill_version"]
+        by.setdefault(sid, {}).setdefault(ver, []).append(r["score"])
+        order.setdefault(sid, [])
+        if ver not in order[sid]:
+            order[sid].append(ver)
+    srows = ""
+    for sid, versions in order.items():
+        cells = ""
+        prev = None
+        for v in versions:
+            m = round(sum(by[sid][v]) / len(by[sid][v]), 2)
+            delta = "" if prev is None else (f' <span class="up">▲{m-prev:+.2f}</span>' if m > prev
+                                             else (f' <span class="dn">▼{m-prev:+.2f}</span>' if m < prev else ""))
+            cells += f'<span class="ver">{_esc(v[:7])} <b>{m:.2f}</b>{delta}</span>'
+            prev = m
+        srows += f'<tr><td class="mono">{_esc(sid)}</td><td class="vers">{cells}</td></tr>'
+    srows = srows or '<tr><td colspan="2" class="faint">no scores yet</td></tr>'
+
+    promos = [r for r in _read(demo/"l6.jsonl") if r.get("change_ref") == "promotion"]
+    prom_list = "".join(f'<li><span class="mono">{_esc(r["object_id"])}</span> promoted to the team registry</li>'
+                        for r in promos) or '<li class="faint">nothing promoted yet</li>'
+
+    wl = __import__("worklog").load(demo)
+    disc = [w for w in wl if w["agent"] == "scout"]
+    disc_list = "".join(f'<li>{_esc(w["task"])}</li>' for w in disc) or '<li class="faint">no discoveries</li>'
+
+    widens = []
+    if est and Path(est).exists():
+        import json as _j
+        widens = [h for h in _j.loads(Path(est).read_text()).get("history", []) if h.get("rule") == "widen"]
+    wid_list = "".join(f'<li><span class="mono">{_esc(h["category"])}</span> autonomy {h["from"]}→{h["to"]} (earned on your ✓)</li>'
+                       for h in widens) or '<li class="faint">no autonomy changes</li>'
+
+    return f"""<div class="panel"><h2>Skill improvement (score by version — is it getting better?)</h2>
+      <table><thead><tr><th>Skill</th><th>Versions →</th></tr></thead><tbody>{srows}</tbody></table></div>
+    <div class="grid2">
+      <div class="panel"><h2>Promoted across the team (transfer)</h2><ul class="plain">{prom_list}</ul></div>
+      <div class="panel"><h2>Discovered by the scout</h2><ul class="plain">{disc_list}</ul></div></div>
+    <div class="panel"><h2>Autonomy earned</h2><ul class="plain">{wid_list}</ul>
+      <p class="small faint" style="margin-top:.6rem">Learning = signals (L8) → scoring (L7) →
+      versions (L6) → promotion (FK7), plus trust earned in the envelope. This is where the
+      fabric compounds.</p></div>"""
+
+
 def render_console(demo, est, pol, jg):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    tabs = [("overview", "Overview"), ("agents", "Agents"), ("activity", "Activity"),
+    tabs = [("overview", "Overview"), ("recommendations", "Recommendations"),
+            ("learning", "Learning"), ("agents", "Agents"), ("activity", "Activity"),
             ("brief", "Brief"), ("inbox", "Inbox"), ("corpus", "Corpus"),
             ("skills", "Skills"), ("templates", "Templates"), ("envelope", "Envelope"),
             ("audit", "Audit")]
-    surfaces = {"overview": _overview(demo), "agents": _agents(demo), "activity": _activity(demo),
-                "brief": _brief(demo, jg), "inbox": _inbox(demo),
+    surfaces = {"overview": _overview(demo), "recommendations": _recommendations(demo),
+                "learning": _learning(demo, est), "agents": _agents(demo),
+                "activity": _activity(demo), "brief": _brief(demo, jg), "inbox": _inbox(demo),
                 "corpus": _corpus(demo), "skills": _skills(demo), "templates": _templates(demo),
                 "envelope": _envelope(demo, est, pol), "audit": _audit(demo)}
     navbtns = "".join(f'<button data-s="{k}"{" class=active" if i==0 else ""}>{lbl}</button>'
@@ -395,6 +475,12 @@ def build_demo():
     jg = cf.compile_footprint(items, out, demo,
                               cc_footprint_dir=REPO/"fixtures/harness-footprint/dot-claude")["job_graph"]
     worklog.done(demo, "compiler", "Compile footprint", artifact="stores/job_graph.json", outcome="done")
+    # a prior, lower-scoring version FIRST so the learning trend shows improvement
+    import hashchain as _hc
+    for s in (0.55, 0.6, 0.62):
+        _hc.append(demo/"l7.jsonl", {"skill_id": "compile", "skill_version": "v0-9f8e2a",
+            "invocation_id": "hist", "metric": "shadow_completeness", "score": s,
+            "sample_ref": {"store": "x", "path": "y", "content_hash": "sha256:z"}}, "hist")
     m = loopmod.run_daily_loop(jg, out, demo, demo/"anchors", "demo-run", skill_version="a1b2c3d")
     acc_cycle = ["accepted", "accepted", "accepted", "rejected"]
     for i, (name, dv) in enumerate(m["deliverables"].items()):
@@ -415,6 +501,21 @@ def build_demo():
                  artifact="corpus/queue-vendors.md", outcome="accepted")
     # one item still in progress (no matching done)
     worklog.start(demo, "loops", "Draft nightly-corpus-compile")
+    # learning: promote a proven skill to the team registry (transfer)
+    import promotion_gate
+    promotion_gate.promote("compile", "# compile\ncompile the footprint.",
+                           {"signed_commit": True, "reproducible_build": True, "hook_diff_reviewed": True},
+                           demo, demo/"team")
+    # recommendations: agents → user
+    import recommend
+    recommend.record(demo, "scout", "Link 'Cache Layer' across the 2 docs that mention it",
+                     "Recurring entity with no linking corpus entry", confidence="low")
+    recommend.record(demo, "loops", "Promote 'nightly corpus compile' to a scheduled task",
+                     "Compiled 3 weeks running; steady cadence", confidence="medium")
+    recommend.record(demo, "brief", "Accept all 5 job-draft items for daily drafting",
+                     "Every one recurs weekly or faster with correct sources", confidence="high")
+    recommend.record(demo, "code-reviewer", "Add a pre-merge review step on the cache path",
+                     "Two recent bugs shipped through that path", confidence="medium")
     gate.LEDGER_DIR = demo
     pol = gate.load_policy()
     gate.process({"tool_name": "Read", "tool_input": {"file_path": "notes.md"}}, pol)
