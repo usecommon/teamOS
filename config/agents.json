@@ -1,5 +1,5 @@
 {
-  "_comment": "Agent members (arch §3.5 — a member need not be human). Each owns a slice of the work. Profiles are config; live stats come from the work log + ledgers.",
+  "_comment": "Agent members (arch §3.5 — a member need not be human). Each owns a slice of the work. Static profile fields (role, jobs, automation) are config; live stats (tasks, acceptance, quality, subagents) come from the work log + ledgers.",
   "agents": [
     {
       "id": "compiler",
@@ -7,6 +7,8 @@
       "role": "Compiles your job from history into a job graph, profile, and skills",
       "scope": "your eligible footprint",
       "skills": ["compile"],
+      "jobs": ["Read the eligible footprint", "Distill recurring tasks", "Emit job graph + profile + skills"],
+      "automation": "On new footprint · weekly recompile",
       "inference_domain": "teamos_plane_a"
     },
     {
@@ -15,6 +17,8 @@
       "role": "Drafts recurring deliverables on schedule, unprompted",
       "scope": "the job graph",
       "skills": ["weekly-digest", "standup", "status-update", "meeting-summary", "release-notes"],
+      "jobs": ["Draft each recurring deliverable", "Deliver on cadence", "Harvest ✓/✗ for scoring"],
+      "automation": "Scheduled task · fires on each job's cadence",
       "inference_domain": "teamos_plane_a"
     },
     {
@@ -23,6 +27,8 @@
       "role": "Assembles and delivers the unrequested brief; harvests your ✓/✗",
       "scope": "Slack DM",
       "skills": ["brief"],
+      "jobs": ["Assemble the first brief", "Deliver via gated send", "Harvest authenticated reactions"],
+      "automation": "Once on cold start · then daily digest",
       "inference_domain": "teamos_plane_a"
     },
     {
@@ -31,6 +37,8 @@
       "role": "Surfaces recurring patterns as proposals (post-gates, low volume)",
       "scope": "the corpus",
       "skills": ["scout"],
+      "jobs": ["Scan the corpus for patterns", "Draft proposals to the inbox", "Never write the corpus directly"],
+      "automation": "Scheduled task · weekly (Mon 09:00)",
       "inference_domain": "teamos_plane_a"
     },
     {
@@ -39,6 +47,8 @@
       "role": "Inspects and permits every tool call; writes the ledger",
       "scope": "all actions",
       "skills": ["payload-inspection"],
+      "jobs": ["Inspect every payload", "Return allow/deny/ask", "Append one hash-chained L2 record"],
+      "automation": "Continuous · fires on every tool call",
       "inference_domain": "deterministic"
     },
     {
@@ -47,6 +57,8 @@
       "role": "Reviews diffs and PRs for bugs, security, and convention drift",
       "scope": "changed code",
       "skills": ["code-review"],
+      "jobs": ["Read the diff", "Flag bugs / security / drift", "Post a review artifact"],
+      "automation": "On PR open · on request",
       "inference_domain": "teamos_plane_a",
       "specialized": true
     },
@@ -56,6 +68,8 @@
       "role": "Answers questions across sources, verified and cited",
       "scope": "corpus + eligible connectors",
       "skills": ["research"],
+      "jobs": ["Gather across eligible sources", "Verify and cite", "Write the answer to the corpus"],
+      "automation": "On request · on demand",
       "inference_domain": "teamos_plane_a",
       "specialized": true
     },
@@ -65,6 +79,8 @@
       "role": "Monitors every agent; trips the circuit breaker on threshold breach. Can only halt, never widen.",
       "scope": "all agents + ledgers",
       "skills": ["monitor", "circuit-breaker"],
+      "jobs": ["Watch denial / rejection / spawn rates", "Trip the breaker on breach", "Halt only — never widen"],
+      "automation": "Continuous monitor · threshold-triggered",
       "inference_domain": "deterministic",
       "specialized": true
     }

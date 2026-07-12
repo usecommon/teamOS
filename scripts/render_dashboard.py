@@ -103,6 +103,18 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .agentcard .stat{color:var(--accent);border-top:1px solid var(--rule);padding-top:.5rem;margin-top:.2rem}
 .tag.spec{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
 .tag.missing{opacity:.42}
+.tag.auto{background:var(--surface-2);color:var(--accent);border-color:var(--rule)}
+.apstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.55rem;padding:.7rem 0;
+border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.apstat{display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.apstat .apk{font-family:var(--mono);font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.apstat .apv{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.apstat .apv.small{font-size:.9rem;font-weight:600}
+.taskline{display:flex;align-items:center;gap:.5rem;padding:.28rem 0;font-size:.84rem;border-bottom:1px solid var(--rule)}
+.taskline:last-child{border-bottom:none}
+.tmark{font-family:var(--mono);font-weight:700;width:12px;flex:none;text-align:center;color:var(--faint)}
+.tmark.good{color:var(--good)}.tmark.crit{color:var(--crit)}.tmark.warn{color:var(--warn)}
+.autoline{margin:.1rem 0 .4rem}
 .tsec{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:.6rem 0 .2rem}
 .recrow{display:flex;gap:1rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid var(--rule)}
 .recrow:last-child{border-bottom:none}.recmain{flex:1}
@@ -308,6 +320,17 @@ def _agents(demo):
     st = json.loads((demo/"breaker.json").read_text()) if (demo/"breaker.json").exists() else {"state": "closed"}
     halted = st.get("state") == "open"
 
+    # per-skill mean quality (L7) → averaged over each agent's owned skills
+    l7 = _read(demo/"l7.jsonl")
+    by_skill = {}
+    for r in l7:
+        by_skill.setdefault(r["skill_id"], []).append(r["score"])
+    skill_mean = {k: sum(v)/len(v) for k, v in by_skill.items()}
+
+    def quality(a):
+        vals = [skill_mean[s] for s in a["skills"] if s in skill_mean]
+        return sum(vals)/len(vals) if vals else None
+
     def stats(aid):
         d = [w for w in done if w["agent"] == aid]
         acc = sum(1 for w in d if w.get("outcome") == "accepted")
@@ -316,6 +339,11 @@ def _agents(demo):
         sp = [s for s in spawns if s["parent"] == aid or s["parent"].startswith(aid)]
         last = max((w["ts"] for w in wl if w["agent"] == aid), default=None)
         return len(d), acc, rej, len(inp), len(sp), last
+
+    def tasks_of(aid, limit=4):
+        rows = [w for w in working if w["agent"] == aid]
+        rows += [w for w in reversed(done) if w["agent"] == aid]
+        return rows[:limit]
 
     total_done = len(done)
     total_acc = sum(1 for w in done if w.get("outcome") == "accepted")
@@ -351,22 +379,58 @@ def _agents(demo):
           <td class="mono small faint">{_esc(last[11:16]) if last else '—'}</td>
           <td>{health}</td></tr>"""
 
+    ICON = {"accepted": ('✓', 'good'), "rejected": ('✗', 'crit'),
+            "pending": ('·', 'warn'), "done": ('✓', '')}
     cards = ""
     for a in roster:
-        skills = "".join(f'<span class="tag">{_esc(s)}</span> ' for s in a["skills"])
+        d, acc, rej, inp, sp, last = stats(a["id"])
+        q = quality(a)
+        arate = f"{round(100*acc/(acc+rej))}%" if (acc+rej) else "—"
+        arate_frac = acc/(acc+rej) if (acc+rej) else 0
+        health = ('<span class="chip crit">halted</span>' if halted else
+                  ('<span class="chip warn">review</span>' if rej else
+                   '<span class="chip good">healthy</span>'))
+        jobs = "".join(f"<li>{_esc(j)}</li>" for j in a.get("jobs", []))
+        tlist = ""
+        for w in tasks_of(a["id"]):
+            if w["status"] != "done":
+                tlist += (f'<div class="taskline"><span class="spin"></span>'
+                          f'<span>{_esc(w["task"])}</span>'
+                          f'<span class="mono small faint" style="margin-left:auto">now</span></div>')
+            else:
+                ic, cls = ICON.get(w.get("outcome") or "done", ('✓', ''))
+                tlist += (f'<div class="taskline"><span class="tmark {cls}">{ic}</span>'
+                          f'<span>{_esc(w["task"])}</span>'
+                          f'<span class="mono small faint" style="margin-left:auto">{_esc(w["ts"][11:16])}</span></div>')
+        tlist = tlist or '<p class="small faint" style="margin:.2rem 0">no tasks yet</p>'
+        qcell = (f'{_bar(q, "good" if q>=0.7 else "warn")}<span class="mono">{q:.2f}</span>'
+                 if q is not None else '<span class="faint mono">—</span>')
         cards += f"""<div class="agentcard">
           <div class="agenthead"><h3>{_esc(a['name'])}</h3>
-            {'<span class="tag spec">specialized</span>' if a.get('specialized') else ''}</div>
+            {health}{' <span class="tag spec">specialized</span>' if a.get('specialized') else ''}</div>
           <p class="role">{_esc(a['role'])}</p>
+          <div class="apstats">
+            <div class="apstat"><span class="apk">Completed</span><span class="apv">{d}</span></div>
+            <div class="apstat"><span class="apk">Acceptance</span><span class="apv">{arate}</span>
+              {_bar(arate_frac, "good")}</div>
+            <div class="apstat"><span class="apk">Quality</span><span class="apv small">{qcell}</span></div>
+            <div class="apstat"><span class="apk">Subagents</span><span class="apv">{sp}</span></div>
+            <div class="apstat"><span class="apk">In progress</span><span class="apv">{inp}</span></div>
+            <div class="apstat"><span class="apk">Last active</span><span class="apv small mono">{_esc(last[11:16]) if last else '—'}</span></div>
+          </div>
+          <div class="tsec">Jobs</div><ul class="plain">{jobs}</ul>
+          <div class="tsec">Recent tasks</div>{tlist}
+          <div class="tsec">Automation</div>
+          <div class="autoline"><span class="tag auto">{_esc(a.get('automation','on request'))}</span></div>
           <div class="meta"><span class="mono small faint">scope: {_esc(a['scope'])}</span>
-            <span class="mono small faint">inference: {_esc(a['inference_domain'])}</span></div>
-          <div class="skills">{skills}</div></div>"""
+            <span class="mono small faint">inference: {_esc(a['inference_domain'])}</span></div></div>"""
 
     return banner + tiles + f"""<div class="panel"><h2>Fleet — every agent, at a glance</h2>
       <table><thead><tr><th>Agent</th><th>Status</th><th>Doing</th><th>Done</th>
         <th>✓</th><th>✗</th><th>Subagents</th><th>Last</th><th>Health</th></tr></thead>
       <tbody>{rows}</tbody></table></div>
-    <h3>Roster</h3><div class="agentgrid">{cards}</div>"""
+    <h3>Per-agent profiles — performance, jobs, tasks, automation</h3>
+    <div class="agentgrid">{cards}</div>"""
 
 
 def _templates(demo):
@@ -621,12 +685,16 @@ def build_demo():
             "invocation_id": "hist", "metric": "shadow_completeness", "score": s,
             "sample_ref": {"store": "x", "path": "y", "content_hash": "sha256:z"}}, "hist")
     m = loopmod.run_daily_loop(jg, out, demo, demo/"anchors", "demo-run", skill_version="a1b2c3d")
+    import measurement
     acc_cycle = ["accepted", "accepted", "accepted", "rejected"]
     for i, (name, dv) in enumerate(m["deliverables"].items()):
-        task = f"Draft {name.split(':',1)[1]}"
+        skill_id = name.split(":", 1)[1]
+        task = f"Draft {skill_id}"
         worklog.start(demo, "loops", task)
         worklog.done(demo, "loops", task, artifact=dv["path"].split("stores/")[-1]
                      if "stores/" in dv["path"] else dv["path"], outcome=acc_cycle[i % len(acc_cycle)])
+        # score each deliverable under its OWN skill_id so the loops agent shows real quality
+        measurement.score_deliverable(dv["path"], skill_id, "a1b2c3d", f"demo-{skill_id}", demo)
     worklog.done(demo, "brief", "Deliver Day One Brief", artifact="Slack DM", outcome="accepted")
     worklog.done(demo, "scout", "Propose: weekly gap fill", artifact="inbox/proposals", outcome="pending")
     # specialized agents (shared skills) at work
