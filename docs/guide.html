@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team OS — Visual Guide</title>
+<style>
+:root{
+  --bg:#EAEDF1;--surface:#FBFCFD;--surface-2:#F1F4F8;--raise:#FFF;
+  --ink:#131820;--ink-soft:#47505E;--faint:#8A93A0;
+  --rule:#D4DAE2;--rule-strong:#BAC3CE;
+  --accent:#2F4B7C;--accent-2:#3B67C4;--on-accent:#fff;
+  --good:#2E7D5B;--good-bg:#E4F1EA;--warn:#8F6210;--warn-bg:#F6ECD8;--crit:#AF3A3A;--crit-bg:#F6E1E1;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --maxw:1180px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0C0F15;--surface:#141A23;--surface-2:#1A212C;--raise:#1E2632;
+  --ink:#E7ECF3;--ink-soft:#A4AFBE;--faint:#6D7787;--rule:#28313D;--rule-strong:#374252;
+  --accent:#7C9CE0;--accent-2:#93B2F3;--on-accent:#0C0F15;
+  --good:#5DBE90;--good-bg:#16271F;--warn:#D6A64E;--warn-bg:#2A2314;--crit:#E0716B;--crit-bg:#2C1717;
+}}
+:root[data-theme="dark"]{--bg:#0C0F15;--surface:#141A23;--surface-2:#1A212C;--raise:#1E2632;
+  --ink:#E7ECF3;--ink-soft:#A4AFBE;--faint:#6D7787;--rule:#28313D;--rule-strong:#374252;
+  --accent:#7C9CE0;--accent-2:#93B2F3;--on-accent:#0C0F15;--good:#5DBE90;--good-bg:#16271F;
+  --warn:#D6A64E;--warn-bg:#2A2314;--crit:#E0716B;--crit-bg:#2C1717;}
+:root[data-theme="light"]{--bg:#EAEDF1;--surface:#FBFCFD;--surface-2:#F1F4F8;--raise:#FFF;
+  --ink:#131820;--ink-soft:#47505E;--faint:#8A93A0;--rule:#D4DAE2;--rule-strong:#BAC3CE;
+  --accent:#2F4B7C;--accent-2:#3B67C4;--on-accent:#fff;--good:#2E7D5B;--good-bg:#E4F1EA;
+  --warn:#8F6210;--warn-bg:#F6ECD8;--crit:#AF3A3A;--crit-bg:#F6E1E1;}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-2);text-decoration:none}a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;border-radius:3px}
+code{font-family:var(--mono)}
+h1,h2,h3{text-wrap:balance;line-height:1.15;letter-spacing:-.012em}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600}
+
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.topbar .in{max-width:var(--maxw);margin:0 auto;padding:.7rem 1.5rem;display:flex;align-items:center;gap:.7rem}
+.brand{display:flex;align-items:center;gap:.55rem;font-weight:700;letter-spacing:-.02em}
+.brand svg{width:22px;height:22px}.brand rect{fill:none;stroke:var(--accent);stroke-width:2}.brand line{stroke:var(--accent-2);stroke-width:2}
+.brand-tag{font-size:.82rem;color:var(--ink-soft);padding-left:.9rem;border-left:1px solid var(--rule)}
+@media(max-width:720px){.brand-tag{display:none}}
+.tag-sub{margin-left:auto;font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--rule-strong);padding:.24rem .55rem;border-radius:999px}
+
+.hero{max-width:var(--maxw);margin:0 auto;padding:3.4rem 1.5rem 1.6rem}
+.hero h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;margin:.5rem 0 .4rem}
+.hero .lede{font-size:1.15rem;color:var(--ink-soft);max-width:64ch;margin:0}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.5rem 5rem;display:grid;grid-template-columns:1fr;gap:2.4rem}
+@media(min-width:1000px){.wrap{grid-template-columns:minmax(0,1fr) 200px;gap:3rem;align-items:start}
+  .toc{position:sticky;top:70px;order:2}.main{order:1;min-width:0}}
+.toc nav{display:flex;flex-direction:column;gap:.05rem;font-size:.85rem;border-left:1px solid var(--rule);padding-left:1rem}
+.toc .eyebrow{margin:0 0 .5rem}.toc a{color:var(--ink-soft);padding:.18rem 0}.toc a:hover{color:var(--ink);text-decoration:none}
+@media(max-width:999px){.toc{display:none}}
+
+section{padding-top:2.4rem;margin-top:1rem;border-top:1px solid var(--rule)}
+section:first-child{border-top:none;margin-top:0}
+section h2{font-size:1.5rem;font-weight:750;margin:.3rem 0 .9rem}
+section h3{font-size:1.06rem;margin:1.6rem 0 .5rem}
+p{margin:.7rem 0;max-width:70ch}.small{font-size:.9rem;color:var(--ink-soft)}
+
+.diagram{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1.2rem;margin:1.2rem 0;overflow-x:auto}
+.diagram svg{display:block;width:100%;height:auto;min-width:560px}
+.diagram .cap{font-size:.84rem;color:var(--faint);margin-top:.6rem;font-family:var(--mono)}
+svg .node{fill:var(--surface-2);stroke:var(--rule-strong);stroke-width:1.4}
+svg .node-a{fill:var(--surface-2);stroke:var(--accent);stroke-width:1.6}
+svg .gate{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1.4}
+svg .store{fill:var(--good-bg);stroke:var(--good);stroke-width:1.4}
+svg text{fill:var(--ink);font-family:var(--sans);font-size:13px}
+svg .t2{fill:var(--ink-soft);font-size:11px}
+svg .lbl{fill:var(--faint);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em}
+svg .flow{stroke:var(--accent-2);stroke-width:1.7;fill:none;marker-end:url(#ar)}
+svg .flow-b{stroke:var(--faint);stroke-width:1.5;fill:none;stroke-dasharray:4 3;marker-end:url(#arb)}
+svg marker#ar path{fill:var(--accent-2)}svg marker#arb path{fill:var(--faint)}
+
+.grid{display:grid;gap:1rem}
+@media(min-width:640px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:1fr 1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:1.1rem 1.2rem}
+.card h3{margin:.1rem 0 .35rem;font-size:1rem}.card p{margin:.3rem 0;font-size:.92rem;color:var(--ink-soft)}
+.card .fk{font-family:var(--mono);font-size:.66rem;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;margin:.9rem 0}
+table{border-collapse:collapse;width:100%;font-size:.89rem;min-width:520px}
+th,td{text-align:left;padding:.6rem .85rem;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{background:var(--surface-2);font-family:var(--mono);font-weight:600;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+tbody tr:last-child td{border-bottom:none}
+td .mono,.mono{font-family:var(--mono)}.faint{color:var(--faint)}
+.pill{display:inline-block;font-family:var(--mono);font-size:.68rem;padding:.14rem .45rem;border-radius:5px;background:var(--surface-2);border:1px solid var(--rule);color:var(--ink-soft)}
+.pill.good{background:var(--good-bg);color:var(--good);border-color:var(--good)}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.callout{border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:1rem 1.2rem;margin:1.1rem 0}
+.callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+.callout .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--warn)}
+.callout.warn p{color:var(--ink)}
+ul.tight{margin:.5rem 0;padding-left:1.15rem}ul.tight li{margin:.3rem 0}
+footer{max-width:var(--maxw);margin:0 auto;padding:2.2rem 1.5rem 4rem;border-top:1px solid var(--rule);color:var(--faint);font-size:.85rem;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="in">
+  <span class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>Team&nbsp;OS</span>
+  <span class="brand-tag">Human teams. Agent fabric.</span>
+  <span class="tag-sub">Visual guide</span>
+</div></div>
+
+<header class="hero">
+  <p class="eyebrow">Visual guide</p>
+  <h1>How Team OS works — end to end</h1>
+  <p class="lede">A tool for human teams: each person has a proactive agent, and the agents
+  form the connective fabric that carries what the team knows. This guide walks the whole
+  system — what it does, the workflows, the stack, and how it plugs into Claude over MCP.</p>
+</header>
+
+<div class="wrap">
+  <aside class="toc"><nav>
+    <p class="eyebrow">Contents</p>
+    <a href="#what">What it does</a>
+    <a href="#how">How it works</a>
+    <a href="#flows">Workflows</a>
+    <a href="#mcp">MCP &amp; Claude</a>
+    <a href="#io">Sources · I/O</a>
+    <a href="#stack">Technical stack</a>
+    <a href="#cases">Use cases</a>
+  </nav></aside>
+
+  <main class="main">
+
+  <!-- WHAT -->
+  <section id="what">
+    <p class="eyebrow">Overview</p>
+    <h2>What it does</h2>
+    <p>Team OS compiles your recurring work, drafts deliverables before you ask, runs on a
+    schedule, and shares proven skills across the team — every action inspected by a gate and
+    written to an append-only ledger. Nine capabilities, each a building block (the FK labels
+    are the build items):</p>
+    <div class="grid three">
+      <div class="card"><span class="fk">FK4 · Compiler</span><h3>Compiles your job</h3><p>Mines your history into a job graph, profile/voice, and pre-built skills. Injected content is quarantined.</p></div>
+      <div class="card"><span class="fk">FK5 · Brief</span><h3>Day One Brief</h3><p>An unrequested digest + ✓/✗ job draft + first deliverable, to your Slack DM.</p></div>
+      <div class="card"><span class="fk">FK6 · Loops</span><h3>Works unasked</h3><p>Daily digest and recurring drafts on schedule, scored over time; resumes after restarts.</p></div>
+      <div class="card"><span class="fk">FK2 · Gate</span><h3>Every action inspected</h3><p>A hook reads inside each action — command, path, payload — and permits, asks, or blocks.</p></div>
+      <div class="card"><span class="fk">FK2 · Ledgers</span><h3>On the record</h3><p>Hash-chained logs of what ran, why it was permitted, and every write's lineage.</p></div>
+      <div class="card"><span class="fk">FK6b · Envelope</span><h3>Earned autonomy</h3><p>Permissions widen slowly on your ✓ and narrow instantly on a ✗. Reversible, logged.</p></div>
+      <div class="card"><span class="fk">FK6c · Door</span><h3>Reach it from Claude</h3><p>Read your corpus and propose changes from any MCP client. Writes only ever propose.</p></div>
+      <div class="card"><span class="fk">FK7 · Transfer</span><h3>Skills compound</h3><p>A proven skill is promoted through a gate and lifts every teammate's agent.</p></div>
+      <div class="card"><span class="fk">FK8 · Scout</span><h3>Finds patterns</h3><p>Idle-time discovery surfaces recurring work as low-volume proposals.</p></div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <p class="eyebrow">Architecture</p>
+    <h2>How it works</h2>
+    <p>The spine is one loop: <b>sources → compile → stores → loops → outputs → signals →
+    learning</b>, and back. Every write passes the gate and lands in a hash-chained ledger.
+    Files are the system of record; databases and indexes are derived and rebuildable.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 900 300" role="img" aria-label="System data flow">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker>
+        <marker id="arb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker></defs>
+        <!-- top pipeline -->
+        <g><rect class="node" x="12" y="30" width="132" height="56" rx="8"/><text x="78" y="54" text-anchor="middle">Sources</text><text class="t2" x="78" y="72" text-anchor="middle">footprint · connectors</text></g>
+        <g><rect class="node-a" x="188" y="30" width="132" height="56" rx="8"/><text x="254" y="54" text-anchor="middle">Compile</text><text class="t2" x="254" y="72" text-anchor="middle">FK4 skill</text></g>
+        <g><rect class="store" x="364" y="30" width="132" height="56" rx="8"/><text x="430" y="54" text-anchor="middle">Stores</text><text class="t2" x="430" y="72" text-anchor="middle">job graph · skills · profile</text></g>
+        <g><rect class="node-a" x="540" y="30" width="132" height="56" rx="8"/><text x="606" y="54" text-anchor="middle">Loops</text><text class="t2" x="606" y="72" text-anchor="middle">FK6 scheduled</text></g>
+        <g><rect class="node" x="716" y="30" width="140" height="56" rx="8"/><text x="786" y="54" text-anchor="middle">Outputs</text><text class="t2" x="786" y="72" text-anchor="middle">brief · drafts · proposals</text></g>
+        <path class="flow" d="M146,58 L186,58"/><path class="flow" d="M322,58 L362,58"/>
+        <path class="flow" d="M498,58 L538,58"/><path class="flow" d="M674,58 L714,58"/>
+        <!-- feedback loop -->
+        <path class="flow-b" d="M786,88 C786,150 430,150 430,150 L430,88"/>
+        <text class="lbl" x="600" y="143" text-anchor="middle">signals (✓/✗) → scoring · envelope → learning</text>
+        <!-- gate band -->
+        <g><rect class="gate" x="188" y="196" width="668" height="52" rx="8"/><text x="522" y="219" text-anchor="middle">Gate — payload inspection (FK2)</text><text class="t2" x="522" y="237" text-anchor="middle">every write permitted or blocked, then hash-chained into Ledgers L1–L10</text></g>
+        <path class="flow" d="M254,88 L254,194"/><path class="flow" d="M430,88 L430,150"/><path class="flow" d="M606,88 L606,194"/><path class="flow" d="M786,88 L786,194"/>
+      </svg>
+      <div class="cap">Fig 1 — the core loop. Writes pass the gate; the fabric learns from signals.</div>
+    </div>
+
+    <h3>The ten ledgers (what gets recorded)</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Ledger</th><th>Answers</th><th>In the fork</th></tr></thead>
+      <tbody>
+        <tr><td>L1 Execution trace</td><td>What did the agent do?</td><td>compiled from transcripts</td></tr>
+        <tr><td>L2 Gate</td><td>Why was this permitted?</td><td>the hook writes it</td></tr>
+        <tr><td>L3 Memory write</td><td>Can this be trusted?</td><td>lineage-or-rejected</td></tr>
+        <tr><td>L6 Version</td><td>Which config produced this?</td><td>git is L6</td></tr>
+        <tr><td>L7 Evaluation</td><td>Is this skill improving?</td><td>scoring script</td></tr>
+        <tr><td>L8 Human signal</td><td>Did the principal agree?</td><td>reaction / edit capture</td></tr>
+        <tr><td>L9 Deletion</td><td>Did forgetting happen?</td><td>tombstones over lineage</td></tr>
+        <tr><td class="faint">L4 · L5 · L10</td><td class="faint">exchange · identity · environment</td><td class="faint">schema ready, later phases</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- FLOWS -->
+  <section id="flows">
+    <p class="eyebrow">Workflows</p>
+    <h2>Key workflows, drawn</h2>
+
+    <h3>1 · Day One Brief (the first unprompted deliverable)</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 900 130" role="img" aria-label="Day One Brief flow">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker></defs>
+        <g><rect class="node-a" x="10" y="38" width="150" height="52" rx="8"/><text x="85" y="62" text-anchor="middle">Compile footprint</text><text class="t2" x="85" y="79" text-anchor="middle">job graph</text></g>
+        <g><rect class="node" x="196" y="38" width="150" height="52" rx="8"/><text x="271" y="62" text-anchor="middle">Assemble brief</text><text class="t2" x="271" y="79" text-anchor="middle">summary + links</text></g>
+        <g><rect class="gate" x="382" y="38" width="120" height="52" rx="8"/><text x="442" y="68" text-anchor="middle">Gate (send)</text></g>
+        <g><rect class="node" x="538" y="38" width="130" height="52" rx="8"/><text x="603" y="62" text-anchor="middle">Slack DM</text><text class="t2" x="603" y="79" text-anchor="middle">unrequested</text></g>
+        <g><rect class="store" x="704" y="38" width="180" height="52" rx="8"/><text x="794" y="62" text-anchor="middle">Harvest ✓/✗ → L8</text><text class="t2" x="794" y="79" text-anchor="middle">deterministic, authenticated</text></g>
+        <path class="flow" d="M162,64 L194,64"/><path class="flow" d="M348,64 L380,64"/><path class="flow" d="M504,64 L536,64"/><path class="flow" d="M670,64 L702,64"/>
+      </svg>
+      <div class="cap">Fig 2 — the brief is summary-level with links; the send is gated (L2); reactions are read from the API only, counted only from your identity.</div>
+    </div>
+
+    <h3>2 · Write from Claude (propose → gate → commit)</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 900 150" role="img" aria-label="Door write path">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker></defs>
+        <g><rect class="node" x="10" y="48" width="150" height="52" rx="8"/><text x="85" y="72" text-anchor="middle">Claude session</text><text class="t2" x="85" y="89" text-anchor="middle">any MCP client</text></g>
+        <g><rect class="node-a" x="196" y="48" width="150" height="52" rx="8"/><text x="271" y="72" text-anchor="middle">Team OS door</text><text class="t2" x="271" y="89" text-anchor="middle">propose_* (write)</text></g>
+        <g><rect class="node" x="382" y="48" width="140" height="52" rx="8"/><text x="452" y="72" text-anchor="middle">Proposals inbox</text><text class="t2" x="452" y="89" text-anchor="middle">never the corpus</text></g>
+        <g><rect class="gate" x="558" y="48" width="150" height="52" rx="8"/><text x="633" y="68" text-anchor="middle">Gate processor</text><text class="t2" x="633" y="85" text-anchor="middle">deterministic · SE-3 probes</text></g>
+        <g><rect class="store" x="744" y="48" width="140" height="52" rx="8"/><text x="814" y="72" text-anchor="middle">Stores (git)</text><text class="t2" x="814" y="89" text-anchor="middle">+ L3 lineage</text></g>
+        <path class="flow" d="M162,74 L194,74"/><path class="flow" d="M348,74 L380,74"/><path class="flow" d="M524,74 L556,74"/><path class="flow" d="M710,74 L742,74"/>
+      </svg>
+      <div class="cap">Fig 3 — the door only proposes; the single writer (the gate processor at the runtime of record) validates against the parser-probe set, runs the same FK2 gate, then commits with lineage.</div>
+    </div>
+
+    <h3>3 · Transfer across people (the fabric compounding)</h3>
+    <div class="diagram">
+      <svg viewBox="0 0 900 150" role="img" aria-label="Transfer flow">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker></defs>
+        <g><rect class="node" x="10" y="48" width="160" height="52" rx="8"/><text x="90" y="72" text-anchor="middle">Person A's agent</text><text class="t2" x="90" y="89" text-anchor="middle">proves skill v2</text></g>
+        <g><rect class="gate" x="206" y="48" width="200" height="52" rx="8"/><text x="306" y="68" text-anchor="middle">Promotion gate (FK7)</text><text class="t2" x="306" y="85" text-anchor="middle">PII scan · eval floor · signed review</text></g>
+        <g><rect class="store" x="442" y="48" width="160" height="52" rx="8"/><text x="522" y="72" text-anchor="middle">Shared registry</text><text class="t2" x="522" y="89" text-anchor="middle">team namespace</text></g>
+        <g><rect class="node" x="638" y="48" width="160" height="52" rx="8"/><text x="718" y="72" text-anchor="middle">Person B's agent</text><text class="t2" x="718" y="89" text-anchor="middle">staggered cohort</text></g>
+        <path class="flow" d="M170,74 L204,74"/><path class="flow" d="M406,74 L440,74"/><path class="flow" d="M602,74 L636,74"/>
+      </svg>
+      <div class="cap">Fig 4 — knowledge moves through the fabric under governance: a skill proven once lifts the next person's agent without them redoing the work.</div>
+    </div>
+  </section>
+
+  <!-- MCP -->
+  <section id="mcp">
+    <p class="eyebrow">Connection</p>
+    <h2>MCP &amp; the Claude subscription</h2>
+    <p>Team OS ships as one plugin: gate/ledger hooks, schedule templates, and an <b>MCP
+    server — the door</b>. You add the door to Claude as a connector; from then on any Claude
+    session can use its tools. Loops run on your <b>Claude subscription</b> — no API key.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 900 230" role="img" aria-label="MCP topology and run modes">
+        <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker>
+        <marker id="arb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"/></marker></defs>
+        <g><rect class="node" x="10" y="90" width="150" height="52" rx="8"/><text x="85" y="114" text-anchor="middle">Claude</text><text class="t2" x="85" y="131" text-anchor="middle">desktop · web · mobile</text></g>
+        <g><rect class="node-a" x="210" y="90" width="160" height="52" rx="8"/><text x="290" y="108" text-anchor="middle">Team OS door</text><text class="t2" x="290" y="125" text-anchor="middle">read (readOnly) + propose</text></g>
+        <g><rect class="store" x="430" y="30" width="160" height="52" rx="8"/><text x="510" y="54" text-anchor="middle">Stores (read)</text><text class="t2" x="510" y="71" text-anchor="middle">corpus · job graph</text></g>
+        <g><rect class="node" x="430" y="150" width="160" height="52" rx="8"/><text x="510" y="174" text-anchor="middle">Proposals inbox</text><text class="t2" x="510" y="191" text-anchor="middle">propose_* land here</text></g>
+        <g><rect class="gate" x="650" y="150" width="150" height="52" rx="8"/><text x="725" y="170" text-anchor="middle">Gate processor</text><text class="t2" x="725" y="187" text-anchor="middle">commits (writer)</text></g>
+        <path class="flow" d="M162,116 L208,116"/>
+        <path class="flow" d="M372,108 C400,108 405,56 428,56"/>
+        <path class="flow" d="M372,124 C400,124 405,176 428,176"/>
+        <path class="flow" d="M590,176 L648,176"/>
+        <text class="lbl" x="290" y="176" text-anchor="middle">MCP over your Claude connection</text>
+      </svg>
+      <div class="cap">Fig 5 — the door exposes read + propose over MCP. Reads return from the stores; proposes land in the inbox; only the gate processor commits.</div>
+    </div>
+
+    <h3>Two ways to run on a subscription</h3>
+    <div class="grid two">
+      <div class="card"><span class="fk">Recommended</span><h3>Local scheduled tasks <span class="pill good">full trust</span></h3><p>Claude Code Desktop (subscription) runs the loops headless on your always-on machine. Hooks fire locally → every action gated and ledgered. Full trust comes from where the hooks run, not who bills the tokens.</p></div>
+      <div class="card"><span class="fk">No machine</span><h3>Cloud scheduled tasks <span class="pill warn">reduced trust</span></h3><p>Routines on Anthropic's cloud. Hooks don't demonstrably run; only door actions are gated. Scheduled prompts are fenced to door tools only (linter-enforced) and the reduced trust is disclosed.</p></div>
+    </div>
+
+    <h3>Features accessible from Claude via MCP</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Tool</th><th>Type</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">read_corpus</td><td><span class="pill">readOnly</span></td><td>Search / list your corpus entries</td></tr>
+        <tr><td class="mono">read_job_graph</td><td><span class="pill">readOnly</span></td><td>See your recurring work + what the loops produced</td></tr>
+        <tr><td class="mono">list_desired_schedules</td><td><span class="pill">readOnly</span></td><td>Get the schedule templates (as data) to set up loops</td></tr>
+        <tr><td class="mono">propose_corpus_entry</td><td><span class="pill warn">propose</span></td><td>Suggest a new corpus entry → inbox (never direct write)</td></tr>
+        <tr><td class="mono">propose_schedule</td><td><span class="pill warn">propose</span></td><td>Suggest a new scheduled task → inbox</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout warn"><span class="lbl">Credential domains</span>
+      <p>Connecting Slack (or Gmail, Drive) to <b>Claude</b> does not connect it to <b>Team
+      OS</b>, and vice versa. Team OS's own sources (Plane A) hold their own grants and run on
+      owned inference; Claude-account connectors are a separate world reachable only to Claude
+      sessions. Different owners, different revocation.</p>
+    </div>
+  </section>
+
+  <!-- IO -->
+  <section id="io">
+    <p class="eyebrow">Data</p>
+    <h2>Sources, inputs &amp; outputs</h2>
+    <div class="grid two">
+      <div>
+        <h3>Inputs (opt-in)</h3>
+        <ul class="tight">
+          <li><b>Claude Code footprint</b> — commands → skills, CLAUDE.md → profile, transcripts → L1.</li>
+          <li><b>Personal cloud sources</b> (Plane A) — Slack, Drive, Gmail; off until toggled; DMs/email a separate opt-in.</li>
+          <li><b>Reactions</b> — your ✓/✗ on delivered work (authenticated).</li>
+          <li><b>Weekly pulse</b> — one-question signal.</li>
+          <li><b>Proposals</b> — from the door or the scout, into the inbox.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Outputs</h3>
+        <ul class="tight">
+          <li><b>Day One Brief</b> — Slack DM: digest + ✓/✗ job draft + first deliverable.</li>
+          <li><b>Shadow-draft deliverables</b> — recurring work drafted into the store.</li>
+          <li><b>Corpus &amp; skills</b> — committed with lineage; promotable to the team.</li>
+          <li><b>Dashboard / console</b> — the read-only mission-control surfaces.</li>
+          <li><b>Ledgers</b> — exportable, hash-chained audit trail.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small">Discipline: real source data never enters the repo — synthetic fixtures only;
+    distill-then-discard (raw ingest deleted after compile); untrusted content supplies values,
+    never plan structure.</p>
+  </section>
+
+  <!-- STACK -->
+  <section id="stack">
+    <p class="eyebrow">Under the hood</p>
+    <h2>Technical stack</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Runtime</td><td>Claude Code (harness)</td><td>Provides session, tool dispatch, MCP client, hooks, scheduled tasks — Team OS is a kit installed into it</td></tr>
+        <tr><td>Language</td><td>Python 3.10, stdlib-first</td><td>Thin scripts over frameworks; the harness is the runtime</td></tr>
+        <tr><td>System of record</td><td>Files in git</td><td>Corpus / skills / profile as plain markdown; portable, auditable, rebuildable</td></tr>
+        <tr><td>Ledgers</td><td>Append-only JSONL, hash-chained</td><td>Tamper-evident; one chain implementation, verified in CI</td></tr>
+        <tr><td>Contracts</td><td>JSON Schema (2020-12)</td><td>The store model is canonical; validated + FR1 mapping gate in CI</td></tr>
+        <tr><td>Gate</td><td>PreToolUse hook</td><td>Payload inspection inside every action; ~190 lines, spec-matched</td></tr>
+        <tr><td>Door</td><td>MCP server</td><td>read (readOnlyHint) + propose_* to the inbox</td></tr>
+        <tr><td>Encryption</td><td>Fernet (AES + HMAC)</td><td>Per-principal personal store; keys never in the repo</td></tr>
+        <tr><td>CI</td><td>GitHub Actions · <span class="mono">make test</span></td><td>140 tests + schema + mapping + hook budget + chain verify</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- CASES -->
+  <section id="cases">
+    <p class="eyebrow">In practice</p>
+    <h2>Use cases</h2>
+    <div class="grid two">
+      <div class="card"><h3>Solo operator</h3><p>Your agent + specialized members (compiler, loops, scout). The Thursday doc drafts itself on Thursday; the morning digest is waiting. A complete product on its own.</p></div>
+      <div class="card"><h3>Engineer</h3><p>Richest footprint — commands and transcripts compile cleanly. The code-review skill and weekly cadence run themselves; annoying 20% automated.</p></div>
+      <div class="card"><h3>Product manager</h3><p>Synthesis loops, status representation, commitment tracking — the recurring 60%. Status-update and meeting-summary drafts arrive done.</p></div>
+      <div class="card"><h3>Cross-person team</h3><p>A skill one person proves out is promoted and lifts everyone's agent. Organizational memory survives turnover — the fabric compounds.</p></div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<footer>Team OS · Human teams. Agent fabric. · files are the system of record · every action gated and ledgered · github.com/usecommon/teamOS</footer>
+
+<script>(function(){try{var t=localStorage.getItem('teamos-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</body>
+</html>
