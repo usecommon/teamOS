@@ -10,7 +10,7 @@
 
 ## 1. TL;DR
 
-A four-council adversarial review (`2026-07-11-adversarial-14-counsel-review.md`) plus four simulation passes (security, autonomy, failure-injection, and a 4-team × 120-turn sweep) found **~30 findings**. A remediation series **T0–T13** closed the security and privacy criticals; a live reconciliation (`030acff`) re-verified every item against the current tree. **The gate now fails closed, exfil via bash/known-send tools is gated, deletion erases content, the ledger survives concurrency, untrusted content can't auto-commit plan structure, acceptance signals are authenticated, and the initiative floor no longer over-counts.** What remained was **not security** — a cluster of **durability / liveness** bugs in the unattended-run machinery (E1–E4, D3). **That cluster has since been remediated and verified this session** (§3). What is still open: one security **residual** (A7 untainted-first-move exfil, protected path) and the standing **non-code long pole** (recruit real collaborators for the A-P3 transfer gate).
+A four-council adversarial review (`2026-07-11-adversarial-14-counsel-review.md`) plus four simulation passes (security, autonomy, failure-injection, and a 4-team × 120-turn sweep) found **~30 findings**. A remediation series **T0–T13** closed the security and privacy criticals; a live reconciliation (`030acff`) re-verified every item against the current tree. **The gate now fails closed, exfil via bash/known-send tools is gated, deletion erases content, the ledger survives concurrency, untrusted content can't auto-commit plan structure, acceptance signals are authenticated, and the initiative floor no longer over-counts.** What remained was **not security** — a cluster of **durability / liveness** bugs in the unattended-run machinery (E1–E4, D3). **That cluster has since been remediated and verified this session** (§3). What is still open: **A7** (untainted-first-move exfil) has now been **implemented (Option B)** and committed on this branch, but it touches a protected path so it awaits **human approval before merge to main**. The only genuinely unresolved item is the **non-code long pole** (recruit real collaborators for the A-P3 transfer gate).
 
 **Bottom line:** the system is safe-by-construction under fault (no fail-open observed), but not yet *robust* — several faults make it fail **closed-but-dead** (crash/brick) rather than degrade gracefully, which for a system that runs while its principal is away is the next thing to fix.
 
@@ -52,10 +52,10 @@ An unattended agent must degrade, not die. These made it die or lose data; each 
 | **D3** | Scheduled **double-send** (sends 3×) | `sends=3` | ✅ `sends=1` — `deliver` at-most-once against its send-receipt |
 | **E4** | Corrupt checkpoint **crashed resume** | crash on load | ✅ restarts clean; `.corrupt` preserved for audit |
 
-### Security residual (P1 — protected path 🔒) — STILL OPEN
-| # | Finding | Live verdict | Note |
+### Security residual (P1 — protected path 🔒) — IMPLEMENTED, pending human merge-approval
+| # | Finding | Before | After |
 |---|---|---|---|
-| **A7** | WebFetch exfiltrates non-credential corpus data in the URL on an **untainted first move** | `ALLOW (still open)` | Taint closes it *after* a corpus read; the untainted-first-move case permits. `hooks/policy.yaml` documents the substring denylist as interim; the taint layer is the intended control. **Touches `hooks/` — needs human review; do not auto-merge.** |
+| **A7** | WebFetch exfiltrates non-credential corpus data in the URL on an **untainted first move** | `ALLOW` | ✅ **Option B implemented** (`13924ed`): `taint.matches_corpus` flags a send carrying a distinctive 6-word run of stored corpus text even with no prior in-session read → `ask/taint-confirm`. Heuristic defense-in-depth; taint stays primary. **Touches `hooks/` — committed on this branch tagged `[protected: hooks/]`; needs human approval before merge to main.** |
 
 ### Non-code / human (cannot be closed by remediation)
 - **T10** — recruit 2–3 collaborators, declare unattended posture in L2, start the 14-day streak, fill the FR8 overhead ledger. The standing long pole.
@@ -69,7 +69,7 @@ An unattended agent must degrade, not die. These made it die or lose data; each 
 
 ## 5. Recommendation
 
-The durability/liveness cluster (**E1, E3, E2, D3, E4**) is **done and verified** this session (`scripts/` only, no protected paths). What's left: handle **A7** as a separate, human-approved change on `hooks/` (still `allow` on a fresh session — verified), and the non-code long pole (**T10/F6**). Everything security/privacy-critical is closed except A7; per the CLAUDE.md gate, do not ingest real colleague data until A7 is closed.
+The durability/liveness cluster (**E1, E3, E2, D3, E4**) is **done and verified** this session (`scripts/` only). **A7 (Option B) is now implemented** and committed on this branch (`13924ed`, `[protected: hooks/]`) — it needs a human to approve the protected-path merge to main. What's left after that is the non-code long pole (**T10/F6**). Per the CLAUDE.md gate, do not ingest real colleague data until the A7 change is merged.
 
 ## 6. Source index
 

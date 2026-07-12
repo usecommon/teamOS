@@ -57,11 +57,13 @@
 
 ---
 
-## Flagged, NOT auto-remediated
+## A7 — IMPLEMENTED (Option B), pending human merge-approval
 
 ### A7 🔒 — WebFetch untainted-first-move exfil  `[HIGH, protected path]`
-- **Live:** `WebFetch(?d=<corpus>)` on a fresh session → `allow`. Taint closes it after a corpus read; the untainted first move permits.
-- **Why flagged:** `hooks/policy.yaml` + `hooks/gate.py` are **protected paths** (human approval, PR, no auto-merge). The fix is a design decision (fingerprint URL/params against corpus content vs. rely on the taint layer, which `BEHAVIOR.md` already names as the real control). Propose a diff; do not auto-merge. Left for human review.
+- **Was:** `WebFetch(?d=<corpus>)` on a fresh session → `allow`. Taint closed it only after a corpus read; the untainted first move permitted.
+- **Decision:** Option B — fingerprint outbound content against the stored corpus.
+- **Implemented (`13924ed`):** `taint.matches_corpus(policy, texts, repo_root)` computes word-shingle overlap between outbound content and `stores/corpus` (URL-encoding/underscores collapse to the same tokens), cached by corpus mtime. Folded into gate.py's existing `tainted` check — **net-zero lines**, gate.py stays at the 300-line X-1 budget — so a matching send returns `ask/taint-confirm`. Config: `policy.yaml` `corpus_fingerprint` (k=6, min_shingles=1, enabled). Tests: `tests/test_corpus_egress.py` (4 cases; full suite 214 green). Heuristic defense-in-depth; the taint layer remains the primary control.
+- **Status:** committed on `remediation/2026-07-11` tagged `[protected: hooks/]`. **Touches `hooks/` — needs human approval before merge to main** (CLAUDE.md protected-path rule). Do not ingest real colleague data until merged.
 
 ## Sequencing
 R1 → R2 → R4 (hashchain/loop/checkpoint core), then R3 (anchor wiring), then R5 (send idempotency). One task per commit, test alongside, `make test` green before each. Branch: current `remediation/2026-07-11`. None touch protected paths.
