@@ -1,0 +1,29 @@
+{
+  "_comment": "Role templates (arch §10.2 store 5) — the provisioning unit. Each is a ready-made specialized agent for a role: a skill set + knowledge pointers. Instantiate one and the agent knows the role's conventions on day one. Guild-curated (the guild owns its role's template).",
+  "templates": [
+    {
+      "id": "engineer",
+      "name": "Engineer",
+      "description": "Ships and reviews code; keeps the weekly cadence.",
+      "skills": ["code-review", "compile", "weekly-digest", "standup"],
+      "knowledge": ["Team conventions & glossary", "Service ownership map", "Decision log"],
+      "curated_by": "engineering guild"
+    },
+    {
+      "id": "pm",
+      "name": "Product manager",
+      "description": "Synthesizes status, tracks commitments, briefs stakeholders.",
+      "skills": ["research", "status-update", "meeting-summary", "weekly-digest"],
+      "knowledge": ["Roadmap & priorities", "Stakeholder map", "Commitment tracker"],
+      "curated_by": "PM guild"
+    },
+    {
+      "id": "oncall",
+      "name": "On-call",
+      "description": "Triages incidents and keeps the timeline honest.",
+      "skills": ["research", "code-review", "standup"],
+      "knowledge": ["Runbooks", "Escalation policy", "Recent incidents"],
+      "curated_by": "SRE guild"
+    }
+  ]
+}

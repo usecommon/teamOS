@@ -40,6 +40,24 @@
       "scope": "all actions",
       "skills": ["payload-inspection"],
       "inference_domain": "deterministic"
+    },
+    {
+      "id": "code-reviewer",
+      "name": "Code reviewer",
+      "role": "Reviews diffs and PRs for bugs, security, and convention drift",
+      "scope": "changed code",
+      "skills": ["code-review"],
+      "inference_domain": "teamos_plane_a",
+      "specialized": true
+    },
+    {
+      "id": "researcher",
+      "name": "Researcher",
+      "role": "Answers questions across sources, verified and cited",
+      "scope": "corpus + eligible connectors",
+      "skills": ["research"],
+      "inference_domain": "teamos_plane_a",
+      "specialized": true
     }
   ]
 }

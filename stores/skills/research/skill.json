@@ -1,0 +1,14 @@
+{
+  "skill_id": "team/research",
+  "name": "research",
+  "description": "Research a question across multiple sources, verify claims against each other, and synthesize a cited answer with confidence levels.",
+  "namespace": "team",
+  "version": "1.0.0",
+  "capability_manifest": {
+    "capture_surface": "cloud-only",
+    "tools": ["Read", "Grep", "Glob", "WebSearch", "WebFetch"]
+  },
+  "evidence_links": [],
+  "body_path": "stores/skills/research/SKILL.md",
+  "lineage_sidecar": "stores/skills/research/SKILL.lineage.json"
+}

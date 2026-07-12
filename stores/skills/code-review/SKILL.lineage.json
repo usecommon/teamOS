@@ -1,0 +1,1 @@
+{"entity_id":"team/code-review","generated_by":{"transformation":"human-authored","at":"2026-07-11T00:00:00Z"},"agent":"principal:jeff","sources":[{"source_type":"principal-direct","locator":"stores/skills/code-review/SKILL.md","content_hash":"sha256:example"}],"evidence":["stores/skills/code-review/SKILL.md"],"confidence":"high","update_history":[]}

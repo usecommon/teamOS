@@ -101,6 +101,9 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .agentcard .meta{display:flex;flex-direction:column;gap:.1rem}
 .agentcard .skills{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem}
 .agentcard .stat{color:var(--accent);border-top:1px solid var(--rule);padding-top:.5rem;margin-top:.2rem}
+.tag.spec{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.tag.missing{opacity:.42}
+.tsec{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:.6rem 0 .2rem}
 .workrow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule)}
 .workrow:last-child{border-bottom:none}
 .spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent-2);
@@ -293,17 +296,43 @@ def _agents(demo):
     for a in roster:
         busy = a["id"] in working_agents
         chip = '<span class="chip warn">working</span>' if busy else '<span class="chip good">idle</span>'
+        spec = '<span class="tag spec">specialized</span> ' if a.get("specialized") else ''
         skills = "".join(f'<span class="tag">{_esc(s)}</span> ' for s in a["skills"])
         acc = f' · {accepted} accepted' if a["id"] in ("loops", "brief") else ""
         cards += f"""<div class="agentcard">
           <div class="agenthead"><h3>{_esc(a['name'])}</h3>{chip}</div>
-          <p class="role">{_esc(a['role'])}</p>
+          <p class="role">{spec}{_esc(a['role'])}</p>
           <div class="meta"><span class="mono small faint">scope: {_esc(a['scope'])}</span>
             <span class="mono small faint">inference: {_esc(a['inference_domain'])}</span></div>
           <div class="skills">{skills}</div>
           <div class="stat mono small">{done_by.get(a['id'],0)} completed{acc}</div>
         </div>"""
     return f'<div class="agentgrid">{cards}</div>'
+
+
+def _templates(demo):
+    tpls = json.loads((REPO/"config"/"role-templates.json").read_text())["templates"]
+    have = {p.parent.name for p in (demo/"stores"/"skills").glob("*/skill.json")} \
+        if (demo/"stores"/"skills").exists() else set()
+    cards = ""
+    for t in tpls:
+        skills = "".join(
+            f'<span class="tag{"" if s in have else " missing"}">{_esc(s)}</span> '
+            for s in t["skills"])
+        know = "".join(f"<li>{_esc(k)}</li>" for k in t["knowledge"])
+        cards += f"""<div class="agentcard">
+          <div class="agenthead"><h3>{_esc(t['name'])}</h3>
+            <span class="approve">Instantiate</span></div>
+          <p class="role">{_esc(t['description'])}</p>
+          <div class="tsec">Skills</div><div class="skills">{skills}</div>
+          <div class="tsec">Knowledge</div><ul class="plain">{know}</ul>
+          <div class="stat mono small">curated by {_esc(t['curated_by'])}</div>
+        </div>"""
+    return (f'<div class="agentgrid">{cards}</div>'
+            '<p class="small faint" style="margin-top:1rem">A role template is the '
+            '<b>provisioning unit</b>: instantiate one and a new member\'s agent starts '
+            'role-ready — the specialized skills + knowledge, not ramp time. Solid tags exist '
+            'in the registry; faded tags are declared but not yet promoted.</p>')
 
 
 def _activity(demo):
@@ -329,10 +358,11 @@ def render_console(demo, est, pol, jg):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     tabs = [("overview", "Overview"), ("agents", "Agents"), ("activity", "Activity"),
             ("brief", "Brief"), ("inbox", "Inbox"), ("corpus", "Corpus"),
-            ("skills", "Skills"), ("envelope", "Envelope"), ("audit", "Audit")]
+            ("skills", "Skills"), ("templates", "Templates"), ("envelope", "Envelope"),
+            ("audit", "Audit")]
     surfaces = {"overview": _overview(demo), "agents": _agents(demo), "activity": _activity(demo),
                 "brief": _brief(demo, jg), "inbox": _inbox(demo),
-                "corpus": _corpus(demo), "skills": _skills(demo),
+                "corpus": _corpus(demo), "skills": _skills(demo), "templates": _templates(demo),
                 "envelope": _envelope(demo, est, pol), "audit": _audit(demo)}
     navbtns = "".join(f'<button data-s="{k}"{" class=active" if i==0 else ""}>{lbl}</button>'
                       for i, (k, lbl) in enumerate(tabs))
@@ -374,6 +404,15 @@ def build_demo():
                      if "stores/" in dv["path"] else dv["path"], outcome=acc_cycle[i % len(acc_cycle)])
     worklog.done(demo, "brief", "Deliver Day One Brief", artifact="Slack DM", outcome="accepted")
     worklog.done(demo, "scout", "Propose: weekly gap fill", artifact="inbox/proposals", outcome="pending")
+    # specialized agents (shared skills) at work
+    import shutil
+    for sk in sorted((REPO/"stores"/"skills").glob("*/")):
+        if (sk/"skill.json").exists() and not (out/"skills"/sk.name).exists():
+            shutil.copytree(sk, out/"skills"/sk.name)
+    worklog.done(demo, "code-reviewer", "Review PR #128 (cache rollout)",
+                 artifact="review/pr-128.md", outcome="accepted")
+    worklog.done(demo, "researcher", "Research: vendor comparison for queue",
+                 artifact="corpus/queue-vendors.md", outcome="accepted")
     # one item still in progress (no matching done)
     worklog.start(demo, "loops", "Draft nightly-corpus-compile")
     gate.LEDGER_DIR = demo

@@ -1,0 +1,14 @@
+{
+  "skill_id": "team/code-review",
+  "name": "code-review",
+  "description": "Review a diff or PR for correctness bugs, security issues, and convention violations; report findings ranked by severity.",
+  "namespace": "team",
+  "version": "1.0.0",
+  "capability_manifest": {
+    "capture_surface": "cloud+synced+local-folders",
+    "tools": ["Read", "Grep", "Glob", "Bash(git diff:*)"]
+  },
+  "evidence_links": [],
+  "body_path": "stores/skills/code-review/SKILL.md",
+  "lineage_sidecar": "stores/skills/code-review/SKILL.lineage.json"
+}
