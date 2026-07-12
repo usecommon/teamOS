@@ -169,6 +169,7 @@ footer .brand .dot{color:var(--accent)}
   <span class="brand">Team OS<span class="dot">.</span></span>
   <div class="links">
     <a href="#thesis">Thesis</a><a href="#how">How it works</a><a href="#agents">Agents</a>
+    <a href="#autonomy">Autonomy</a>
     <a href="#features">Features</a><a href="#workflows">Workflows</a><a href="#usecases">Use cases</a>
     <a href="#sources">Sources</a><a href="#trust">Trust</a><a href="#install">Install</a>
   </div>
@@ -308,6 +309,56 @@ footer .brand .dot{color:var(--accent)}
     </table></div>
     <p class="note">Every agent may spin up subagents as the work needs — each spawn is recorded,
       depth-bounded, and chain-verified. The safety agent can only halt; it can never widen autonomy.</p>
+  </div>
+</section>
+
+<section id="autonomy">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">Autonomous agents</span>
+      <h2>Agency is earned, not granted.</h2>
+      <p class="lead">Agents work unprompted — inside a job you accepted, with autonomy they earned,
+        under a gate they can't bypass, on a record they can't edit, with a breaker you hold. That
+        sentence is the whole autonomy model; everything below enforces one clause of it.</p>
+    </div>
+
+    <div class="grid g3" style="margin-bottom:2.2rem">
+      <div class="card"><h3>What runs on its own</h3>
+        <p>The loops draft recurring deliverables on their cadence. The compiler recompiles on new
+          footprint. The scout scans weekly. The brief fires on cold start, then daily. The safety
+          agent watches continuously.</p></div>
+      <div class="card"><h3>Subagents, as needed</h3>
+        <p>Any agent spins up workers for the task at hand — draft, format-check, entity-scan.
+          Every spawn is ledgered, depth-bounded, rate-bounded, chain-verified.</p></div>
+      <div class="card"><h3>Unattended, still accountable</h3>
+        <p>A 3am run gets the same payload inspection as an attended one — posture never disables
+          inspection. Runs are checkpointed (a kill resumes) and anchor their chain heads off-box,
+          so tampering while you sleep is detectable.</p></div>
+    </div>
+
+    <div class="lane">
+      <div class="lh"><span class="num">⇅</span><h3>The envelope — how agency is earned</h3>
+        <span class="when">slow to widen · instant to narrow</span></div>
+      <div class="flowscroll"><div class="flow">
+        <div class="node"><span class="nk">start</span><span class="nt">Narrow by default</span><span class="nd">propose-only</span></div>
+        <div class="arr">→</div>
+        <div class="node out"><span class="nk">your ✓</span><span class="nt">Streak of accepts</span><span class="nd">principal-authenticated only</span></div>
+        <div class="arr">→</div>
+        <div class="node acc"><span class="nk">widen</span><span class="nt">+1 level, one category</span><span class="nd">never past its ceiling</span></div>
+        <div class="arr">→</div>
+        <div class="node gate"><span class="nk">your ✗</span><span class="nt">One rejection</span></div>
+        <div class="arr">→</div>
+        <div class="node"><span class="nk">narrow</span><span class="nt">Snap back, instantly</span><span class="nd">manual reset anytime</span></div>
+      </div></div>
+    </div>
+
+    <div class="trust">
+      <div class="trow"><div class="tk">Earned, not granted</div><div class="tv">The envelope starts narrow and widens <b>one level per streak of your authenticated ✓</b> — and narrows instantly on a single ✗. Category ceilings are pre-declared; the envelope can never raise its own ceiling.</div></div>
+      <div class="trow"><div class="tk">Autonomous ≠ ungated</div><div class="tv">Every action an autonomous agent takes still crosses the gate. <b>Payload inspection is always-on</b>; running unattended changes what happens after a finding, never whether inspection runs.</div></div>
+      <div class="trow"><div class="tk">New work = proposal</div><div class="tv">Agents <b>do</b> the job you accepted. Anything novel — a new skill, a new schedule, an outside write — goes to the inbox as a proposal and <b>waits for you</b>.</div></div>
+      <div class="trow"><div class="tk">Forgery can't widen</div><div class="tv">Only the principal's <b>verified identity</b> counts a ✓. An unattributed or forged signal never expands autonomy — that line is the control on the one third-party attack chain.</div></div>
+      <div class="trow"><div class="tk">One breaker, fleet-wide</div><div class="tv">Trip the circuit breaker and <b>every side-effect is denied across all agents</b>; reads stay open so you can inspect. You or the safety agent trips it. <b>Only a human resets it.</b></div></div>
+    </div>
   </div>
 </section>
 
