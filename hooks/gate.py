@@ -19,7 +19,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+import taint  # noqa: E402 — FR2 Layer A (same protected dir)
 
 import yaml  # noqa: E402
 
@@ -72,12 +74,14 @@ def scan_secrets(policy, texts):
 
 
 def classify(policy, tool_name):
+    """Returns (action_class, known). Unknown tools default to SEND-class
+    (scan + ask, FR2 Layer B) — never a silent pass-through 'tool' class."""
     if tool_name in policy["action_classes"]:
-        return policy["action_classes"][tool_name]
+        return policy["action_classes"][tool_name], True
     lower = tool_name.lower()
     if any(m in lower for m in policy["send_tool_markers"]):
-        return "send"
-    return "tool"
+        return "send", True
+    return "send", False
 
 
 def target_of(tool_input):
@@ -87,7 +91,8 @@ def target_of(tool_input):
     return ""
 
 
-def inspect(policy, tool_name, action_class, tool_input):
+def inspect(policy, tool_name, action_class, tool_input, known=True,
+            session_id="unknown"):
     """Returns (checks_run, findings, verdict, rule_id)."""
     checks, findings = [], []
     # Circuit breaker: when open, every side-effectful action is halted (still
@@ -95,7 +100,9 @@ def inspect(policy, tool_name, action_class, tool_input):
     if action_class in ("write", "edit", "send", "execute", "schedule") and _breaker_open():
         return ["circuit-breaker"], ["breaker-open"], "deny", "circuit-open"
     texts = list(flatten_strings(tool_input))
-    joined = " ".join(texts)
+    # scan through one base64 layer too (FR2 Layer B)
+    texts += taint.decode_base64_blobs(texts)
+    tainted = taint.is_tainted(LEDGER_DIR / "taint", session_id)
 
     # tool-parameter scan — every call, every string param (FR2 probe #3)
     checks.append("tool-parameter-scan")
@@ -103,20 +110,30 @@ def inspect(policy, tool_name, action_class, tool_input):
 
     if tool_name == "Bash":
         command = str(tool_input.get("command", ""))
+        norm = taint.normalize_command(command)  # defeat quoting obfuscation
         checks.append("bash-egress-scan")
-        egress = [p for p in policy["egress_patterns"] if p in command]
+        egress = [p for p in policy["egress_patterns"] if p in norm]
         if egress:
             findings += [f"egress:{p.strip()}" for p in egress]
         checks.append("bash-sensitive-read-scan")
-        sensitive = [p for p in policy["sensitive_read_paths"] if p in command]
+        sensitive = [p for p in policy["sensitive_read_paths"] if p in norm]
         if sensitive:
             findings += [f"sensitive-read:{p}" for p in sensitive]
-        if egress and (sensitive or scan_secrets(policy, [command])):
+        if egress and (sensitive or scan_secrets(policy, texts)):
             return checks, findings, "deny", "bash-exfil"
         if egress:
             return checks, findings, "ask", "bash-egress"
         if sensitive:
             return checks, findings, "ask", "sensitive-read"
+        # a bash command touching a cloud-synced root IS a send (FR2)
+        checks.append("bash-synced-path-scan")
+        raw = taint.normalize_command(command, lower=False)
+        synced = [p for p in policy["synced_paths"] if p in command or p in raw]
+        if synced:
+            findings += [f"synced-path:{p}" for p in synced]
+            secrets = scan_secrets(policy, texts)
+            findings += secrets
+            return checks, findings, ("deny" if secrets else "ask"), "bash-synced-path"
 
     if action_class in ("write", "edit"):
         path = str(tool_input.get("file_path", tool_input.get("path", "")))
@@ -145,7 +162,22 @@ def inspect(policy, tool_name, action_class, tool_input):
             return checks, findings, "deny", "outbound-secret"
         if findings:  # param-scan already hit
             return checks, findings, "deny", "outbound-secret"
+        if not known:
+            # unknown tool: egress-capable until proven otherwise (Layer B)
+            return checks, findings, "ask", "unknown-tool-send"
+        if tainted:
+            # Layer A: untrusted content is in-session; the send's target may
+            # be attacker-chosen plan structure — require confirmation (§7.7)
+            checks.append("taint-check")
+            findings.append("taint:session")
+            return checks, findings, "ask", "taint-confirm"
         return checks, findings, "permit", "send-scanned-clean"
+
+    if action_class == "schedule" and tainted:
+        # untrusted content cannot add a step without confirmation (§7.7)
+        checks.append("taint-check")
+        findings.append("taint:session")
+        return checks, findings, "ask", "taint-confirm"
 
     if findings:
         return checks, findings, "ask", "param-secret"
@@ -165,8 +197,17 @@ def process(hook_input, policy=None):
     policy = policy or load_policy()
     tool_name = hook_input.get("tool_name", "unknown")
     tool_input = hook_input.get("tool_input", {}) or {}
-    action_class = classify(policy, tool_name)
-    checks, findings, verdict, rule_id = inspect(policy, tool_name, action_class, tool_input)
+    session_id = hook_input.get("session_id", "unknown")
+    action_class, known = classify(policy, tool_name)
+    checks, findings, verdict, rule_id = inspect(
+        policy, tool_name, action_class, tool_input, known, session_id)
+
+    # mark taint AFTER inspection: a permitted/asked read of untrusted content
+    # (corpus, inbox, external fetch) taints the session going forward
+    if verdict != "deny":
+        src = taint.taints(policy, tool_name, action_class, target_of(tool_input))
+        if src:
+            taint.mark(LEDGER_DIR / "taint", session_id, src)
 
     record_body = {
         "proposed_action": {

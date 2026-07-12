@@ -35,14 +35,22 @@ sensitive_read_paths:
   - id_rsa
   - credentials
 
-# Writes under declared cloud-synced roots are SENDS, not local writes (FR2)
+# Writes under declared cloud-synced roots are SENDS, not local writes (FR2).
+# Matched as substrings of the target path AND of Bash commands.
 synced_paths:
   - Library/Mobile Documents
+  - Library/CloudStorage
   - Dropbox
   - Google Drive
+  - GoogleDrive-          # modern macOS Drive mount: GoogleDrive-<email>
   - OneDrive
+  - /Box/
+  - /Box Sync
 
-# Bash egress markers (command scan)
+# Bash egress markers. Matched against a NORMALIZED command: quote/escape
+# chars stripped, whitespace collapsed, casefolded — so cu"r"l, CURL, cu\rl
+# all match. Substring denylist = interim defense-in-depth only; the
+# defensible layer is taint + send gate (see BEHAVIOR.md).
 egress_patterns:
   - curl
   - wget
@@ -51,9 +59,17 @@ egress_patterns:
   - netcat
   - scp
   - sftp
+  - "ssh "
+  - rsync
+  - "git push"
+  - "dig "
+  - nslookup
+  - osascript
+  - "open http"
   - /dev/tcp
-  - python -c import socket
-  - python3 -c import socket
+  - /dev/udp
+  - import socket
+  - socket.socket
   - base64
 
 # Outbound-content scan (mandatory on every send — X-2: catches VERBATIM
@@ -65,3 +81,14 @@ secret_patterns:
   - "sk-ant-[A-Za-z0-9-]{20,}"
   - "xox[bap]-[A-Za-z0-9-]{10,}"
   - "eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+"   # JWT: header.payload, both base64url of a JSON object ({"...)
+
+# --- taint (FR2 Layer A, session-granular, fork §7.7) ---
+# Reading any of these marks the session tainted: subsequent sends/schedules
+# require confirmation (untrusted content supplies values, never plan structure)
+taint_source_paths:
+  - stores/corpus
+  - stores/skills
+  - inbox/
+taint_source_tools:
+  - WebFetch
+  - WebSearch
