@@ -1,0 +1,34 @@
+{
+  "turns": 100,
+  "actions": {
+    "benign-write": 100,
+    "human-react": 100,
+    "forge-attempt": 25,
+    "breaker-disarm-attempt": 25,
+    "untrusted-read": 30,
+    "tainted-send": 30,
+    "envelope-signed-accept": 50,
+    "plan-injection-attempt": 25,
+    "exfil-attempt": 25,
+    "spawn-ok": 14,
+    "safety-check": 9,
+    "erase": 7,
+    "breaker-recovery": 1,
+    "chain-ok": 6,
+    "initiative-floor": 1
+  },
+  "findings": [],
+  "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "initiative_floor": 73,
+  "recovery": {
+    "reset": true,
+    "resafety_status": "ok",
+    "reopened": false,
+    "benign_write": "allow"
+  }
+}
