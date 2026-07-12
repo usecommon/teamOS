@@ -110,6 +110,76 @@ class DeletionPropagation(unittest.TestCase):
         self.assertEqual(rows[0]["status"], "overdue")
 
 
+class ErasureTouchesContent(unittest.TestCase):
+    """T4: after purge_completed the CONTENT is absent — grep the store, not
+    just the ledger."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.d = Path(self.tmp.name)
+        self.store = self.d / "root"
+        (self.store / "stores" / "corpus").mkdir(parents=True)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _grep_store(self, needle):
+        return [p for p in self.store.rglob("*")
+                if p.is_file() and needle in p.read_text()]
+
+    def test_corpus_file_removed_on_erasure(self):
+        node = "stores/corpus/colleague-note.md"
+        (self.store / node).write_text("bob said THE_SENSITIVE_THING at standup")
+        plant_l3(self.d, node, [], "verbatim-quote")
+        state = deletion.request_erasure(node, "req-c1", ledger_dir=self.d,
+                                         store_root=self.store)
+        self.assertEqual(state["status"], "complete")
+        self.assertFalse((self.store / node).exists())
+        self.assertEqual(self._grep_store("THE_SENSITIVE_THING"), [])
+        events = [json.loads(l) for l in (self.d / "l9.jsonl").read_text().splitlines()]
+        self.assertIn("content_shredded", [e["event"] for e in events])
+
+    def test_descendant_content_removed_too(self):
+        origin = "stores/corpus/origin.md"
+        child = "stores/corpus/derived-quote.md"
+        (self.store / origin).write_text("origin SECRET_DATUM")
+        (self.store / child).write_text("quoting SECRET_DATUM verbatim")
+        plant_l3(self.d, origin, [], "verbatim-copy")
+        plant_l3(self.d, child, [origin], "verbatim-quote")
+        deletion.request_erasure(origin, "req-c2", ledger_dir=self.d,
+                                 store_root=self.store)
+        self.assertEqual(self._grep_store("SECRET_DATUM"), [])
+
+    def test_l3_sidestore_content_shredded_chain_survives(self):
+        node = "stores/corpus/note.md"
+        ref = deletion.store_l3_content(node, "raw ingested content PII_X", self.d)
+        side = self.d / ref["path"]
+        self.assertTrue(side.exists())
+        plant_l3(self.d, node, [], "verbatim-copy")
+        deletion.request_erasure(node, "req-c3", ledger_dir=self.d,
+                                 store_root=self.store)
+        self.assertFalse(side.exists())
+        self.assertGreater(hashchain.verify(self.d / "l3.jsonl"), 0)
+        self.assertGreater(hashchain.verify(self.d / "l9.jsonl"), 0)
+
+    def test_statistical_influence_content_survives(self):
+        # a distilled pattern no longer contains the datum — may survive
+        node = "stores/corpus/distilled-pattern.md"
+        (self.store / node).write_text("weekly cadence pattern, no quotes")
+        plant_l3(self.d, node, [], "compilation-distill")
+        deletion.request_erasure(node, "req-c4", ledger_dir=self.d,
+                                 store_root=self.store)
+        self.assertTrue((self.store / node).exists())
+
+    def test_path_escape_in_node_id_never_deletes_outside_store(self):
+        outside = self.d / "outside.txt"
+        outside.write_text("do not touch")
+        plant_l3(self.d, "stores/../../outside.txt", [], "verbatim-copy")
+        deletion.request_erasure("stores/../../outside.txt", "req-c5",
+                                 ledger_dir=self.d, store_root=self.store)
+        self.assertTrue(outside.exists())
+
+
 class ThirdPartyL8Shred(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

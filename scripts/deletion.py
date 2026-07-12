@@ -14,6 +14,7 @@ No language model anywhere here (deterministic, hook-gated code path).
 """
 
 import json
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -27,6 +28,8 @@ GDPR_DAYS = 30
 PROMOTED_NAMESPACES = ("team/", "org/", "company/")
 # transformation markers meaning "the datum was distilled out" (may survive)
 STATISTICAL_MARKERS = ("distill", "compil", "aggregate", "pattern")
+# node-id prefixes whose ids ARE store-relative content paths (erasable)
+CONTENT_ROOTS = ("stores/", "inbox/", "job-graph/", "deliverables/", "schedules/")
 
 
 def _now():
@@ -72,14 +75,57 @@ def _request_path(ledger_dir, request_id):
     return d / f"{request_id}.json"
 
 
+# --- content side-store (the L8 crypto-shred pattern, generalized to L3) ------
+# Chains hash REFERENCES, never content. Node content lives in an erasable
+# side-store (or as the store file the node id names); erasure unlinks it and
+# the chain still verifies.
+
+def l3_sidestore_path(ledger_dir, node_id):
+    digest = hashchain.sha256_str(node_id).split(":")[1]
+    return Path(ledger_dir) / "sidestore" / "l3" / f"{digest}.content"
+
+
+def store_l3_content(node_id, content, ledger_dir):
+    """Write node content into the redactable L3 side-store; return its ref
+    (path + hash) for the chain. The chain must never inline this content."""
+    path = l3_sidestore_path(ledger_dir, node_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
+    return {"store": "l3-sidestore",
+            "path": str(path.relative_to(Path(ledger_dir))),
+            "content_hash": hashchain.sha256_str(content)}
+
+
+def _shred_node_content(node_id, ledger_dir, store_root):
+    """Remove the CONTENT behind a node: its side-store file and, when the
+    node id names a store file, that file. Returns the paths removed."""
+    removed = []
+    side = l3_sidestore_path(ledger_dir, node_id)
+    if side.exists():
+        side.unlink()
+        removed.append(str(side))
+    if "/" in node_id and "#" not in node_id \
+            and any(node_id.startswith(r) for r in CONTENT_ROOTS):
+        target = (Path(store_root) / node_id).resolve()
+        root = Path(store_root).resolve()
+        if str(target).startswith(str(root) + os.sep) and target.is_file():
+            target.unlink()
+            removed.append(str(target))
+    return removed
+
+
 def request_erasure(origin_node, request_id, requester_type="principal",
-                    ledger_dir=None, deadline=None, resume=True):
+                    ledger_dir=None, deadline=None, resume=True,
+                    store_root=None):
     """Tombstone origin_node and propagate over descendants. Idempotent.
+    Erasure REMOVES CONTENT (side-store + named store files), not just ledger
+    events; the chain hashes references, so it still verifies afterward.
 
     Returns the request state dict. Re-invoking with the same request_id resumes
     an interrupted purge (durable-tombstone offline completion).
     """
     ledger_dir = Path(ledger_dir or REPO_ROOT / "ledgers")
+    store_root = Path(store_root or REPO_ROOT)
     l9 = ledger_dir / "l9.jsonl"
     deadline = deadline or (_now() + timedelta(days=GDPR_DAYS)).isoformat().replace("+00:00", "Z")
     req_path = _request_path(ledger_dir, request_id)
@@ -137,6 +183,16 @@ def request_erasure(origin_node, request_id, requester_type="principal",
                 "affected_node": node_id, "deletion_kind": kind,
                 "deadline": deadline, "status": "in_progress",
             }, DEL_AGENT_ID)
+            if kind == "content_traceable":
+                # deletion touches CONTENT, not only the ledger (T4)
+                for path in _shred_node_content(node_id, ledger_dir, store_root):
+                    hashchain.append(l9, {
+                        "request_id": request_id,
+                        "requester_type": requester_type,
+                        "event": "content_shredded", "origin_node": origin_node,
+                        "affected_node": path, "deletion_kind": kind,
+                        "deadline": deadline, "status": "in_progress",
+                    }, DEL_AGENT_ID)
         processed.add(node_id)
         state["processed"] = sorted(processed)
         req_path.write_text(json.dumps(state))  # durable after every node
