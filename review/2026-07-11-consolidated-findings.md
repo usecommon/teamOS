@@ -8,7 +8,35 @@
   - `review/2026-07-11-simulation-report.md` (§3a security, §8a autonomy, §8b resilience)
   - Evidence: `review/sim-artifacts/` (engines, fault matrix, coverage, findings JSON)
 - **Status legend:** ✅ FIXED (verified) · 🟠 OPEN (confirmed at HEAD) · ⚪ LATENT (real but not live) · 🔵 PENDING (committed, needs targeted test)
-- **Framing:** all data is sandboxed simulation with synthetic actors — **formative, not proof**. Severity is *conditional*: most items become live only when real colleague data is ingested. Remediation was landing during the runs, so status is "as of commit `eb59b88`".
+- **Framing:** all data is sandboxed simulation with synthetic actors — **formative, not proof**. Severity is *conditional*: most items become live only when real colleague data is ingested.
+- **RECONCILED 2026-07-12 against the full remediation tree (all T0–T13, branch `remediation/2026-07-11`, `make test` green).** My earlier autonomy (§8a) and fault (§8b) sweeps ran on a stale sandbox (T0–T5 only), so several items below were re-verified live against the current tree. See the reconciliation block next.
+
+---
+
+## RECONCILIATION — verified live against current tree (T0–T13)
+
+The remediation branch closed all fourteen work-order tasks (each with a test). I re-ran targeted probes (`…/scratchpad/teamos-sim4/reconcile.py`) on every previously-open item. Result: **most are fixed; four resilience residuals remain.**
+
+| Item | Was | Live verdict now | Status |
+|---|---|---|---|
+| D1/F1 untrusted → schedule via `process_inbox` | committed (CRIT) | **pending human approval, not committed** | ✅ FIXED (T9) |
+| D2 agent auto-creates shared worker | auto-committed | **pending human approval** | ✅ FIXED (T9) |
+| A7/F2 WebFetch corpus exfil (untainted first move) | allow (CRIT) | **ask** (blocked) | ✅ FIXED (T2) |
+| A10/F4 forge envelope (unsigned endorsements) | widens 0→1 | **0→0, forge blocked** (HMAC verify) | ✅ FIXED (T7) |
+| C1/C3/F5 initiative-floor over-count | 82–91 inflated | **=2** — excludes prompted, heavy-edit, dedups | ✅ FIXED (T6) |
+| C2 engagement penalty (narrow on heavy edit) | narrows autonomy | envelope no longer narrows on edits | ✅ FIXED (T6) |
+| C4 gameable L7 marker | score 1.0 clears promotion | marked non-load-bearing; promotion ignores it | ✅ FIXED (T8) |
+| C6 local accepts dead signal | ignored | `signal_type` reconciled; verified records consumed | ✅ FIXED (T7) |
+| B1 deletion tombstone-only | 0 files removed | content shred + `test_corpus_file_removed_on_erasure` | ✅ FIXED (T4) |
+| B3 key hygiene | world-readable, no shred | `chmod 0600`, keys outside repo | ✅ FIXED (T13) |
+| D3 scheduled double-send | double-sends | **still sends 3× on crash-after-effect**; send-receipt now makes it *auditable* | 🟠 PARTIAL |
+| E1 torn ledger tail-line | bricks writer | **still crashes** all future appends | 🟠 OPEN |
+| E2 whole-file deletion | silent history loss | **still silent** at append (off-box anchor is a separate witness, not checked here) | 🟠 OPEN |
+| E3 breaker-open crashes scheduled loop | uncaught `PermissionError` | **still crashes** the scheduled run | 🟠 OPEN |
+
+**Note on discrepancy:** the parallel `2026-07-12-remediation-simulation-report.md` reports "13/13 faults fail safe." My targeted probes reproduce E1/E2/E3 as still-failing — those specific scenarios (torn tail-line, whole-file deletion, breaker-open via `run_if_due`) are not in that report's fault set. Reconciliation contribution: **four durability/liveness residuals survive the remediation.**
+
+The per-domain tables below are the *pre-reconciliation* record; where a row disagrees with the reconciliation table above, **the reconciliation wins.**
 
 ---
 
@@ -74,27 +102,25 @@
 
 ---
 
-## Still-open, ranked (the actual to-do at HEAD `eb59b88`)
+## Still-open, ranked (RECONCILED against current tree, T0–T13)
 
-**Gate on ingesting any real colleague data (P0):**
-1. **A7 / A8 / A9 — send-class exfil** — WebFetch and any egress-capable/MCP tool still leaks non-credential data; T2 covered Bash-to-`ask` only. The last open seam in FR2.
-2. **D1 — untrusted content → corpus/worker** — the scout auto-commits mined external content; the door→`process_inbox` path has no taint check.
-3. **D2 — worker auto-creation without approval** — a new shared skill stands itself up unprompted.
-4. **B1 — deletion** (verify T4 end-to-end) and **B3 — key hygiene/crypto-shred**.
+**Durability & liveness (P1 — the real residual; no data-loss/crash for an unattended system):**
+1. **E1 — torn ledger tail-line bricks the writer.** A crash mid-`append` leaves a partial last line; every future `append` then crashes in `last_hash()`. T5 added a lock but no tail-repair. Fix: skip/repair a trailing partial line on read.
+2. **E3 — tripping the breaker crashes the scheduled loop.** Breaker-open → `deliver` raises `PermissionError` → `run_if_due` doesn't catch it → the autonomous run dies (and retries-crash next tick). Fix: a safety halt should *pause* gracefully.
+3. **E2 — whole-file deletion is silent at the append layer.** Deleting a ledger and appending starts a fresh chain with no gap record. T13 added an off-box anchor *witness*, but it isn't consulted at append; wire a deletion/gap check.
+4. **D3 — scheduled double-send still reproduces** via `run_if_due` crash-after-effect (sends 3×). T13's send-receipt makes it **auditable** but not **prevented** on this path; add an at-most-once check against the receipt before sending. (**E4 corrupt-checkpoint** and **E5 send-receipt** from the fault sweep: E5 fixed by T13; E4 not re-verified — likely still crashes on a torn checkpoint.)
 
-**Durability & liveness (P1 — no data-loss/crash for an unattended system):**
-5. **E1 torn-tail repair**, **E2 anchor-at-append (or deletion detection)**, **E3 graceful breaker pause**, **E4 checkpoint restart-on-corrupt**, **E5 send-receipt ledger**.
+**Non-code / human (cannot be closed by remediation):**
+5. **T10** — recruit 2–3 collaborators, declare unattended posture in L2, start the 14-day streak, fill the FR8 overhead ledger. The standing long pole.
+6. **F6** — A-P3 transfer is `inconclusive` at synthetic n; needs real receivers (the T0 interval rule is correct).
 
-**Thesis integrity (P1 — before the FK6 clock):**
-6. **C1/C2/C3 floor integrity** (unprompted provenance; missing-distance = not-accepted; decouple from envelope narrowing), **C4 real L7 metric**, **C6 wire local accepts**.
+**Latent (already mitigated; keep both halves together):**
+7. **A9 residual** — the send-class/egress denylist is "interim, not defensible" per BEHAVIOR.md; keep the taint layer as the real control. **A10/D5** now moot: T7 verifies L8 identity, so even when the gate wires the envelope, forging is blocked.
 
-**Latent (fix when the envelope is enforced):**
-7. **A10 / D5** — cryptographically attribute L8 and make the gate consult the envelope *together*, or forging becomes live the day autonomy is enforced.
-
-**Already fixed in tree (regression-guard only):** A1, A2, A3, A4, A5, A6, B2, B4(verify), B5, C5, plus the good resilience behaviors (fail-closed gate/policy/breaker, tamper detection, batch isolation) and good autonomy behaviors (crash-safe loop, deterministic insights).
+**Fixed & verified — regression-guard only:** A1, A2, A3, A4, A5, A6, A7, A10, B1, B2, B3, B4, B5, C1, C2, C3, C4, C5, C6, D1, D2, D4 (spawn bounds enforced), plus good baseline behaviors (fail-closed gate/policy/breaker, tamper detection, batch isolation, crash-safe loop, deterministic insights, no-individuation).
 
 ---
 
 ## Recommended next step
 
-Wire the still-open items as **failing CI guards** using the sim engines already in `review/sim-artifacts/` (they are deterministic): `engine.py` (A7–A9 exfil, D1 taint), `engine_autonomy.py` (D2/D3/D4/D5), `engine_faults.py` (E1–E5). Each currently reproduces its defect and flips green as the fix lands — turning this findings ledger into an executable checklist.
+The security/privacy/behavioral/autonomy layers are substantially remediated and verified. **The remaining work is durability/liveness (E1, E3, E2, D3) + the human long pole (T10).** Wire the four residuals as failing CI guards using `…/teamos-sim4/reconcile.py` and `review/sim-artifacts/engine_faults.py` (both deterministic; each reproduces its defect today and flips green as the fix lands). Then this ledger is an executable, self-checking checklist rather than a static document.
