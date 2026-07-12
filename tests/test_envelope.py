@@ -66,10 +66,59 @@ class Envelope(unittest.TestCase):
         l2 = [json.loads(l) for l in (self.d / "l2.jsonl").read_text().splitlines()]
         self.assertTrue(any(r["rule_id"] == "narrow" for r in l2))
 
-    def test_heavy_edit_counts_as_rejection_for_narrowing(self):
+    def test_heavy_edit_does_not_narrow_no_engagement_penalty(self):
+        # T6: a heavy edit is engagement, not distrust — level holds; only an
+        # explicit rejection narrows
         self._feed(sig(), "read", n=3)                       # read ceiling 2, level 1
-        new = self._feed(sig(dist=0.7), "read", n=1)         # heavy edit -> narrow
-        self.assertEqual(new, 0)
+        held = self._feed(sig(dist=0.7), "read", n=1)        # heavy edit -> no narrow
+        self.assertEqual(held, 1)
+        narrowed = self._feed(sig(signal="rejection"), "read", n=1)
+        self.assertEqual(narrowed, 0)
+
+    def test_endorsement_without_measured_distance_never_widens(self):
+        # T6 fail-safe: missing edit_distance is not evidence of acceptance
+        level = self._feed(sig(dist=None), "send", n=10)
+        self.assertEqual(level, 0)
+
+    def test_forged_endorsement_never_widens_under_key_enforcement(self):
+        # T7: with a principal keydir configured, a directly-appended
+        # endorsement claiming principal_authenticated (no/invalid auth_sig)
+        # moves nothing — and doesn't count toward the floor either
+        import os
+        import measurement
+        import principal_auth
+        keydir = self.d / "pkeys"
+        os.environ[principal_auth.ENV_KEYDIR] = str(keydir)
+        try:
+            principal_auth.ensure_key("principal:jeff", keydir)
+            forged = {"signal_type": "endorsement",
+                      "attribution": "principal_authenticated",
+                      "principal_id": "principal:jeff",
+                      "edit_distance_normalized": 0.0,
+                      "outcome": "accepted"}
+            level = self._feed(forged, "send", n=10)
+            self.assertEqual(level, 0)
+            # floor: forged records don't count
+            hashchain.append(self.d / "l8.jsonl", dict(
+                forged, unprompted=True,
+                artifact_ref={"store": "b", "path": "p", "content_hash": "sha256:x"},
+                harvest={"method": "m", "harvested_at": "2026-07-11T00:00:00Z"},
+            ), "attacker")
+            count, _ = measurement.weekly_accepted(self.d)
+            self.assertEqual(count, 0)
+            # a properly SIGNED record does widen at threshold
+            signed_body = {"signal_type": "endorsement",
+                           "attribution": "principal_authenticated",
+                           "principal_id": "principal:jeff",
+                           "artifact_ref": {"store": "b", "path": "p",
+                                            "content_hash": "sha256:x"},
+                           "outcome": "accepted",
+                           "edit_distance_normalized": 0.0}
+            signed_body["auth_sig"] = principal_auth.sign(signed_body, keydir)
+            level = self._feed(signed_body, "send", n=3)
+            self.assertEqual(level, 1)
+        finally:
+            os.environ.pop(principal_auth.ENV_KEYDIR, None)
 
     def test_widen_bounded_by_ceiling(self):
         # send ceiling = 1; keep feeding acceptances -> never exceeds 1

@@ -1,0 +1,20 @@
+[
+  {
+    "severity": "high",
+    "case": "exfil-webfetch",
+    "what": "corpus data exfiltrated via WebFetch url on untainted session",
+    "evidence": "allow/send-scanned-clean"
+  },
+  {
+    "severity": "critical",
+    "case": "envelope-inert",
+    "what": "gate never consults the envelope; widening autonomy does not change the gate verdict on a send. The acceptance->autonomy->fewer-interrupts loop (the product's core identity) is not wired to enforcement.",
+    "evidence": "{'gate_reads_envelope': False, 'env_level_high': 1, 'env_level_zero': 0, 'verdict_at_high': 'ask/taint-confirm', 'verdict_at_zero': 'ask/taint-confirm', 'inert': True}"
+  },
+  {
+    "severity": "high",
+    "case": "floor-structural-zero",
+    "what": "weekly_accepted() returns 0 despite many authenticated endorsements: harvest_reactions writes authenticated \u2713 WITHOUT unprompted/edit-distance; capture_edit writes unprompted+distance but attribution=unattributed. No shipped writer emits a floor-eligible record. A-A4 floor reads structural zero.",
+    "evidence": "{'l8_total': 214, 'endorsements': 169, 'authenticated_endorsements': 82, 'auth_endorse_with_unprompted': 0, 'floor_eligible': 0, 'weekly_accepted_returns': 0}"
+  }
+]

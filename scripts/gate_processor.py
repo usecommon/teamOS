@@ -25,6 +25,25 @@ import gate  # noqa: E402
 
 PROC_AGENT_ID = "teamos-gate-processor/0.1"
 ALLOWED_ROOTS = ("stores/corpus", "schedules", "stores/skills")
+# T9 / §7.7: proposals that ADD PLAN STRUCTURE (a scheduled step, a loadable
+# skill) never auto-commit — they wait for explicit human approval. Corpus
+# entries are values and flow through the parser + FK2 gate as before.
+PLAN_STRUCTURE_KINDS = ("schedule", "skill")
+
+
+def approve(inbox_dir, proposal_id, approver="principal"):
+    """The human-approval step: drop an approval marker for a proposal. Meant
+    to be called by the principal (CLI/console), never by the agent."""
+    d = Path(inbox_dir) / "approvals"
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f"{proposal_id}.approved"
+    path.write_text(json.dumps({"approver": approver,
+                                "at": hashchain.utc_now()}))
+    return path
+
+
+def _approved(inbox_dir, proposal_id):
+    return (Path(inbox_dir) / "approvals" / f"{proposal_id}.approved").exists()
 
 
 class ProposalRejected(ValueError):
@@ -115,11 +134,13 @@ def _commit(proposal, resolved, repo_root, ledger_dir, kind):
 
 
 def process_inbox(inbox_dir, repo_root, ledger_dir, policy=None):
-    """Process every proposal. Returns {committed:[...], rejected:[(id,rule)]}."""
+    """Process every proposal. Returns {committed, rejected, pending}.
+    Schedule/skill proposals WAIT (pending) until a human approval marker
+    exists — untrusted content never adds plan structure unconfirmed (T9)."""
     inbox = Path(inbox_dir) / "proposals"
-    committed, rejected = [], []
+    committed, rejected, pending = [], [], []
     if not inbox.exists():
-        return {"committed": committed, "rejected": rejected}
+        return {"committed": committed, "rejected": rejected, "pending": pending}
     policy = policy or gate.load_policy()
     prev_ledger = gate.LEDGER_DIR
     gate.LEDGER_DIR = Path(ledger_dir)
@@ -131,6 +152,10 @@ def process_inbox(inbox_dir, repo_root, ledger_dir, policy=None):
                 proposal = json.loads(path.read_text())
                 kind, target = _validate_structure(proposal)
                 resolved = _safe_target(repo_root, target)
+                if kind in PLAN_STRUCTURE_KINDS \
+                        and not _approved(inbox_dir, proposal["proposal_id"]):
+                    pending.append(proposal["proposal_id"])
+                    continue  # stays in the inbox awaiting the human
                 # run the IDENTICAL FK2 gate on the resolved write (protected
                 # paths / payload inspection apply exactly as in the loop path)
                 decision = gate.process({"tool_name": "Write",
@@ -152,7 +177,7 @@ def process_inbox(inbox_dir, repo_root, ledger_dir, policy=None):
                 _move(path, inbox.parent / "rejected")
     finally:
         gate.LEDGER_DIR = prev_ledger
-    return {"committed": committed, "rejected": rejected}
+    return {"committed": committed, "rejected": rejected, "pending": pending}
 
 
 def _move(path, dest_dir):

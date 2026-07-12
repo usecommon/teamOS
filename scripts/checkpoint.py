@@ -15,10 +15,19 @@ from pathlib import Path
 class Checkpoint:
     def __init__(self, path):
         self.path = Path(path)
+        self.state = {"done": [], "results": {}}
         if self.path.exists():
-            self.state = json.loads(self.path.read_text())
-        else:
-            self.state = {"done": [], "results": {}}
+            try:
+                loaded = json.loads(self.path.read_text())
+                if isinstance(loaded, dict) and "done" in loaded and "results" in loaded:
+                    self.state = loaded
+                else:
+                    raise ValueError("checkpoint missing done/results")
+            except (ValueError, OSError):
+                # E4: a torn checkpoint must not brick every resume. Preserve the
+                # corrupt bytes for audit and restart clean — at most a redo of
+                # the in-flight run, never a permanent crash.
+                self.path.replace(self.path.with_suffix(self.path.suffix + ".corrupt"))
 
     def is_done(self, name):
         return name in self.state["done"]

@@ -1,9 +1,12 @@
 PYTHON := python3
 export PYTHONPATH := $(CURDIR):$(CURDIR)/scripts
 
-.PHONY: test schemas mapping unit
+.PHONY: test schemas mapping unit individuation
 
-test: schemas mapping hookbudget unit chains
+test: schemas mapping hookbudget individuation unit chains
+
+individuation:
+	$(PYTHON) scripts/audit_individuation_ci.py
 
 schemas:
 	$(PYTHON) scripts/validate_schemas.py

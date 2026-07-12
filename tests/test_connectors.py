@@ -130,6 +130,33 @@ class OptInGate(unittest.TestCase):
         cfg = connectors.load_config(self.cfg_path)
         self.assertTrue(connectors._source(cfg, self.sid)["dm_email"])
 
+    def test_dm_item_refused_when_dm_email_off(self):
+        # T4: dm_email is ENFORCED at eligibility, not just stored
+        connectors.toggle(self.sid, True, config_path=self.cfg_path, ledger_dir=self.d)
+        cfg = connectors.load_config(self.cfg_path)
+        eligible, rule = connectors.eligibility(cfg, self.sid, item_class="dm")
+        self.assertFalse(eligible)
+        self.assertEqual(rule, "dm-email-opt-in")
+        items = [{"text": "channel msg", "item_class": "channel"},
+                 {"text": "private dm", "item_class": "dm"},
+                 {"text": "an email", "item_class": "email"}]
+        out = connectors.ingest(self.sid, items, config=cfg,
+                                config_path=self.cfg_path, ledger_dir=self.d)
+        self.assertEqual([i["text"] for i in out], ["channel msg"])
+        # refused items never reach L3 provenance either
+        l3_lines = (self.d / "l3.jsonl").read_text().splitlines()
+        self.assertEqual(len(l3_lines), 1)
+
+    def test_dm_item_ingests_after_dm_email_on(self):
+        connectors.toggle(self.sid, True, config_path=self.cfg_path, ledger_dir=self.d)
+        connectors.toggle(self.sid, True, config_path=self.cfg_path, ledger_dir=self.d,
+                          field="dm_email")
+        cfg = connectors.load_config(self.cfg_path)
+        out = connectors.ingest(self.sid, [{"text": "dm", "item_class": "dm"}],
+                                config=cfg, config_path=self.cfg_path,
+                                ledger_dir=self.d)
+        self.assertEqual(len(out), 1)
+
 
 class Allowlist(unittest.TestCase):
     def setUp(self):

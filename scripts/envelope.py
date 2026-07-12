@@ -20,6 +20,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+import principal_auth  # noqa: E402
+from fsutil import atomic_write_text  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 POLICY_PATH = REPO_ROOT / "config" / "envelope-policy.json"
@@ -47,7 +49,7 @@ def load_state(state_path, policy):
 
 
 def _save(state, state_path):
-    Path(state_path).write_text(json.dumps(state, indent=2))
+    atomic_write_text(state_path, json.dumps(state, indent=2))
 
 
 def _ledger_change(ledger_dir, category, frm, to, rule, policy_path):
@@ -84,18 +86,25 @@ def process_signal(l8_record, category, ledger_dir, state_path,
     ceiling = policy["categories"][category]["ceiling"]
     level = state["levels"][category]
 
-    principal = l8_record.get("attribution") == "principal_authenticated"
+    # CN-1/T7: cryptographically verified when a principal keydir is
+    # configured; a bare attribution field is a claim, not evidence
+    principal = principal_auth.verified(l8_record)
     signal = l8_record.get("signal_type")
     dist = l8_record.get("edit_distance_normalized")
-    severity = policy["narrow_edit_severity"]
 
     if not principal:
         state["history"].append({"category": category, "action": "ignored-unattributed"})
         _save(state, state_path)
         return level  # forged/unattributed never moves the envelope (CN-1)
 
-    is_rejection = signal == "rejection" or (dist is not None and dist > severity)
-    is_acceptance = signal == "endorsement" and (dist is None or dist <= LIGHT_EDIT)
+    # T6 — no engagement penalty: only an EXPLICIT rejection narrows. A heavy
+    # edit is the principal investing in the draft, not distrust; punishing it
+    # taught rubber-stamping (rejected-then-narrowed = more interrupts).
+    is_rejection = signal == "rejection"
+    # widening stays slow AND measured: an endorsement without a recorded edit
+    # distance is not evidence of acceptance (fail safe, T6)
+    is_acceptance = (signal == "endorsement"
+                     and dist is not None and dist <= LIGHT_EDIT)
 
     if is_rejection:
         if level > 0:

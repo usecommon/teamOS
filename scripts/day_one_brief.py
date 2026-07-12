@@ -19,11 +19,20 @@ sys.path.insert(0, str(REPO_ROOT / "hooks"))
 
 import hashchain  # noqa: E402
 import gate  # noqa: E402
+import principal_auth  # noqa: E402
 
 BRIEF_AGENT_ID = "teamos-brief/0.1"
 # Slack emoji -> signal
 ACCEPT_EMOJI = "white_check_mark"
 REJECT_EMOJI = "x"
+
+
+class GateBlocked(PermissionError):
+    """The gate denied the send (e.g. circuit breaker open). A subclass of
+    PermissionError so existing `except PermissionError` handlers still catch it,
+    but run_if_due() distinguishes it (E3): a safety halt PAUSES the scheduled
+    loop gracefully instead of crashing it. A post-permit send FAILURE stays a
+    plain PermissionError — that is a real error, not a halt."""
 
 
 # --- 1. assembly (summary-level with links; compiled content stays in store) ---
@@ -82,10 +91,32 @@ def render_dm(brief):
 
 # --- 2. delivery (through the gate; emits L2) ---------------------------------
 
+def _prior_successful_send(ledger_dir, payload_digest):
+    """Return the ts of an already-succeeded send-receipt for this exact payload
+    (D3 idempotency), or None. Deterministic ledger read — no model in the path."""
+    l2 = Path(ledger_dir) / "l2.jsonl"
+    if not l2.exists():
+        return None
+    for line in l2.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if (r.get("rule_id") == "send-receipt"
+                and r.get("outcome") == "send_succeeded"
+                and r.get("proposed_action", {}).get("payload_digest") == payload_digest):
+            target = r["proposed_action"].get("target", "")
+            return target.split("/", 1)[1] if "/" in target else target
+    return None
+
+
 def deliver(brief, channel, slack, ledger_dir, policy=None):
     """Send the brief DM. The send traverses the FK2 gate (L2) before posting.
 
-    Returns (ts, l2_record). Raises if the gate blocks the send.
+    Returns (ts, l2_record). Raises GateBlocked if the gate blocks the send.
+    Idempotent: an identical payload already send-receipted returns the prior ts.
     """
     ledger_dir = Path(ledger_dir)
     text = render_dm(brief)
@@ -101,9 +132,38 @@ def deliver(brief, channel, slack, ledger_dir, policy=None):
         gate.LEDGER_DIR = prev_ledger
     l2 = json.loads((ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
     if decision["hookSpecificOutput"]["permissionDecision"] != "allow":
-        raise PermissionError(f"gate blocked the brief send: {l2['rule_id']}")
+        # E3: a gate deny (e.g. breaker open) is a HALT, not a failure — raise a
+        # distinct type so the scheduled loop can pause instead of crashing.
+        raise GateBlocked(f"gate blocked the brief send: {l2['rule_id']}")
 
-    ts = slack.post_message(channel, text=text)
+    # D3 — at-most-once at the send path: if a send-receipt for this exact
+    # payload already succeeded, a prior run (or a crash-after-effect rerun)
+    # already delivered it. Return that ts without re-posting. Scheduled-brief
+    # content varies per slot, so an identical payload is a true duplicate.
+    digest = hashchain.sha256_str(text)
+    prior_ts = _prior_successful_send(ledger_dir, digest)
+    if prior_ts is not None:
+        return prior_ts, l2
+
+    # T13 — record the OUTCOME, not only the decision: a permitted-but-failed
+    # or double send is visible in the ledger (send-receipt record).
+    try:
+        ts = slack.post_message(channel, text=text)
+        receipt_outcome, receipt_target = "send_succeeded", f"{channel}/{ts}"
+    except Exception as exc:
+        receipt_outcome, receipt_target = "send_failed", f"{channel}/{type(exc).__name__}"
+        ts = None
+    hashchain.append(ledger_dir / "l2.jsonl", {
+        "proposed_action": {"tool": "slack_post_message",
+                            "action_class": "send", "target": receipt_target,
+                            "payload_digest": hashchain.sha256_str(text)},
+        "verdict": "permit", "policy_version": l2["policy_version"],
+        "rule_id": "send-receipt",
+        "inspection": {"checks_run": ["send-receipt"], "findings": []},
+        "outcome": receipt_outcome,
+    }, BRIEF_AGENT_ID)
+    if ts is None:
+        raise PermissionError("send failed after permit — receipt ledgered")
     return ts, l2
 
 
@@ -125,7 +185,7 @@ def harvest_reactions(channel, ts, principal_user_id, slack, ledger_dir,
             principal = (user == principal_user_id)
             signal = "endorsement" if r["name"] == ACCEPT_EMOJI else "rejection"
             outcome = "accepted" if r["name"] == ACCEPT_EMOJI else "rejected"
-            rec = hashchain.append(ledger_dir / "l8.jsonl", {
+            body = {
                 "signal_type": signal,
                 "artifact_ref": {"store": "brief", "path": f"{channel}/{ts}",
                                  "content_hash": hashchain.sha256_str(artifact_link)},
@@ -133,7 +193,14 @@ def harvest_reactions(channel, ts, principal_user_id, slack, ledger_dir,
                 "attribution": "principal_authenticated" if principal else "unattributed",
                 "outcome": outcome,
                 "harvest": {"method": "slack-reactions-get", "harvested_at": harvested_at},
-            }, BRIEF_AGENT_ID)
+            }
+            if principal:
+                # T7: API-verified identity gets the crypto stamp when a
+                # principal keydir is configured — consumers verify, not trust
+                sig = principal_auth.sign(body)
+                if sig:
+                    body["auth_sig"] = sig
+            rec = hashchain.append(ledger_dir / "l8.jsonl", body, BRIEF_AGENT_ID)
             records.append(rec)
     return records
 
@@ -165,6 +232,28 @@ def run_if_due(task_name, interval_seconds, state_dir, action, now=None):
         catch_up = elapsed > interval_seconds * 1.5  # a scheduled slot was missed
     if not due:
         return False, False, None
-    result = action()
-    state_file.write_text(json.dumps({"last_run": now.isoformat(), "catch_up": catch_up}))
+    # T13 — claim the slot BEFORE the side effect is observable: a crash after
+    # the action can no longer double-send on the rerun (at-most-once). The
+    # claim is atomic; a failed action leaves the claim + failure marker.
+    from fsutil import atomic_write_text
+    prior_state = state_file.read_text() if state_file.exists() else None
+    atomic_write_text(state_file, json.dumps(
+        {"last_run": now.isoformat(), "catch_up": catch_up, "status": "claimed"}))
+    try:
+        result = action()
+    except GateBlocked:
+        # E3: a safety halt (breaker open) PAUSES the loop — it does not crash.
+        # Roll back the slot claim so the run stays due and retries once the
+        # breaker closes, instead of dying and retry-crashing every tick.
+        if prior_state is None:
+            state_file.unlink(missing_ok=True)
+        else:
+            atomic_write_text(state_file, prior_state)
+        return False, catch_up, None
+    except Exception:
+        atomic_write_text(state_file, json.dumps(
+            {"last_run": now.isoformat(), "catch_up": catch_up, "status": "failed"}))
+        raise
+    atomic_write_text(state_file, json.dumps(
+        {"last_run": now.isoformat(), "catch_up": catch_up, "status": "completed"}))
     return True, catch_up, result

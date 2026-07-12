@@ -1,0 +1,3 @@
+{"turn": 0, "actor": "U_ENG", "action": "cold-start", "compiled": 4, "brief_ok": true, "gate": "send-scanned-clean"}
+{"turn": 0, "actor": "U_ONCALL", "action": "cold-start", "compiled": 4, "brief_ok": true, "gate": "send-scanned-clean"}
+{"turn": 0, "actor": "U_DATA", "action": "cold-start", "compiled": 3, "brief_ok": true, "gate": "send-scanned-clean"}

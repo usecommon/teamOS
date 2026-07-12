@@ -53,12 +53,18 @@ RUNTIME_DOMAINS = {
 }
 
 
-def eligibility(config, source_id, runtime="path_a"):
+# item classes that are DM/email-grade (opt-in via the dm_email toggle, FK3b)
+DM_CLASSES = ("dm", "email", "im", "mpim", "group_dm")
+
+
+def eligibility(config, source_id, runtime="path_a", item_class=None):
     """Return (eligible, rule_id). Pure policy evaluation, no side effects.
 
     Enforces fork §9 credential domains: a runtime may only reach sources in its
     permitted domain(s), and Plane-A sources require OWNED inference (API key or
     local model) — so teamOS runs independent of the Claude account.
+    DM/email-class items additionally require the source's dm_email toggle
+    (opt-in, ledgered) — CLAUDE.md: nothing reads DMs until toggled on.
     """
     source = _source(config, source_id)
     if source is None:
@@ -73,6 +79,8 @@ def eligibility(config, source_id, runtime="path_a"):
         return False, "allowlist-block"
     if not source.get("enabled", False):
         return False, "off-by-default"
+    if item_class in DM_CLASSES and not source.get("dm_email", False):
+        return False, "dm-email-opt-in"
     return True, "eligible"
 
 
@@ -128,6 +136,13 @@ def ingest(source_id, items, config=None, config_path=None, ledger_dir=None,
     }
     tagged = []
     for i, item in enumerate(items):
+        # per-item class check: DM/email items refused unless dm_email is on.
+        # Items carry item_class ("dm"/"email"/"channel"/...); untagged items
+        # are treated as channel-grade.
+        ok, _ = eligibility(config, source_id, runtime,
+                            item_class=item.get("item_class"))
+        if not ok:
+            continue  # never tagged, never ledgered, never returned
         stamped = dict(item)
         stamped["provenance"] = provenance
         tagged.append(stamped)

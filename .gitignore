@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .DS_Store
+ledgers/l3.jsonl
+ledgers/sidestore/
+ledgers/taint/

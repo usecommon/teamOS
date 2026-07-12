@@ -44,12 +44,14 @@ def _assert_key_outside_repo(keydir, repo_root):
 
 
 def load_or_create_key(keydir, principal, repo_root):
+    import os
     _assert_key_outside_repo(keydir, repo_root)
     keydir = Path(keydir)
     keydir.mkdir(parents=True, exist_ok=True)
     kp = keydir / f"{principal}.key"
     if not kp.exists():
         kp.write_bytes(generate_key())
+    os.chmod(kp, 0o600)  # T13: owner-only, always (also repairs old keys)
     return kp.read_bytes()
 
 

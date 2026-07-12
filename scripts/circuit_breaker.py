@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+from fsutil import atomic_write_text  # noqa: E402
 
 CB_AGENT_ID = "teamos-circuit-breaker/0.1"
 SIDE_EFFECTS = ("write", "edit", "send", "execute", "schedule")
@@ -40,13 +41,13 @@ def _ledger(ledger_dir, verdict, rule, by, reason):
 
 def trip(ledger_dir, state_path, by, reason):
     """Open the breaker. `by` = a principal id or 'safety-agent'."""
-    Path(state_path).write_text(json.dumps(
+    atomic_write_text(state_path, json.dumps(
         {"state": "open", "tripped_by": by, "reason": reason, "at": hashchain.utc_now()}))
     _ledger(ledger_dir, "deny", "circuit-breaker-trip", by, reason)
 
 
 def reset(ledger_dir, state_path, by):
     """Close the breaker (manual — resetting is never automatic)."""
-    Path(state_path).write_text(json.dumps(
+    atomic_write_text(state_path, json.dumps(
         {"state": "closed", "tripped_by": None, "reason": None, "at": hashchain.utc_now()}))
     _ledger(ledger_dir, "permit", "circuit-breaker-reset", by, None)

@@ -36,11 +36,19 @@ def pii_scan(text):
 
 
 def eval_score(skill_id, ledger_dir):
+    """Mean of LOAD-BEARING L7 scores only (T8). Scaffold metrics (the
+    gameable structural-marker fraction) are excluded by construction: a stub
+    deliverable containing three magic strings can never clear promotion."""
     path = Path(ledger_dir) / "l7.jsonl"
     if not path.exists():
         return None
-    scores = [json.loads(l)["score"] for l in path.read_text().splitlines()
-              if l.strip() and json.loads(l)["skill_id"] == skill_id]
+    scores = []
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        if r["skill_id"] == skill_id and r.get("load_bearing", False):
+            scores.append(r["score"])
     return round(statistics.mean(scores), 3) if scores else None
 
 

@@ -3,6 +3,7 @@ content-by-reference + no inlining (SE-2); L1 compile + chain; tamper breaks
 chain; golden scripted session -> expected records."""
 
 import json
+import multiprocessing
 import sys
 import tempfile
 import unittest
@@ -16,6 +17,15 @@ import hashchain  # noqa: E402
 import l1_compile  # noqa: E402
 import l8_capture  # noqa: E402
 from l3_writer import LineageRejected, write_with_lineage  # noqa: E402
+
+
+def _append_burst(args):
+    """Module-level so multiprocessing can pickle it (spawn-safe)."""
+    ledger_path, writer_id, n = args
+    for i in range(n):
+        hashchain.append(Path(ledger_path), {"writer": writer_id, "i": i},
+                         f"test-writer-{writer_id}")
+    return writer_id
 
 TRANSCRIPT = (
     REPO_ROOT / "fixtures" / "harness-footprint" / "dot-claude"
@@ -70,8 +80,30 @@ class Ledgers(unittest.TestCase):
         self.assertNotIn("SECRETSAUCE", json.dumps(rec))
         self.assertNotIn("parser fix", json.dumps(rec))
         self.assertEqual(rec["diff_ref"]["store"], "l8-sidestore")
-        self.assertEqual(rec["attribution"], "principal_authenticated")
+        # T7: no key, no principal stamp — attribution defaults unattributed
+        self.assertEqual(rec["attribution"], "unattributed")
         self.assertGreater(rec["edit_distance_normalized"], 0)
+
+    def test_l8_capture_stamps_principal_only_with_key(self):
+        draft, edited = self.d / "d2.md", self.d / "e2.md"
+        draft.write_text("hello world\n")
+        edited.write_text("hello world!\n")
+        keydir = self.d / "keys"
+        rec = l8_capture.capture_edit(draft, edited, "principal:jeff",
+                                      ledger_dir=self.d, keydir=keydir)
+        self.assertEqual(rec["attribution"], "principal_authenticated")
+        self.assertIn("auth_sig", rec)
+        # a light edit emits the CONSUMED signal type — local accepts are live
+        self.assertEqual(rec["signal_type"], "endorsement")
+
+    def test_l8_capture_heavy_edit_is_engagement_not_endorsement(self):
+        draft, edited = self.d / "d3.md", self.d / "e3.md"
+        draft.write_text("alpha\n")
+        edited.write_text("completely different content entirely\n")
+        rec = l8_capture.capture_edit(draft, edited, "principal:jeff",
+                                      ledger_dir=self.d)
+        self.assertEqual(rec["signal_type"], "edit")
+        self.assertEqual(rec["outcome"], "edited-heavily")
 
     def test_l8_erasure_of_sidestore_keeps_chain_verifiable(self):
         # SE-2: chain hashes the REFERENCE; deleting side-store content (DSAR
@@ -92,6 +124,21 @@ class Ledgers(unittest.TestCase):
         records = l1_compile.compile_transcript(TRANSCRIPT, ledger_dir=self.d)
         self.assertEqual(len(records), 3)  # 2 tool spans + 1 chat
         self.assertEqual(hashchain.verify(self.d / "l1.jsonl"), 3)
+
+    def test_concurrent_appends_never_fork_the_chain(self):
+        # T5: >=4 processes hammering one ledger; the flock spanning
+        # read-last-hash + write must keep the chain linear and complete.
+        ledger = self.d / "concurrent.jsonl"
+        writers, per_writer = 6, 25
+        with multiprocessing.Pool(writers) as pool:
+            pool.map(_append_burst,
+                     [(str(ledger), w, per_writer) for w in range(writers)])
+        self.assertEqual(hashchain.verify(ledger), writers * per_writer)
+        records = [json.loads(l) for l in ledger.read_text().splitlines()]
+        self.assertEqual(len(records), writers * per_writer)
+        # every writer's every record landed exactly once
+        seen = {(r["writer"], r["i"]) for r in records}
+        self.assertEqual(len(seen), writers * per_writer)
 
     def test_tamper_breaks_chain(self):
         l1_compile.compile_transcript(TRANSCRIPT, ledger_dir=self.d)

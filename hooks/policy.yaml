@@ -16,7 +16,9 @@ action_classes:
 # Tool-name substrings classed as sends (outbound-content scan mandatory, AT-6)
 send_tool_markers: [send, post, message, mail, publish, upload, share]
 
-# Writes here require human approval (verdict: ask)
+# Writes here require human approval (verdict: ask). Matched on the RESOLVED
+# real path (symlinks can't dodge). Relative entries match anywhere in the
+# resolved path; ~//absolute entries match by prefix.
 protected_paths:
   - hooks/
   - adapter/
@@ -24,6 +26,10 @@ protected_paths:
   - .github/workflows/
   - docs/team-os-fork-harness-native.md   # divergence log — append via PR only
   - config/envelope-policy.json           # envelope ceiling — script can never touch its own ceiling
+  - envelope-state.json                   # the dial — agent can't widen its own envelope
+  - breaker.json                          # the stop — agent can't disarm the kill switch
+  - .claude/settings.json                 # hook registration — gate can't be unplugged at source
+  - ~/.claude/settings.json
 
 # Reads of these escalate (verdict: ask)
 sensitive_read_paths:
@@ -35,14 +41,22 @@ sensitive_read_paths:
   - id_rsa
   - credentials
 
-# Writes under declared cloud-synced roots are SENDS, not local writes (FR2)
+# Writes under declared cloud-synced roots are SENDS, not local writes (FR2).
+# Matched as substrings of the target path AND of Bash commands.
 synced_paths:
   - Library/Mobile Documents
+  - Library/CloudStorage
   - Dropbox
   - Google Drive
+  - GoogleDrive-          # modern macOS Drive mount: GoogleDrive-<email>
   - OneDrive
+  - /Box/
+  - /Box Sync
 
-# Bash egress markers (command scan)
+# Bash egress markers. Matched against a NORMALIZED command: quote/escape
+# chars stripped, whitespace collapsed, casefolded — so cu"r"l, CURL, cu\rl
+# all match. Substring denylist = interim defense-in-depth only; the
+# defensible layer is taint + send gate (see BEHAVIOR.md).
 egress_patterns:
   - curl
   - wget
@@ -51,9 +65,17 @@ egress_patterns:
   - netcat
   - scp
   - sftp
+  - "ssh "
+  - rsync
+  - "git push"
+  - "dig "
+  - nslookup
+  - osascript
+  - "open http"
   - /dev/tcp
-  - python -c import socket
-  - python3 -c import socket
+  - /dev/udp
+  - import socket
+  - socket.socket
   - base64
 
 # Outbound-content scan (mandatory on every send — X-2: catches VERBATIM
@@ -64,4 +86,29 @@ secret_patterns:
   - "ghp_[A-Za-z0-9]{20,}"
   - "sk-ant-[A-Za-z0-9-]{20,}"
   - "xox[bap]-[A-Za-z0-9-]{10,}"
-  - "eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+"   # JWT: header.payload, both base64url of a JSON object ({"...)
+  # JWT: header.payload.signature — the 3rd segment requirement keeps plain
+  # dot-joined base64 JSON (e.g. two encoded config objects) from false-
+  # positive-denying (T13)
+  - "eyJ[A-Za-z0-9_-]{8,}\\.eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}"
+
+# --- taint (FR2 Layer A, session-granular, fork §7.7) ---
+# Reading any of these marks the session tainted: subsequent sends/schedules
+# require confirmation (untrusted content supplies values, never plan structure)
+taint_source_paths:
+  - stores/corpus
+  - stores/skills
+  - inbox/
+taint_source_tools:
+  - WebFetch
+  - WebSearch
+
+# --- corpus-content egress (A7 / Option-B, protected change) ---
+# Flag a send carrying a distinctive run of STORED corpus text even on an
+# UNTAINTED first move (before any in-session corpus read) — the seam the taint
+# layer alone misses. Word-shingle overlap; folds into the taint-confirm ask.
+# Heuristic defense-in-depth; taint remains the primary control.
+corpus_fingerprint:
+  enabled: true
+  corpus_dir: stores/corpus
+  shingle_k: 6        # a 6-word verbatim run is distinctive, not incidental
+  min_shingles: 1
