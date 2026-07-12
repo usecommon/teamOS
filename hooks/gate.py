@@ -11,7 +11,6 @@ sends. Payload inspection is always-on; posture only changes what happens
 AFTER a finding, never whether inspection runs.
 """
 
-import hashlib
 import json
 import os
 import re
@@ -40,15 +39,15 @@ def load_policy():
 
 
 def _breaker_open():
-    """Circuit breaker: if TEAMOS_BREAKER points at an open breaker, side-effectful
-    actions are halted. Any principal or the safety agent can trip it."""
-    path = os.environ.get("TEAMOS_BREAKER")
-    if not path or not Path(path).exists():
-        return False
+    """Circuit breaker check — UNCONDITIONAL (T3). The stop is always wired:
+    a corrupt, missing, or unreadable breaker file counts as OPEN (deny), so
+    deleting or mangling the state file bricks instead of disarming."""
+    path = Path(os.environ.get("TEAMOS_BREAKER",
+                               REPO_ROOT / "ledgers" / "breaker.json"))
     try:
-        return json.loads(Path(path).read_text()).get("state") == "open"
+        return json.loads(path.read_text()).get("state") != "closed"
     except (ValueError, OSError):
-        return False
+        return True  # fail closed
 
 
 def flatten_strings(value):
@@ -82,6 +81,28 @@ def classify(policy, tool_name):
     if any(m in lower for m in policy["send_tool_markers"]):
         return "send", True
     return "send", False
+
+
+def protected_hits(policy, path_str):
+    """Protected-path match on the RESOLVED real path (T3): symlinks and
+    unicode tricks can't dodge the compare (mirrors gate_processor._safe_target).
+    Relative policy entries match repo-relative resolved paths; absolute/~
+    entries match by prefix."""
+    if not path_str:
+        return []
+    p = Path(path_str).expanduser()
+    resolved = p.resolve() if p.is_absolute() else (REPO_ROOT / p).resolve()
+    s = str(resolved)
+    rel = s[len(str(REPO_ROOT)) + 1:] if s.startswith(str(REPO_ROOT) + os.sep) else s
+    hits = []
+    for entry in policy["protected_paths"]:
+        e = str(Path(entry).expanduser())
+        if entry.startswith(("~", "/")):
+            if s == e or s.startswith(e.rstrip("/") + os.sep):
+                hits.append(entry)
+        elif rel.startswith(entry) or entry in rel:
+            hits.append(entry)
+    return hits
 
 
 def target_of(tool_input):
@@ -138,8 +159,7 @@ def inspect(policy, tool_name, action_class, tool_input, known=True,
     if action_class in ("write", "edit"):
         path = str(tool_input.get("file_path", tool_input.get("path", "")))
         checks.append("protected-path-check")
-        rel = path.replace(str(REPO_ROOT) + "/", "")
-        hits = [p for p in policy["protected_paths"] if rel.startswith(p) or p in rel]
+        hits = protected_hits(policy, path)
         if hits:
             findings += [f"protected-path:{p}" for p in hits]
             return checks, findings, "ask", "protected-path"

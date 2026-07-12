@@ -179,6 +179,68 @@ class Taint(GateBase):
         self.assertEqual(send["rule_id"], "taint-confirm")
 
 
+class ProtectedDials(GateBase):
+    """T3: resolved-path protection; the dial, the stop, and the hook config
+    are untouchable; the breaker is unconditional and fails closed."""
+
+    def _write(self, path, content="x"):
+        gate.process({"tool_name": "Write",
+                      "tool_input": {"file_path": str(path), "content": content},
+                      "session_id": "t3"}, self.policy)
+        return json.loads(
+            (self.ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
+
+    def test_symlink_to_protected_file_is_caught(self):
+        link = self.ledger_dir / "innocent.py"
+        link.symlink_to(REPO_ROOT / "hooks" / "gate.py")
+        rec = self._write(link)
+        self.assertEqual(rec["verdict"], "ask")
+        self.assertEqual(rec["rule_id"], "protected-path")
+
+    def test_breaker_state_write_is_protected(self):
+        rec = self._write("/anywhere/at/all/breaker.json", '{"state":"closed"}')
+        self.assertEqual(rec["rule_id"], "protected-path")
+
+    def test_envelope_state_write_is_protected(self):
+        rec = self._write(REPO_ROOT / "state" / "envelope-state.json")
+        self.assertEqual(rec["rule_id"], "protected-path")
+
+    def test_claude_settings_write_is_protected(self):
+        rec = self._write(Path.home() / ".claude" / "settings.json", "{}")
+        self.assertEqual(rec["rule_id"], "protected-path")
+
+    def test_corrupt_breaker_file_denies_side_effects(self):
+        bad = self.ledger_dir / "bad-breaker.json"
+        bad.write_text("{corrupt")
+        os.environ["TEAMOS_BREAKER"] = str(bad)
+        try:
+            rec = self._write(self.ledger_dir / "note.md")
+            self.assertEqual(rec["verdict"], "deny")
+            self.assertEqual(rec["rule_id"], "circuit-open")
+        finally:
+            os.environ.pop("TEAMOS_BREAKER", None)
+
+    def test_missing_breaker_file_denies_side_effects(self):
+        os.environ["TEAMOS_BREAKER"] = str(self.ledger_dir / "never-created.json")
+        try:
+            rec = self._write(self.ledger_dir / "note.md")
+            self.assertEqual(rec["verdict"], "deny")
+            self.assertEqual(rec["rule_id"], "circuit-open")
+        finally:
+            os.environ.pop("TEAMOS_BREAKER", None)
+
+    def test_reads_pass_while_breaker_unavailable(self):
+        os.environ["TEAMOS_BREAKER"] = str(self.ledger_dir / "never-created.json")
+        try:
+            gate.process({"tool_name": "Read",
+                          "tool_input": {"file_path": "README.md"}}, self.policy)
+            rec = json.loads(
+                (self.ledger_dir / "l2.jsonl").read_text().splitlines()[-1])
+            self.assertEqual(rec["verdict"], "permit")
+        finally:
+            os.environ.pop("TEAMOS_BREAKER", None)
+
+
 class FailClosed(unittest.TestCase):
     """T1: a gate crash must deny, never permit — and must be ledgered."""
 
