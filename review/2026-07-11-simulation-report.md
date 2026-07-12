@@ -10,7 +10,9 @@
 
 ## 1. TL;DR
 
-The software runs a full lifecycle without crashing — cold-start compile, unprompted loops, acceptance harvest, envelope movement, breaker, deletion, transfer, dashboards all execute — but under adversarial pressure it **reproduces six of the review's invariant failures identically across every team composition**, confirming they are code-level, not team-level. Encouragingly, **two of the review's headline findings are already fixed in the current tree** (the gate now fails *closed* on a crash; `transfer.py` now computes the pre-registered interval). The most important behavioral result is subtle: the initiative floor reported **82–91 "accepted" deliverables** while **28–44 of them were heavily rewritten by the human** — the metric literally cannot see the engagement it's meant to measure. Team makeup changed only the surface numbers; it changed none of the failures.
+The software runs a full lifecycle without crashing — cold-start compile, unprompted loops, acceptance harvest, envelope movement, breaker, deletion, transfer, dashboards all execute. The four-team sweep (§2–§6) ran against a snapshot taken **before** the work order's T2/T3 fixes landed and reproduced six invariant failures identically across every team — confirming they are code-level, not team-level. **A parallel remediation effort landed mid-run**, so I re-verified every adversarial case against the current tree (HEAD) with clean isolation (§3a). Net at HEAD: **four items fixed or materially improved** (gate fails closed; transfer interval; symlink/settings/breaker-state now protected; Bash egress downgraded allow→ask), and **four still open** (WebFetch non-credential exfil, untrusted-schedule auto-commit, deletion-removes-nothing, chain-corrupts-under-concurrency). The most important *behavioral* result is unchanged and team-independent: the initiative floor reported **82–91 "accepted" deliverables** while **28–44 were heavily rewritten by the human** — the metric cannot see the engagement it exists to measure.
+
+> **Read §3a first.** The per-team sweep below (§4) documents the pre-T2/T3 snapshot for the record; §3a is the authoritative current-HEAD status.
 
 ## 2. Run summary
 
@@ -26,6 +28,27 @@ The software runs a full lifecycle without crashing — cold-start compile, unpr
 **Actors:** 3–6 principals per team (each a persona subagent: a deep-editor, a rubber-stamper, a skeptic, and role-balanced others), each with their own Team OS agent; shared scout/gate-processor/safety-agent/breaker; a Manager, a Colleague (transfer), an external Client (untrusted source), and a red-team insider. Behavior is deterministic (seeded by actor+turn) so runs are reproducible.
 
 **Coverage:** all 15 cases exercised in every scenario (`review/sim-artifacts/*-coverage.md`).
+
+## 3a. Re-verification against HEAD (authoritative)
+
+The 4-team sweep ran on a sandbox snapshotted before work-order commits **T2 (egress hardening)** and **T3 (resolved-path protection)** landed. I re-ran every adversarial probe against current HEAD, with the breaker explicitly **closed** to isolate the payload checks from the new fail-closed-breaker behavior (a missing breaker file now denies everything, which otherwise masks the real verdict).
+
+| Probe | Pre-T2/T3 (sweep) | HEAD (isolated) | Status |
+|---|---|---|---|
+| Gate crash (garbage stdin) | — | `rc=2`, fail closed | **FIXED (T1)** |
+| Transfer pre-registration | interval computed | t-interval, `lo>0` bar | **FIXED (T0)** |
+| `Write` symlink → `hooks/gate.py` | allow | `ask` / protected-path | **FIXED (T3)** |
+| `Write` `~/.claude/settings.json` | (not tested) | `ask` / protected-path | **FIXED (T3)** |
+| `Write` breaker-state file (disarm) | allow | `ask` / protected-path | **FIXED (T3)** |
+| Breaker with missing/corrupt file | permit | treated open → deny | **FIXED (T3)** |
+| Bash `ssh` / `git push` / `curl` egress | allow | `ask` / bash-egress | **IMPROVED (T2)** — ask, not deny |
+| **WebFetch `?d=<corpus>`** | allow | **allow / send-scanned-clean** | **STILL OPEN** — non-credential exfil |
+| **Untrusted schedule → `process_inbox`** | auto-commit | **committed** | **STILL OPEN** — taint→plan-structure |
+| **Deletion `request_erasure`** | 0 files removed | **0 files removed** | **STILL OPEN** — tombstone-only |
+| **Hash chain, 4 concurrent appends** | chain broken | **chain broken** | **STILL OPEN** — no locking |
+| Forge 7 `principal_authenticated` endorsements | widens 0→1 | widens 0→1 (gate ignores envelope) | **LATENT** — high, not live |
+
+**HEAD bottom line:** the containment layer (protected paths, symlink resolution, breaker, fail-closed gate) is now largely closed. The **data-flow layer is still open**: a permitted send (WebFetch) still exfiltrates non-credential data, untrusted content still becomes a live schedule with no confirmation, erasure still deletes nothing, and the audit chain still corrupts under the parallelism the product encourages. Two of these (WebFetch exfil, taint auto-commit) indicate T2's taint/egress work does not yet cover the send-class URL path or the door→gate-processor commit path.
 
 ## 3. What worked (behaved as designed)
 
@@ -67,7 +90,7 @@ Cross-reference: findings 1–6 map directly to the review's CRITICALs; 7–8 to
 ## 7. Recommendations (reconciled with the work order)
 
 1. The simulation **confirms the work order's P0 ordering** for the still-open items — close exfil/taint/deletion/concurrency/containment before any real data. These are not hypothetical; they fire on turn one of an adversarial probe.
-2. **Update the work order:** mark **T0 (transfer interval)** and **T1 (gate fail-closed)** as *fixed in tree — verified by simulation*, and re-scope their tests to regression guards.
+2. **Update the work order** (verified by simulation against HEAD): mark **T0 (transfer interval)**, **T1 (gate fail-closed)**, and **T3 (resolved-path protection: symlink, settings.json, breaker-state, fail-closed breaker)** as *fixed in tree*; mark **T2 partial** (Bash egress now `ask`, but the WebFetch send-class URL path and the door→`process_inbox` commit path are still uncovered). Remaining open P0: **WebFetch/send-class exfil, taint auto-commit in `process_inbox`, deletion-removes-nothing (T4), hash-chain locking (T5)** — these four are the authoritative gate on ingesting real data.
 3. **Add a floor-integrity fix (elevate within T6):** `weekly_accepted` must treat a missing edit distance as *not* accepted, and join the endorsement to its edit record — the sim shows the headline metric is inflated today.
 4. **Add these sim probes to CI** (`review/sim-artifacts/engine.py`): they are deterministic regression tests for FR2, taint, deletion, symlink, breaker-disarm, and chain-concurrency — each currently reproduces a defect and will flip to green as the P0 fixes land.
 

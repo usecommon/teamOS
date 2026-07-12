@@ -5,6 +5,7 @@ chain implementations is the FR2 failure mode.
 Formula: hash = sha256((prev_hash or "") + canonical(record_without_hash)).
 """
 
+import fcntl
 import hashlib
 import json
 import os
@@ -43,35 +44,60 @@ def envelope(record, prev_hash, record_id, ts, agent_id, schema_version):
     return record
 
 
+def _tail_line(f, chunk=65536):
+    """Last non-empty line via seek from the end — O(tail), not O(file)."""
+    f.seek(0, os.SEEK_END)
+    size = f.tell()
+    if size == 0:
+        return None
+    buf = b""
+    pos = size
+    while pos > 0:
+        step = min(chunk, pos)
+        pos -= step
+        f.seek(pos)
+        buf = f.read(step) + buf
+        lines = [l for l in buf.split(b"\n") if l.strip()]
+        if len(lines) >= 2 or (lines and pos == 0):
+            return lines[-1].decode("utf-8")
+    return None
+
+
 def last_hash(path):
     path = Path(path)
     if not path.exists() or path.stat().st_size == 0:
         return None
-    with path.open() as f:
-        last = None
-        for line in f:
-            if line.strip():
-                last = line
+    with path.open("rb") as f:
+        last = _tail_line(f)
     return json.loads(last)["hash"] if last else None
 
 
 def append(path, body, agent_id, schema_version="0.1", record_id=None):
-    """Chain `body` onto the ledger at `path`. Returns the full record."""
+    """Chain `body` onto the ledger at `path`. Returns the full record.
+
+    Serialized: an exclusive flock spans read-last-hash + write, so parallel
+    writers (subagents, hooks, loops) can never fork the chain (T5)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    prev = last_hash(path)
-    record = envelope(
-        dict(body),
-        prev,
-        record_id or f"{path.stem}-{uuid.uuid4().hex[:12]}",
-        utc_now(),
-        agent_id,
-        schema_version,
-    )
-    with path.open("a") as f:
-        f.write(canonical(record) + "\n")
-        f.flush()
-        os.fsync(f.fileno())
+    with path.open("a+b") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            last = _tail_line(f)
+            prev = json.loads(last)["hash"] if last else None
+            record = envelope(
+                dict(body),
+                prev,
+                record_id or f"{path.stem}-{uuid.uuid4().hex[:12]}",
+                utc_now(),
+                agent_id,
+                schema_version,
+            )
+            f.seek(0, os.SEEK_END)
+            f.write((canonical(record) + "\n").encode("utf-8"))
+            f.flush()
+            os.fsync(f.fileno())
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
     return record
 
 

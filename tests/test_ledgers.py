@@ -3,6 +3,7 @@ content-by-reference + no inlining (SE-2); L1 compile + chain; tamper breaks
 chain; golden scripted session -> expected records."""
 
 import json
+import multiprocessing
 import sys
 import tempfile
 import unittest
@@ -16,6 +17,15 @@ import hashchain  # noqa: E402
 import l1_compile  # noqa: E402
 import l8_capture  # noqa: E402
 from l3_writer import LineageRejected, write_with_lineage  # noqa: E402
+
+
+def _append_burst(args):
+    """Module-level so multiprocessing can pickle it (spawn-safe)."""
+    ledger_path, writer_id, n = args
+    for i in range(n):
+        hashchain.append(Path(ledger_path), {"writer": writer_id, "i": i},
+                         f"test-writer-{writer_id}")
+    return writer_id
 
 TRANSCRIPT = (
     REPO_ROOT / "fixtures" / "harness-footprint" / "dot-claude"
@@ -92,6 +102,21 @@ class Ledgers(unittest.TestCase):
         records = l1_compile.compile_transcript(TRANSCRIPT, ledger_dir=self.d)
         self.assertEqual(len(records), 3)  # 2 tool spans + 1 chat
         self.assertEqual(hashchain.verify(self.d / "l1.jsonl"), 3)
+
+    def test_concurrent_appends_never_fork_the_chain(self):
+        # T5: >=4 processes hammering one ledger; the flock spanning
+        # read-last-hash + write must keep the chain linear and complete.
+        ledger = self.d / "concurrent.jsonl"
+        writers, per_writer = 6, 25
+        with multiprocessing.Pool(writers) as pool:
+            pool.map(_append_burst,
+                     [(str(ledger), w, per_writer) for w in range(writers)])
+        self.assertEqual(hashchain.verify(ledger), writers * per_writer)
+        records = [json.loads(l) for l in ledger.read_text().splitlines()]
+        self.assertEqual(len(records), writers * per_writer)
+        # every writer's every record landed exactly once
+        seen = {(r["writer"], r["i"]) for r in records}
+        self.assertEqual(len(seen), writers * per_writer)
 
     def test_tamper_breaks_chain(self):
         l1_compile.compile_transcript(TRANSCRIPT, ledger_dir=self.d)
