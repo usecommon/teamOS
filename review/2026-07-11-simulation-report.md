@@ -12,7 +12,7 @@
 
 The software runs a full lifecycle without crashing — cold-start compile, unprompted loops, acceptance harvest, envelope movement, breaker, deletion, transfer, dashboards all execute. The four-team sweep (§2–§6) ran against a snapshot taken **before** the work order's T2/T3 fixes landed and reproduced six invariant failures identically across every team — confirming they are code-level, not team-level. **A parallel remediation effort landed mid-run**, so I re-verified every adversarial case against the current tree (HEAD) with clean isolation (§3a). Net at newest HEAD (re-checked as commits T2→T5 landed during the run): **most items fixed or improved** (gate fails closed T1; transfer interval T0; symlink/settings/breaker-state protected T3; chain locking T5; Bash egress allow→ask T2; deletion T4 committed), and **two data-flow holes remain confirmed-open**: WebFetch non-credential exfil and untrusted-schedule auto-commit via `process_inbox`. The most important *behavioral* result is unchanged and team-independent: the initiative floor reported **82–91 "accepted" deliverables** while **28–44 were heavily rewritten by the human** — the metric cannot see the engagement it exists to measure.
 
-> **Read §3a first.** The per-team sweep below (§4) documents the pre-T2/T3 snapshot for the record; §3a is the authoritative current-HEAD status.
+> **Read §3a first** (authoritative current-HEAD status); the per-team sweep (§4) documents the pre-T2/T3 snapshot for the record. **§8a** covers the autonomy/initiative surfaces (self-running loops, recommendations, the agent creating a new shared worker, subagent spawning) added in a second pass.
 
 ## 2. Run summary
 
@@ -95,6 +95,23 @@ Cross-reference: findings 1–6 map directly to the review's CRITICALs; 7–8 to
 2. **Update the work order** (verified by simulation against HEAD): mark **T0, T1, T3, and T5 (chain locking — 160/160 intact)** as *fixed in tree*; **T4 (deletion)** committed but re-run with a targeted test (erase the node backing a real stored file). Remaining confirmed-open P0: **WebFetch/send-class exfil** and **taint auto-commit in `process_inbox`** — both in the send/door-commit seam T2 did not cover, and the authoritative gate on ingesting real data.
 3. **Add a floor-integrity fix (elevate within T6):** `weekly_accepted` must treat a missing edit distance as *not* accepted, and join the endorsement to its edit record — the sim shows the headline metric is inflated today.
 4. **Add these sim probes to CI** (`review/sim-artifacts/engine.py`): they are deterministic regression tests for FR2, taint, deletion, symlink, breaker-disarm, and chain-concurrency — each currently reproduces a defect and will flip to green as the P0 fixes land.
+
+## 8a. Autonomy & initiative (added — the self-running / recommend / worker-creation surfaces)
+
+The first pass under-exercised the *initiative* half of the product. A dedicated autonomy harness (`review/sim-artifacts/engine_autonomy.py`, run against HEAD with the breaker explicitly closed) drives the self-running loop, scheduled catch-up, the recommend/insights surface, worker-creation, subagent spawning, and earned-autonomy enforcement.
+
+**Behaved as designed (credit):**
+- **Self-running loop is crash-safe (FR4).** `loop.run_daily_loop` produced 3 shadow deliverables; re-firing the *same* run_id produced **0 duplicate L7** records (idempotent), and a simulated mid-run kill resumed cleanly — `done=[s1,s2]` after crash → `[s1,s2,s3]` after resume, step 3 attempted exactly twice, no completed step repeated. The checkpoint shim holds.
+- **Recommend / insights surface works and is clean.** `insights.generate` is deterministic across runs, correctly recommends "create a skill" for recurring tasks with no skill yet, and contained **no person-like tokens** (no individuation leak in the output).
+
+**Initiative findings (ranked):**
+1. **CRITICAL — untrusted content becomes an autonomous artifact.** External client messages fed to `discovery.corpus_scout` were mined into entities ("Billing Team", "Compliance Mailbox", "Halcyon Freight Partners") and **auto-committed to the corpus** via `process_inbox` with no confirmation. Untrusted input → self-authored knowledge, and the scout harvests proper nouns (would-be person names) exactly as the review warned. This is the initiative-side face of the taint hole.
+2. **HIGH — the agent auto-creates a new shared worker with no approval.** `propose_skill` → `process_inbox` wrote `stores/skills/standup-writer/SKILL.md` + `skill.json` + lineage. `gate_processor` has **no human-approval concept** (`approval_step_in_code=False`), yet `door.propose_skill`'s docstring says "the gate processor creates the skill folder only on approval." A new common worker is created unprompted; the gate only checks protected-paths/secrets, not "should this worker exist."
+3. **HIGH — scheduled self-running task double-sends on crash.** `run_if_due` writes its state *after* the action. Correct on the happy path (due→not-due dedup), but a crash after the side effect and before the state write re-runs the action next tick → **total_sends=3** for one logical delivery. No idempotency key on the send.
+4. **HIGH — subagent spawning has no preventive cap.** `spawn.record` accepted `depth=5 > MAX_DEPTH=3` without refusal (depth is self-reported), and 25 spawns exceeded `MAX_RATE=20`; the safety agent only trips the breaker **post-hoc** (`breaches=['spawn_depth','spawn_rate']`). Runaway fan-out is detected after it happens, not prevented.
+5. **HIGH — earned autonomy is decorative.** The envelope widened on repeated acceptances, but `gate.py` never consults envelope levels, so the widened autonomy changes **no permission** — the "bounded autonomy" guarantee is unenforced at the gate (confirms the meta-review's latent-not-live call, now shown for the initiative path too).
+
+**Net:** the autonomous *execution* machinery (loops, checkpoints, recommendations) is solid; the autonomous *authority* machinery is not gated — an unprompted agent can mine untrusted content into the corpus, stand up a new shared skill, double-send on a crash, and fan out subagents past its own limits, none behind a confirmation or an enforced envelope. Artifacts: `review/sim-artifacts/autonomy_findings.json`, `autonomy_results.json`.
 
 ## 8. Appendix
 
