@@ -1,0 +1,133 @@
+{"turn": 0, "actor": "u_eng", "action": "cold-start[fresh-install]", "compiled": 3, "delivered": false, "why": "gate blocked the brief send: circuit-open"}
+{"turn": 0, "actor": "u_mgr", "action": "cold-start[fresh-install]", "compiled": 3, "delivered": false, "why": "gate blocked the brief send: circuit-open"}
+{"turn": 0, "actor": "u_pm", "action": "cold-start[fresh-install]", "compiled": 3, "delivered": false, "why": "gate blocked the brief send: circuit-open"}
+{"turn": 0, "actor": "u_sec", "action": "cold-start[fresh-install]", "compiled": 3, "delivered": false, "why": "gate blocked the brief send: circuit-open"}
+{"turn": 0, "actor": "u_eng", "action": "cold-start[provisioned]", "compiled": 3, "delivered": true, "why": ""}
+{"turn": 0, "actor": "u_mgr", "action": "cold-start[provisioned]", "compiled": 3, "delivered": true, "why": ""}
+{"turn": 0, "actor": "u_pm", "action": "cold-start[provisioned]", "compiled": 3, "delivered": true, "why": ""}
+{"turn": 0, "actor": "u_sec", "action": "cold-start[provisioned]", "compiled": 3, "delivered": true, "why": ""}
+{"turn": 1, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.028, "env_send": 0}
+{"turn": 2, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.218, "env_send": 0}
+{"turn": 3, "actor": "u_sec", "action": "deliver+ignore", "type": "Privacy/Security Eng", "dtype": "audit-summary"}
+{"turn": 4, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 5, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.028, "env_send": 0}
+{"turn": 6, "actor": "u_pm", "action": "deliver+ignore", "type": "Non-technical PM/Ops", "dtype": "stakeholder-roundup"}
+{"turn": 7, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.214, "env_send": 0}
+{"turn": 8, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.148, "env_send": 0}
+{"turn": 9, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.102, "env_send": 0}
+{"turn": 10, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.214, "env_send": 0}
+{"turn": 11, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.169, "env_send": 0}
+{"turn": 12, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.167, "env_send": 0}
+{"turn": 13, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 14, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 15, "actor": "u_sec", "action": "deliver+ignore", "type": "Privacy/Security Eng", "dtype": "security-note"}
+{"turn": 16, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 17, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.055, "env_send": 0}
+{"turn": 18, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 19, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 20, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.113, "env_send": 0}
+{"turn": 20, "actor": "EXT_CLIENT", "action": "taint-schedule", "committed": [], "rejected": [], "pending": ["prop-4c67813b0194"]}
+{"turn": 21, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.043, "env_send": 0}
+{"turn": 22, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.195, "env_send": 0}
+{"turn": 23, "actor": "u_sec", "action": "deliver+ignore", "type": "Privacy/Security Eng", "dtype": "security-note"}
+{"turn": 24, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.173, "env_send": 0}
+{"turn": 25, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.026, "env_send": 0}
+{"turn": 26, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.26, "env_send": 0}
+{"turn": 27, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.135, "env_send": 0}
+{"turn": 28, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.172, "env_send": 0}
+{"turn": 29, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.049, "env_send": 0}
+{"turn": 30, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 31, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.174, "env_send": 0}
+{"turn": 32, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.2, "env_send": 0}
+{"turn": 33, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.063, "env_send": 0}
+{"turn": 34, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.209, "env_send": 0}
+{"turn": 35, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.177, "env_send": 0}
+{"turn": 36, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.196, "env_send": 0}
+{"turn": 37, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.041, "env_send": 1}
+{"turn": 38, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.256, "env_send": 0}
+{"turn": 39, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 40, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 40, "actor": "U_RED", "action": "exfil", "webfetch": "allow"}
+{"turn": 41, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.035, "env_send": 1}
+{"turn": 42, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.254, "env_send": 0}
+{"turn": 43, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 44, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.196, "env_send": 0}
+{"turn": 45, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.031, "env_send": 1}
+{"turn": 46, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.19, "env_send": 0}
+{"turn": 47, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 48, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.196, "env_send": 0}
+{"turn": 49, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.09, "env_send": 1}
+{"turn": 50, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.219, "env_send": 0}
+{"turn": 51, "actor": "u_sec", "action": "deliver+ignore", "type": "Privacy/Security Eng", "dtype": "security-note"}
+{"turn": 52, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.178, "env_send": 0}
+{"turn": 53, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.026, "env_send": 1}
+{"turn": 54, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.283, "env_send": 0}
+{"turn": 55, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 55, "actor": "u_sec", "action": "erasure", "file_gone": false, "grep_hit": true}
+{"turn": 56, "actor": "u_eng", "action": "deliver+ignore", "type": "IC Engineer", "dtype": "pr-summary"}
+{"turn": 57, "actor": "u_mgr", "action": "deliver+ignore", "type": "Eng Manager", "dtype": "status-roundup"}
+{"turn": 58, "actor": "u_pm", "action": "deliver+ignore", "type": "Non-technical PM/Ops", "dtype": "status-update"}
+{"turn": 59, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.212, "env_send": 0}
+{"turn": 60, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.183, "env_send": 0}
+{"turn": 61, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.087, "env_send": 1}
+{"turn": 62, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.231, "env_send": 0}
+{"turn": 63, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.192, "env_send": 0}
+{"turn": 64, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.159, "env_send": 0}
+{"turn": 65, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.073, "env_send": 1}
+{"turn": 66, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.258, "env_send": 0}
+{"turn": 67, "actor": "u_sec", "action": "deliver+ignore", "type": "Privacy/Security Eng", "dtype": "audit-summary"}
+{"turn": 68, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.11, "env_send": 1}
+{"turn": 69, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.082, "env_send": 1}
+{"turn": 70, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.245, "env_send": 0}
+{"turn": 70, "actor": "U_COL", "action": "transfer-eval", "verdict": {"result": "inconclusive", "positive_receivers": 0, "usable_receivers": 0, "pooled": 0.0, "interval": null}}
+{"turn": 71, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.149, "env_send": 0}
+{"turn": 72, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.106, "env_send": 1}
+{"turn": 73, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.09, "env_send": 1}
+{"turn": 74, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.229, "env_send": 0}
+{"turn": 75, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 76, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.138, "env_send": 1}
+{"turn": 77, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.085, "env_send": 1}
+{"turn": 78, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.238, "env_send": 0}
+{"turn": 79, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 80, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 81, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 82, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.178, "env_send": 0}
+{"turn": 83, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.108, "env_send": 0}
+{"turn": 84, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.147, "env_send": 0}
+{"turn": 85, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.078, "env_send": 0}
+{"turn": 85, "actor": "U_MGR_ADMIN", "action": "individuation-audit", "dashboard.py": "(True, [])", "render_dashboard.py": "(True, [])"}
+{"turn": 86, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.268, "env_send": 0}
+{"turn": 87, "actor": "u_sec", "action": "deliver+ignore", "type": "Privacy/Security Eng", "dtype": "audit-summary"}
+{"turn": 88, "actor": "u_eng", "action": "deliver+ignore", "type": "IC Engineer", "dtype": "standup"}
+{"turn": 89, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.091, "env_send": 0}
+{"turn": 90, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.272, "env_send": 0}
+{"turn": 91, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 92, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 93, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.072, "env_send": 0}
+{"turn": 94, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.179, "env_send": 0}
+{"turn": 95, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 96, "actor": "u_eng", "action": "deliver+ignore", "type": "IC Engineer", "dtype": "pr-summary"}
+{"turn": 97, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.05, "env_send": 0}
+{"turn": 98, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.185, "env_send": 0}
+{"turn": 99, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 100, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.166, "env_send": 0}
+{"turn": 101, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.046, "env_send": 0}
+{"turn": 102, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.246, "env_send": 0}
+{"turn": 103, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 104, "actor": "u_eng", "action": "deliver+ignore", "type": "IC Engineer", "dtype": "standup"}
+{"turn": 105, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 106, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.186, "env_send": 0}
+{"turn": 107, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.199, "env_send": 0}
+{"turn": 108, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 109, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.099, "env_send": 0}
+{"turn": 110, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.248, "env_send": 0}
+{"turn": 111, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 112, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.092, "env_send": 0}
+{"turn": 113, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.078, "env_send": 0}
+{"turn": 114, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.289, "env_send": 0}
+{"turn": 115, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": false, "edit": 0.134, "env_send": 0}
+{"turn": 116, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.14, "env_send": 0}
+{"turn": 117, "actor": "u_mgr", "action": "deliver+react", "type": "Eng Manager", "reject": false, "edit": 0.104, "env_send": 0}
+{"turn": 118, "actor": "u_pm", "action": "deliver+react", "type": "Non-technical PM/Ops", "reject": false, "edit": 0.183, "env_send": 1}
+{"turn": 119, "actor": "u_sec", "action": "deliver+react", "type": "Privacy/Security Eng", "reject": true, "edit": 0.0, "env_send": 0}
+{"turn": 120, "actor": "u_eng", "action": "deliver+react", "type": "IC Engineer", "reject": false, "edit": 0.137, "env_send": 0}
