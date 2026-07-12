@@ -58,6 +58,15 @@
       "skills": ["research"],
       "inference_domain": "teamos_plane_a",
       "specialized": true
+    },
+    {
+      "id": "safety-agent",
+      "name": "Safety agent",
+      "role": "Monitors every agent; trips the circuit breaker on threshold breach. Can only halt, never widen.",
+      "scope": "all agents + ledgers",
+      "skills": ["monitor", "circuit-breaker"],
+      "inference_domain": "deterministic",
+      "specialized": true
     }
   ]
 }

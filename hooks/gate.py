@@ -37,6 +37,18 @@ def load_policy():
     return policy
 
 
+def _breaker_open():
+    """Circuit breaker: if TEAMOS_BREAKER points at an open breaker, side-effectful
+    actions are halted. Any principal or the safety agent can trip it."""
+    path = os.environ.get("TEAMOS_BREAKER")
+    if not path or not Path(path).exists():
+        return False
+    try:
+        return json.loads(Path(path).read_text()).get("state") == "open"
+    except (ValueError, OSError):
+        return False
+
+
 def flatten_strings(value):
     """Every string anywhere in the tool input — the parameter scan surface."""
     if isinstance(value, str):
@@ -78,6 +90,10 @@ def target_of(tool_input):
 def inspect(policy, tool_name, action_class, tool_input):
     """Returns (checks_run, findings, verdict, rule_id)."""
     checks, findings = [], []
+    # Circuit breaker: when open, every side-effectful action is halted (still
+    # ledgered). Reads pass so the operator can inspect while halted.
+    if action_class in ("write", "edit", "send", "execute", "schedule") and _breaker_open():
+        return ["circuit-breaker"], ["breaker-open"], "deny", "circuit-open"
     texts = list(flatten_strings(tool_input))
     joined = " ".join(texts)
 

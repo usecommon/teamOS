@@ -368,6 +368,66 @@ def _activity(demo):
         <tbody>{crows}</tbody></table></div>"""
 
 
+def _safety(demo):
+    bstate = demo/"breaker.json"
+    st = json.loads(bstate.read_text()) if bstate.exists() else {"state": "closed"}
+    open_ = st.get("state") == "open"
+    bchip = ('<span class="chip crit">OPEN — halted</span>' if open_
+             else '<span class="chip good">closed — running</span>')
+    slog = _read(demo/"safety.jsonl")
+    last = slog[-1] if slog else None
+    sstat = ('<span class="chip crit">tripped</span>' if last and last["status"] == "tripped"
+             else '<span class="chip good">all clear</span>') if last else '<span class="chip">—</span>'
+    spawns = _read(demo/"spawns.jsonl")
+    maxd = max((s["depth"] for s in spawns), default=0)
+
+    tiles = f"""<div class="tiles">
+      <div class="tile {'warn' if open_ else 'good'}"><span class="k">Circuit breaker</span>
+        <span class="v" style="font-size:1.2rem">{bchip}</span>
+        <span class="note">{_esc((st.get('tripped_by') or 'no active trip'))}{' · '+_esc(st.get('reason','')) if st.get('reason') else ''}</span></div>
+      <div class="tile"><span class="k">Safety agent</span><span class="v" style="font-size:1.2rem">{sstat}</span>
+        <span class="note">deterministic monitor · can only halt</span></div>
+      <div class="tile"><span class="k">Subagents spawned</span><span class="v">{len(spawns)}</span>
+        <span class="note">max depth {maxd} / {__import__('spawn').MAX_DEPTH}</span></div></div>"""
+
+    metric_rows = ""
+    if last:
+        for k, v in last["metrics"].items():
+            th = last["thresholds"][k]
+            metric_rows += (f'<tr><td class="mono">{_esc(k)}</td><td class="numcell">{v}</td>'
+                            f'<td class="faint">/ {th}</td>'
+                            f'<td><span class="chip {"crit" if v>=th else "good"}">'
+                            f'{"breach" if v>=th else "ok"}</span></td></tr>')
+    metric_rows = metric_rows or '<tr><td colspan="4" class="faint">no check yet</td></tr>'
+
+    trips = [r for r in _read(demo/"l2.jsonl") if r["rule_id"].startswith("circuit")]
+    trows = "".join(f'<tr><td class="mono small faint">{_esc(r["ts"][11:19])}</td>'
+                    f'<td class="mono small">{_esc(r["rule_id"])}</td>'
+                    f'<td class="mono small">{_esc(r["proposed_action"]["target"])}</td>'
+                    f'<td class="small faint">{_esc(", ".join(r["inspection"]["findings"]) or "—")}</td></tr>'
+                    for r in reversed(trips)) or '<tr><td colspan="4" class="faint">no trips</td></tr>'
+
+    srows = "".join(f'<tr><td class="mono small">{_esc(s["parent"])}</td>'
+                    f'<td class="mono small">→ {_esc(s["child"])}</td>'
+                    f'<td><span class="tag">depth {s["depth"]}</span></td>'
+                    f'<td class="small faint">{_esc(s["task"])}</td></tr>'
+                    for s in spawns) or '<tr><td colspan="4" class="faint">no spawns</td></tr>'
+
+    return tiles + f"""<div class="grid2">
+      <div class="panel"><h2>Safety checks (thresholds)</h2><table>
+        <thead><tr><th>Metric</th><th>Now</th><th>Limit</th><th>State</th></tr></thead>
+        <tbody>{metric_rows}</tbody></table></div>
+      <div class="panel"><h2>Breaker trips &amp; resets (ledgered)</h2><table>
+        <thead><tr><th>Time</th><th>Event</th><th>By</th><th>Reason</th></tr></thead>
+        <tbody>{trows}</tbody></table></div></div>
+    <div class="panel"><h2>Subagent spawns — auditable</h2><table>
+      <thead><tr><th>Parent</th><th>Subagent</th><th>Depth</th><th>Task</th></tr></thead>
+      <tbody>{srows}</tbody></table>
+      <p class="small faint" style="margin-top:.7rem">Agents spin up subagents as needed; every
+      spawn is recorded. When the breaker is OPEN, all side-effectful actions are denied — the
+      user or the safety agent can trip it; only a human resets it.</p></div>"""
+
+
 def _insights(demo, jg):
     ins = __import__("insights").generate(demo, demo/"stores", jg)
     KIND = {"new_skill": ("New skill", "good"), "improve": ("Improve", "warn"),
@@ -471,13 +531,13 @@ def render_console(demo, est, pol, jg):
             ("agents", "Agents"), ("activity", "Activity"),
             ("brief", "Brief"), ("inbox", "Inbox"), ("corpus", "Corpus"),
             ("skills", "Skills"), ("templates", "Templates"), ("envelope", "Envelope"),
-            ("audit", "Audit")]
+            ("safety", "Safety"), ("audit", "Audit")]
     surfaces = {"overview": _overview(demo), "insights": _insights(demo, jg),
                 "recommendations": _recommendations(demo),
                 "learning": _learning(demo, est), "agents": _agents(demo),
                 "activity": _activity(demo), "brief": _brief(demo, jg), "inbox": _inbox(demo),
                 "corpus": _corpus(demo), "skills": _skills(demo), "templates": _templates(demo),
-                "envelope": _envelope(demo, est, pol), "audit": _audit(demo)}
+                "envelope": _envelope(demo, est, pol), "safety": _safety(demo), "audit": _audit(demo)}
     navbtns = "".join(f'<button data-s="{k}"{" class=active" if i==0 else ""}>{lbl}</button>'
                       for i, (k, lbl) in enumerate(tabs))
     panels = "".join(f'<div class="surface{" active" if i==0 else ""}" id="surf-{k}">{surfaces[k]}</div>'
@@ -550,6 +610,16 @@ def build_demo():
                      "Every one recurs weekly or faster with correct sources", confidence="high")
     recommend.record(demo, "code-reviewer", "Add a pre-merge review step on the cache path",
                      "Two recent bugs shipped through that path", confidence="medium")
+    # autonomy + safety: subagent spawns (auditable), a past trip, safety check
+    import spawn, circuit_breaker, safety_agent
+    bstate = demo/"breaker.json"
+    spawn.record(demo, "loops", "draft-worker·weekly-digest", "Draft weekly-digest", 1)
+    spawn.record(demo, "loops", "draft-worker·standup", "Draft standup", 1)
+    spawn.record(demo, "scout", "entity-scan", "Scan corpus for unlinked references", 1)
+    spawn.record(demo, "draft-worker·weekly-digest", "format-check", "Check house style", 2)
+    circuit_breaker.trip(demo, bstate, "safety-agent", "deny-rate spike during a bad connector window")
+    circuit_breaker.reset(demo, bstate, "principal:jeff")
+    safety_agent.check(demo, demo/"safety.jsonl", bstate)
     gate.LEDGER_DIR = demo
     pol = gate.load_policy()
     gate.process({"tool_name": "Read", "tool_input": {"file_path": "notes.md"}}, pol)

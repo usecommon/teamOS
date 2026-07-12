@@ -12,6 +12,7 @@ allow/deny/ask, and appends one hash-chained L2 record per call to
 
 | # | Condition | Verdict | Rule id |
 |---|---|---|---|
+| 0 | Circuit breaker OPEN (`TEAMOS_BREAKER`) and action is side-effectful (write/edit/send/execute/schedule) | deny | circuit-open |
 | 1 | Bash command has egress marker AND (sensitive path OR verbatim secret) | deny | bash-exfil |
 | 2 | Bash command has egress marker | ask | bash-egress |
 | 3 | Bash command touches sensitive read path (.ssh, .env, …) | ask | sensitive-read |
