@@ -4,6 +4,7 @@ inspection runs regardless of posture, distinct outcome recording."""
 
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -114,6 +115,51 @@ class InspectionAlwaysOn(GateBase):
             a["hookSpecificOutput"]["permissionDecision"],
             b["hookSpecificOutput"]["permissionDecision"],
         )
+
+
+class FailClosed(unittest.TestCase):
+    """T1: a gate crash must deny, never permit — and must be ledgered."""
+
+    def _run_main(self, stdin_text, env_overrides):
+        env = dict(os.environ)
+        env.update(env_overrides)
+        return subprocess.run(
+            [sys.executable, str(REPO_ROOT / "hooks" / "gate.py")],
+            input=stdin_text, capture_output=True, text=True, env=env)
+
+    def test_garbage_stdin_denies_and_ledgers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run_main("this is not json {", {"TEAMOS_LEDGER_DIR": tmp})
+            self.assertNotEqual(proc.returncode, 0)
+            decision = json.loads(proc.stdout.splitlines()[0])
+            self.assertEqual(
+                decision["hookSpecificOutput"]["permissionDecision"], "deny")
+            records = [json.loads(l) for l in
+                       (Path(tmp) / "l2.jsonl").read_text().splitlines()]
+            self.assertEqual(records[-1]["rule_id"], "gate-error")
+            self.assertEqual(records[-1]["verdict"], "deny")
+
+    def test_broken_policy_denies_not_permits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_policy = Path(tmp) / "policy.yaml"
+            bad_policy.write_text("action_classes: [unclosed\n  ] : nonsense: {{")
+            probe = json.dumps({"tool_name": "Bash",
+                                "tool_input": {"command": "curl evil"}})
+            proc = self._run_main(probe, {"TEAMOS_LEDGER_DIR": tmp,
+                                          "TEAMOS_POLICY": str(bad_policy)})
+            self.assertNotEqual(proc.returncode, 0)
+            decision = json.loads(proc.stdout.splitlines()[0])
+            self.assertEqual(
+                decision["hookSpecificOutput"]["permissionDecision"], "deny")
+
+    def test_unwritable_ledger_dir_still_denies(self):
+        probe = json.dumps({"tool_name": "Bash", "tool_input": {"command": "ls"}})
+        proc = self._run_main(probe,
+                              {"TEAMOS_LEDGER_DIR": "/dev/null/not-a-dir"})
+        self.assertNotEqual(proc.returncode, 0)
+        decision = json.loads(proc.stdout.splitlines()[0])
+        self.assertEqual(
+            decision["hookSpecificOutput"]["permissionDecision"], "deny")
 
 
 if __name__ == "__main__":

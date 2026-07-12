@@ -194,9 +194,45 @@ def process(hook_input, policy=None):
     }
 
 
+def _deny_response(reason):
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }
+
+
 def main():
-    hook_input = json.load(sys.stdin)
-    print(json.dumps(process(hook_input)))
+    """Fail CLOSED: a gate crash must never become a permit. Any exception
+    (malformed stdin, broken policy, unwritable ledger) => deny + best-effort
+    gate-error L2 record."""
+    try:
+        hook_input = json.load(sys.stdin)
+        print(json.dumps(process(hook_input)))
+    except Exception as exc:  # noqa: BLE001 — everything denies
+        try:
+            hashchain.append(LEDGER_DIR / "l2.jsonl", {
+                "proposed_action": {"tool": "unknown", "action_class": "unknown",
+                                    "target": "", "payload_digest": "sha256:0"},
+                "verdict": "deny",
+                "policy_version": "gate-error",
+                "rule_id": "gate-error",
+                "inspection": {"checks_run": ["gate-crash-handler"],
+                               "findings": [f"gate-error:{type(exc).__name__}"]},
+                "outcome": "gate_blocked",
+                "posture": POSTURE,
+            }, GATE_AGENT_ID)
+        except Exception:  # noqa: BLE001 — ledger down: still deny
+            pass
+        # stdout deny JSON (exit-0 path) AND exit 2 (blocking-error path):
+        # whichever the harness honors, the tool call is blocked.
+        print(json.dumps(_deny_response(
+            f"teamos-gate: gate-error ({type(exc).__name__}) — failing closed")))
+        print(f"teamos-gate: gate-error ({type(exc).__name__}) — failing closed",
+              file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":
