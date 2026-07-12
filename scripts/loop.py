@@ -6,15 +6,22 @@ from the last checkpoint (FR4). Deterministic core; the A-A4 clock measures on
 top.
 """
 
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import anchor  # noqa: E402
 import measurement  # noqa: E402
+import safety_agent  # noqa: E402
 from checkpoint import run_checkpointed  # noqa: E402
 
 DELIVERABLE_CAP = 4  # designed capacity > floor of 3 (CN-6)
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+class LoopHalted(RuntimeError):
+    pass
 
 
 def _render_shadow_draft(node, out_dir):
@@ -28,10 +35,21 @@ def _render_shadow_draft(node, out_dir):
 
 
 def run_daily_loop(job_graph, out_dir, ledger_dir, anchor_dir, run_id,
-                   skill_id="compile", skill_version=None, checkpoint_path=None):
-    """Run one loop pass. Returns a manifest. Resumable via checkpoint_path."""
+                   skill_id="compile", skill_version=None, checkpoint_path=None,
+                   safety_check=True):
+    """Run one loop pass. Returns a manifest. Resumable via checkpoint_path.
+    Pre-flight (T9): the safety agent runs FIRST — a threshold breach trips
+    the breaker and halts the loop before any side effect."""
     out_dir = Path(out_dir)
     ledger_dir = Path(ledger_dir)
+    if safety_check:
+        breaker = os.environ.get("TEAMOS_BREAKER",
+                                 str(REPO_ROOT / "ledgers" / "breaker.json"))
+        verdict = safety_agent.check(ledger_dir, ledger_dir / "safety.jsonl",
+                                     breaker)
+        if verdict["status"] == "tripped":
+            raise LoopHalted(
+                f"safety agent tripped the breaker: {verdict['breaches']}")
     checkpoint_path = checkpoint_path or (out_dir / f"{run_id}.checkpoint.json")
     skill_version = skill_version or measurement.l6_version(
         Path(__file__).resolve().parent.parent / "stores" / "skills" / "compile")

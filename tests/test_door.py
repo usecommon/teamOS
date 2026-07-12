@@ -69,6 +69,32 @@ class GateProcessor(unittest.TestCase):
         self.assertTrue((self.d / "stores" / "corpus" / "adopt-cache.md").exists())
         self.assertEqual(hashchain.verify(self.d / "l3.jsonl"), 1)
 
+    def test_schedule_proposal_waits_for_human_approval(self):
+        # T9: plan structure (a scheduled step) never auto-commits
+        p = door.propose_schedule(self.inbox, "night sync", "0 3 * * *",
+                                  "sync the corpus")
+        pid = json.loads(p.read_text())["proposal_id"]
+        result = self._proc()
+        self.assertEqual(result["committed"], [])
+        self.assertIn(pid, result["pending"])
+        self.assertFalse((self.d / "schedules" / "night-sync.json").exists())
+        # after the human approves, it commits
+        gp.approve(self.inbox, pid)
+        result = self._proc()
+        self.assertIn(pid, result["committed"])
+        self.assertTrue((self.d / "schedules" / "night-sync.json").exists())
+
+    def test_skill_proposal_waits_for_human_approval(self):
+        (self.d / "stores" / "skills").mkdir(parents=True, exist_ok=True)
+        p = door.propose_skill(self.inbox, "auto-mailer", "send mail on cadence",
+                               tools=["send_email"])
+        pid = json.loads(p.read_text())["proposal_id"]
+        result = self._proc()
+        self.assertEqual(result["committed"], [])
+        self.assertIn(pid, result["pending"])
+        self.assertFalse((self.d / "stores" / "skills" / "auto-mailer" /
+                          "SKILL.md").exists())
+
     def _raw_proposal(self, obj, name="prop-x.json", symlink_to=None):
         d = self.inbox / "proposals"
         d.mkdir(parents=True, exist_ok=True)
@@ -81,7 +107,8 @@ class GateProcessor(unittest.TestCase):
         return p
 
     def test_skill_proposal_creates_skill_on_approval(self):
-        door.propose_skill(self.inbox, "meeting-notes", "Summarize a meeting.", tools=["Read"])
+        p = door.propose_skill(self.inbox, "meeting-notes", "Summarize a meeting.", tools=["Read"])
+        gp.approve(self.inbox, json.loads(p.read_text())["proposal_id"])
         result = self._proc()
         self.assertEqual(len(result["committed"]), 1)
         sd = self.d / "stores" / "skills" / "meeting-notes"

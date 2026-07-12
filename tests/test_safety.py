@@ -94,10 +94,61 @@ class Safety(unittest.TestCase):
         self.assertFalse(cb.is_open(self.state))
 
     def test_spawns_recorded_and_chain_verifies(self):
-        spawn.record(self.d, "loops", "worker-1", "draft", 1)
-        spawn.record(self.d, "worker-1", "worker-2", "subtask", 2)
+        spawn.record(self.d, "loops", "worker-1", "draft")
+        spawn.record(self.d, "worker-1", "worker-2", "subtask")
         self.assertEqual(spawn.stats(self.d), {"count": 2, "max_depth": 2})
         self.assertEqual(hashchain.verify(self.d / "spawns.jsonl"), 2)
+
+    def test_spawn_depth_enforced_not_self_reported(self):
+        # T9: depth computed from the parent chain; the 4th level refuses —
+        # and a liar passing depth=1 doesn't matter, the param is ignored
+        spawn.record(self.d, "loops", "a", "t")
+        spawn.record(self.d, "a", "b", "t")
+        spawn.record(self.d, "b", "c", "t", depth=1)   # actual depth 3, ok
+        with self.assertRaises(spawn.SpawnRefused):
+            spawn.record(self.d, "c", "d", "t", depth=1)  # actual 4 -> refused
+
+    def test_spawn_rate_enforced_at_record(self):
+        for i in range(spawn.MAX_RATE):
+            spawn.record(self.d, "loops", f"w{i}", "t")
+        with self.assertRaises(spawn.SpawnRefused):
+            spawn.record(self.d, "loops", "one-too-many", "t")
+
+    def _old_denial_line(self, path, ts):
+        # raw line with a controlled old timestamp (window test; _count-style
+        # readers don't verify the chain)
+        rec = {"verdict": "deny", "rule_id": "bash-exfil", "ts": ts,
+               "proposed_action": {"tool": "Bash", "action_class": "execute",
+                                   "target": "x", "payload_digest": "sha256:x"},
+               "inspection": {"checks_run": [], "findings": []},
+               "outcome": "gate_blocked", "hash": "sha256:x", "prev_hash": None,
+               "record_id": "x", "schema_version": "0.1", "agent_id": "t"}
+        with path.open("a") as f:
+            f.write(json.dumps(rec) + "\n")
+
+    def test_windowed_counters_recover_after_reset(self):
+        # T9: 5 old denials outside the window; after a human reset the safety
+        # agent must NOT re-trip on lifetime totals (the stuck-open deadlock)
+        for _ in range(5):
+            self._old_denial_line(self.d / "l2.jsonl", "2026-01-01T00:00:00Z")
+        result = safety_agent.check(self.d, self.d / "safety.jsonl", self.state)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["metrics"]["gate_denials"], 0)
+
+    def test_unattributed_rejections_never_halt(self):
+        # CN-1: a stranger's ✗ spike cannot trip a permanent halt
+        for i in range(6):
+            hashchain.append(self.d / "l8.jsonl", {
+                "signal_type": "rejection", "attribution": "unattributed",
+                "principal_id": f"stranger-{i}",
+                "artifact_ref": {"store": "b", "path": "p",
+                                 "content_hash": "sha256:x"},
+                "outcome": "rejected",
+                "harvest": {"method": "m", "harvested_at": "2026-07-11T00:00:00Z"},
+            }, "test")
+        result = safety_agent.check(self.d, self.d / "safety.jsonl", self.state)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["metrics"]["rejections"], 0)
 
 
 if __name__ == "__main__":
