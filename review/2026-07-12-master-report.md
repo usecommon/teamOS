@@ -10,7 +10,7 @@
 
 ## 1. TL;DR
 
-A four-council adversarial review (`2026-07-11-adversarial-14-counsel-review.md`) plus four simulation passes (security, autonomy, failure-injection, and a 4-team × 120-turn sweep) found **~30 findings**. A remediation series **T0–T13** closed the security and privacy criticals; a live reconciliation (`030acff`) re-verified every item against the current tree. **The gate now fails closed, exfil via bash/known-send tools is gated, deletion erases content, the ledger survives concurrency, untrusted content can't auto-commit plan structure, acceptance signals are authenticated, and the initiative floor no longer over-counts.** What remains is **not security** — it is a cluster of **durability / liveness** bugs in the unattended-run machinery (E1–E4, D3) plus one security **residual** (A7 untainted-first-move exfil) and the standing **non-code long pole** (recruit real collaborators for the A-P3 transfer gate).
+A four-council adversarial review (`2026-07-11-adversarial-14-counsel-review.md`) plus four simulation passes (security, autonomy, failure-injection, and a 4-team × 120-turn sweep) found **~30 findings**. A remediation series **T0–T13** closed the security and privacy criticals; a live reconciliation (`030acff`) re-verified every item against the current tree. **The gate now fails closed, exfil via bash/known-send tools is gated, deletion erases content, the ledger survives concurrency, untrusted content can't auto-commit plan structure, acceptance signals are authenticated, and the initiative floor no longer over-counts.** What remained was **not security** — a cluster of **durability / liveness** bugs in the unattended-run machinery (E1–E4, D3). **That cluster has since been remediated and verified this session** (§3). What is still open: one security **residual** (A7 untainted-first-move exfil, protected path) and the standing **non-code long pole** (recruit real collaborators for the A-P3 transfer gate).
 
 **Bottom line:** the system is safe-by-construction under fault (no fail-open observed), but not yet *robust* — several faults make it fail **closed-but-dead** (crash/brick) rather than degrade gracefully, which for a system that runs while its principal is away is the next thing to fix.
 
@@ -33,20 +33,26 @@ A four-council adversarial review (`2026-07-11-adversarial-14-counsel-review.md`
 
 **Regression-guard (fixed & re-verified live):** A1–A6, A10, B1–B5, C1–C6, D1, D2, D4. See `2026-07-11-consolidated-findings.md` for the full table.
 
-## 3. What remains open (reconciled live against `030acff`)
+## 3. What remains open (reconciled live)
 
-### Durability / liveness — the real residual (P1)
-An unattended agent must degrade, not die. These four make it die or lose data:
+> **Status update (this session): the durability/liveness cluster below is now FIXED.**
+> Commits `52ade3f` (E1), `47b7762` (E3+D3), `e6dcbac` (E4), `3937971` (E2). Verified
+> 10/10 in a clean sandbox — see `2026-07-12-remediation-execution-report.md` and
+> `2026-07-12-verification-report.md`. The table is kept for the record with live
+> before→after verdicts. **Only A7 (protected) and the non-code long pole remain open.**
 
-| # | Finding | Live verdict | Fix direction |
+### Durability / liveness — REMEDIATED (was the real residual, P1)
+An unattended agent must degrade, not die. These made it die or lose data; each now degrades gracefully:
+
+| # | Finding | Before | After (verified) |
 |---|---|---|---|
-| **E1** | Torn ledger tail-line **bricks the writer** — a crash mid-`append` leaves a partial last line; every future `append` crashes in `last_hash()` | `CRASH JSONDecodeError (still bricks)` | tolerate/repair a trailing partial line on read |
-| **E3** | Tripping the breaker **crashes the scheduled loop** it protects — `deliver` raises `PermissionError`, `run_if_due` doesn't catch → the autonomous run dies and retries-crash next tick | `CRASH PermissionError (still crashes)` | a safety halt should *pause* gracefully, not raise |
-| **E2** | Whole-file ledger deletion is **silent** — deleting a ledger and appending starts a fresh chain with no gap record; `verify` passes | `SILENT (fresh chain, no gap record)` | consult the off-box anchor witness at append; emit a gap record |
-| **D3** | Scheduled **double-send** still reproduces via `run_if_due` crash-after-effect (sends 3×) — T13's receipt makes it auditable, not prevented | `sends=3 (still double); receipt=True` | at-most-once check against the receipt before sending |
-| **E4** | Corrupt checkpoint unrecoverable on resume (`Checkpoint.__init__` `json.loads` crash) | not re-verified; likely still crashes | restart clean on a torn checkpoint |
+| **E1** | Torn ledger tail-line **bricked the writer** | `CRASH JSONDecodeError` | ✅ `GRACEFUL` — append heals the torn tail; interior tamper still caught |
+| **E3** | Tripping the breaker **crashed the scheduled loop** | `CRASH PermissionError` | ✅ `GRACEFUL` — `GateBlocked` → loop pauses, retries when breaker closes |
+| **E2** | Whole-file ledger deletion was **silent** | `verify passes` | ✅ `DETECTED` — `anchor.detect_truncation` + `verify_chains` exit non-zero |
+| **D3** | Scheduled **double-send** (sends 3×) | `sends=3` | ✅ `sends=1` — `deliver` at-most-once against its send-receipt |
+| **E4** | Corrupt checkpoint **crashed resume** | crash on load | ✅ restarts clean; `.corrupt` preserved for audit |
 
-### Security residual (P1 — protected path 🔒)
+### Security residual (P1 — protected path 🔒) — STILL OPEN
 | # | Finding | Live verdict | Note |
 |---|---|---|---|
 | **A7** | WebFetch exfiltrates non-credential corpus data in the URL on an **untainted first move** | `ALLOW (still open)` | Taint closes it *after* a corpus read; the untainted-first-move case permits. `hooks/policy.yaml` documents the substring denylist as interim; the taint layer is the intended control. **Touches `hooks/` — needs human review; do not auto-merge.** |
@@ -63,7 +69,7 @@ An unattended agent must degrade, not die. These four make it die or lose data:
 
 ## 5. Recommendation
 
-Remediate the durability/liveness cluster (**E1, E3, E2, D3, E4**) next — they are unambiguous, non-protected (`scripts/` only), and each already has a reproducing probe in `review/sim-artifacts/`. Handle **A7** as a separate, human-approved change on `hooks/`. Everything security/privacy-critical is already closed; do not ingest real colleague data until A7 and the durability cluster are closed, per the CLAUDE.md gate.
+The durability/liveness cluster (**E1, E3, E2, D3, E4**) is **done and verified** this session (`scripts/` only, no protected paths). What's left: handle **A7** as a separate, human-approved change on `hooks/` (still `allow` on a fresh session — verified), and the non-code long pole (**T10/F6**). Everything security/privacy-critical is closed except A7; per the CLAUDE.md gate, do not ingest real colleague data until A7 is closed.
 
 ## 6. Source index
 
