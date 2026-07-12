@@ -29,9 +29,15 @@ def l6_version(path):
 
 
 def score_deliverable(deliverable_path, skill_id, skill_version, invocation_id,
-                      ledger_dir, metric="shadow_completeness"):
+                      ledger_dir, metric="structural_markers_scaffold"):
     """Score a shadow deliverable -> L7 record keyed to L6 (skill_version).
-    Deterministic proxy: fraction of expected structural markers present."""
+
+    T8 — SCAFFOLDING, NOT LOAD-BEARING: the structural-marker fraction is
+    trivially gameable (three magic strings -> 1.0), so the record carries
+    load_bearing=false and the promotion gate REFUSES to count it toward the
+    eval floor. It exists only to exercise the L7 plumbing until a real
+    metric (principal acceptance keyed to invocations) produces load-bearing
+    records via record_eval()."""
     ledger_dir = Path(ledger_dir)
     text = Path(deliverable_path).read_text()
     markers = ["#", "cadence", "source"]
@@ -42,8 +48,25 @@ def score_deliverable(deliverable_path, skill_id, skill_version, invocation_id,
         "invocation_id": invocation_id,
         "metric": metric,
         "score": score,
+        "load_bearing": False,               # promotion must not rely on this
         "sample_ref": {"store": "deliverables", "path": str(deliverable_path),
                        "content_hash": hashchain.sha256_str(text)},
+    }, SCORER_AGENT_ID)
+
+
+def record_eval(skill_id, skill_version, invocation_id, metric, score,
+                sample_ref, ledger_dir):
+    """Write a LOAD-BEARING L7 record — for real, earned metrics only
+    (e.g. verified principal acceptance keyed to an invocation). This is the
+    only kind of record the promotion eval floor counts (T8)."""
+    return hashchain.append(Path(ledger_dir) / "l7.jsonl", {
+        "skill_id": skill_id,
+        "skill_version": skill_version,
+        "invocation_id": invocation_id,
+        "metric": metric,
+        "score": score,
+        "load_bearing": True,
+        "sample_ref": sample_ref,
     }, SCORER_AGENT_ID)
 
 

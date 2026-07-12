@@ -25,13 +25,11 @@ class PromotionGate(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.d = Path(self.tmp.name)
         self.team = self.d / "team"
-        # give the skill passing eval evidence
+        # give the skill passing LOAD-BEARING eval evidence (T8)
         for s in (0.8, 0.9):
-            hashchain.append(self.d / "l7.jsonl", {
-                "skill_id": "digest", "skill_version": "v1", "invocation_id": "i",
-                "metric": "m", "score": s,
-                "sample_ref": {"store": "x", "path": "y", "content_hash": "sha256:z"},
-            }, "test")
+            measurement.record_eval(
+                "digest", "v1", "i", "principal-acceptance", s,
+                {"store": "x", "path": "y", "content_hash": "sha256:z"}, self.d)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -67,6 +65,20 @@ class PromotionGate(unittest.TestCase):
         pg.promote("digest", "ssn 123-45-6789", SIGNED, self.d, self.team)
         l2 = json.loads((self.d / "l2.jsonl").read_text().splitlines()[-1])
         self.assertEqual(l2["verdict"], "deny")
+
+    def test_scaffold_metric_never_clears_promotion(self):
+        # T8: a stub containing the three magic markers scores 1.0 on the
+        # scaffold metric — and still cannot clear the eval floor
+        stub = self.d / "stub.md"
+        stub.write_text("# t\ncadence: daily\nsource: x\n")
+        measurement.score_deliverable(stub, "stub-skill", "v1", "i1", self.d)
+        rec = json.loads((self.d / "l7.jsonl").read_text().splitlines()[-1])
+        self.assertEqual(rec["score"], 1.0)          # gameable, as documented
+        self.assertFalse(rec["load_bearing"])        # and therefore inert
+        ok, reasons = pg.promote("stub-skill", "# stub\ncadence source", SIGNED,
+                                 self.d, self.team)
+        self.assertFalse(ok)
+        self.assertTrue(any(r.startswith("eval-floor") for r in reasons))
 
 
 class Cohorts(unittest.TestCase):
