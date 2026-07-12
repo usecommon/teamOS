@@ -71,16 +71,19 @@ def record_pulse_response(value, principal_id, ledger_dir, week_id):
 
 
 def weekly_accepted(ledger_dir, since_iso=None, until_iso=None):
-    """Initiative floor (FR6): count accepted unprompted deliverables in a window.
+    """Initiative floor (FR6): count accepted UNPROMPTED deliverables in a window.
 
-    accepted = ✓ (endorsement) AND principal_authenticated AND lightly-or-not
-    edited (edit distance <= 0.2 or no edit). Returns (count, records).
+    accepted = ✓ (endorsement) AND principal_authenticated AND unprompted=true
+    AND measured-lightly-or-not edited (edit distance PRESENT and <= 0.2 —
+    a missing distance is NOT accepted, fail safe). Each distinct deliverable
+    (artifact path) counts once per window: re-endorsing a recurring digest or
+    padding duplicates never inflates the floor (T6). Returns (count, records).
     """
     ledger_dir = Path(ledger_dir)
     l8 = ledger_dir / "l8.jsonl"
     if not l8.exists():
         return 0, []
-    hits = []
+    hits, seen_artifacts = [], set()
     for line in l8.read_text().splitlines():
         if not line.strip():
             continue
@@ -93,9 +96,15 @@ def weekly_accepted(ledger_dir, since_iso=None, until_iso=None):
             continue
         if r["attribution"] != "principal_authenticated":
             continue
+        if not r.get("unprompted", False):
+            continue  # prompted work never inflates the floor
         dist = r.get("edit_distance_normalized")
-        if dist is not None and dist > LIGHT_EDIT:
-            continue
+        if dist is None or dist > LIGHT_EDIT:
+            continue  # unmeasured = not accepted (fail safe)
+        key = (r.get("artifact_ref") or {}).get("path", r["record_id"])
+        if key in seen_artifacts:
+            continue  # dedupe: one deliverable, one floor count
+        seen_artifacts.add(key)
         hits.append(r)
     return len(hits), hits
 

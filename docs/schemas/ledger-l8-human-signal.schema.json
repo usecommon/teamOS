@@ -19,6 +19,7 @@
       "description": "CN-1: unattributed signals are logged with this mark and never counted toward acceptance or envelope widening"
     },
     "outcome": { "type": "string", "description": "The signal outcome (e.g. accepted, rejected, edited-lightly, edited-heavily) — outcomes, not content (V3)" },
+    "unprompted": { "type": "boolean", "description": "Provenance of the deliverable this signal is about: true = the agent produced it unprompted (initiative); false/absent = the principal asked for it. The initiative floor counts ONLY unprompted=true records — prompted work never inflates the floor (T6)." },
     "edit_distance_normalized": { "type": ["number", "null"], "description": "For edits: normalized edit distance (≤0.2 = lightly edited, R-11); null when not an edit" },
     "diff_ref": { "$ref": "ledger-common.schema.json#/$defs/ref", "description": "SE-2: reference into the erasable diff side-store; erasure crypto-shreds the referenced content while chain verification of adjacent records survives" },
     "harvest": {

@@ -87,15 +87,20 @@ def process_signal(l8_record, category, ledger_dir, state_path,
     principal = l8_record.get("attribution") == "principal_authenticated"
     signal = l8_record.get("signal_type")
     dist = l8_record.get("edit_distance_normalized")
-    severity = policy["narrow_edit_severity"]
 
     if not principal:
         state["history"].append({"category": category, "action": "ignored-unattributed"})
         _save(state, state_path)
         return level  # forged/unattributed never moves the envelope (CN-1)
 
-    is_rejection = signal == "rejection" or (dist is not None and dist > severity)
-    is_acceptance = signal == "endorsement" and (dist is None or dist <= LIGHT_EDIT)
+    # T6 — no engagement penalty: only an EXPLICIT rejection narrows. A heavy
+    # edit is the principal investing in the draft, not distrust; punishing it
+    # taught rubber-stamping (rejected-then-narrowed = more interrupts).
+    is_rejection = signal == "rejection"
+    # widening stays slow AND measured: an endorsement without a recorded edit
+    # distance is not evidence of acceptance (fail safe, T6)
+    is_acceptance = (signal == "endorsement"
+                     and dist is not None and dist <= LIGHT_EDIT)
 
     if is_rejection:
         if level > 0:

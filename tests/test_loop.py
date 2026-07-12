@@ -106,29 +106,62 @@ class Measurement(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def _accept(self, ts_offset_days=0, dist=0.0, attribution="principal_authenticated",
-                signal="endorsement"):
+    def _accept(self, path="x", dist=0.0, attribution="principal_authenticated",
+                signal="endorsement", unprompted=True):
         # write an L8 record directly with a controlled timestamp
         rec = hashchain.append(self.d / "l8.jsonl", {
             "signal_type": signal,
-            "artifact_ref": {"store": "brief", "path": "x", "content_hash": "sha256:x"},
+            "artifact_ref": {"store": "brief", "path": path, "content_hash": "sha256:x"},
             "principal_id": "U", "attribution": attribution,
             "outcome": "accepted" if signal == "endorsement" else "other",
             "edit_distance_normalized": dist,
+            "unprompted": unprompted,
             "harvest": {"method": "slack-reactions-get", "harvested_at": "2026-07-10T00:00:00Z"},
         }, "test")
         return rec
 
     def test_initiative_floor_counts_only_accepted_principal_light_edit(self):
-        self._accept(dist=0.0)                                   # counts
-        self._accept(dist=0.1)                                   # counts (light)
-        self._accept(dist=0.0)                                   # counts
-        self._accept(dist=0.5)                                   # NOT (heavy edit)
-        self._accept(dist=0.0, attribution="unattributed")      # NOT (not principal)
-        self._accept(dist=0.0, signal="rejection")              # NOT (rejection)
+        self._accept(path="a", dist=0.0)                          # counts
+        self._accept(path="b", dist=0.1)                          # counts (light)
+        self._accept(path="c", dist=0.0)                          # counts
+        self._accept(path="d", dist=0.5)                          # NOT (heavy edit)
+        self._accept(path="e", dist=0.0, attribution="unattributed")  # NOT
+        self._accept(path="f", dist=0.0, signal="rejection")     # NOT (rejection)
         count, hits = measurement.weekly_accepted(self.d)
         self.assertEqual(count, 3)
         self.assertTrue(measurement.floor_met(count))
+
+    def test_prompted_work_never_inflates_the_floor(self):
+        # T6: the user asked for these on Tuesday — not initiative
+        for p in ("a", "b", "c"):
+            self._accept(path=p, unprompted=False)
+        count, _ = measurement.weekly_accepted(self.d)
+        self.assertEqual(count, 0)
+
+    def test_missing_edit_distance_is_not_accepted(self):
+        self._accept(path="a", dist=None)                        # fail safe: NOT
+        self._accept(path="b", dist=0.0)
+        count, _ = measurement.weekly_accepted(self.d)
+        self.assertEqual(count, 1)
+
+    def test_recurring_digest_counts_once(self):
+        # T6 dedupe: re-endorsing the same deliverable pads nothing
+        for _ in range(5):
+            self._accept(path="deliverables/daily-digest.md", dist=0.0)
+        self._accept(path="deliverables/retro.md", dist=0.0)
+        count, _ = measurement.weekly_accepted(self.d)
+        self.assertEqual(count, 2)
+
+    def test_rejection_does_not_reduce_the_floor_count(self):
+        # honest ✗ costs nothing: floor counts accepted work, independent of
+        # the envelope
+        for p in ("a", "b", "c"):
+            self._accept(path=p, dist=0.0)
+        before, _ = measurement.weekly_accepted(self.d)
+        for p in ("x", "y", "z"):
+            self._accept(path=p, signal="rejection")
+        after, _ = measurement.weekly_accepted(self.d)
+        self.assertEqual(before, after)
 
     def test_pulse_instrument_records_question_and_response(self):
         q = measurement.emit_pulse("How useful was this week's output?", self.d, "2026-W28")

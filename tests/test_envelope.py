@@ -66,10 +66,19 @@ class Envelope(unittest.TestCase):
         l2 = [json.loads(l) for l in (self.d / "l2.jsonl").read_text().splitlines()]
         self.assertTrue(any(r["rule_id"] == "narrow" for r in l2))
 
-    def test_heavy_edit_counts_as_rejection_for_narrowing(self):
+    def test_heavy_edit_does_not_narrow_no_engagement_penalty(self):
+        # T6: a heavy edit is engagement, not distrust — level holds; only an
+        # explicit rejection narrows
         self._feed(sig(), "read", n=3)                       # read ceiling 2, level 1
-        new = self._feed(sig(dist=0.7), "read", n=1)         # heavy edit -> narrow
-        self.assertEqual(new, 0)
+        held = self._feed(sig(dist=0.7), "read", n=1)        # heavy edit -> no narrow
+        self.assertEqual(held, 1)
+        narrowed = self._feed(sig(signal="rejection"), "read", n=1)
+        self.assertEqual(narrowed, 0)
+
+    def test_endorsement_without_measured_distance_never_widens(self):
+        # T6 fail-safe: missing edit_distance is not evidence of acceptance
+        level = self._feed(sig(dist=None), "send", n=10)
+        self.assertEqual(level, 0)
 
     def test_widen_bounded_by_ceiling(self):
         # send ceiling = 1; keep feeding acceptances -> never exceeds 1
