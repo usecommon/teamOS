@@ -1,0 +1,114 @@
+[
+  {
+    "size": "tiny",
+    "fault": "corrupt ledger line",
+    "expected": "detect (raise)",
+    "observed": "raised JSONDecodeError",
+    "class": "DETECT",
+    "evidence": "Expecting property name enclosed in double quotes: line 1 column 3 (char 2)"
+  },
+  {
+    "size": "tiny",
+    "fault": "truncated tail line",
+    "expected": "recover or detect",
+    "observed": "append raised JSONDecodeError",
+    "class": "CRASH",
+    "evidence": "Expecting value: line 1 column 13 (char 12)"
+  },
+  {
+    "size": "tiny",
+    "fault": "record missing optional field",
+    "expected": "tolerate",
+    "observed": "weekly_accepted=1",
+    "class": "GRACEFUL",
+    "evidence": "1"
+  },
+  {
+    "size": "small",
+    "fault": "corrupt breaker file",
+    "expected": "deny (fail-closed)",
+    "observed": "gate=deny",
+    "class": "FAIL-CLOSED",
+    "evidence": "deny"
+  },
+  {
+    "size": "small",
+    "fault": "missing breaker file",
+    "expected": "deny or permit-safely",
+    "observed": "gate=deny",
+    "class": "FAIL-CLOSED",
+    "evidence": "deny"
+  },
+  {
+    "size": "small",
+    "fault": "corrupt policy.yaml",
+    "expected": "deny (fail-closed)",
+    "observed": "rc=2",
+    "class": "FAIL-CLOSED",
+    "evidence": "{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"perm"
+  },
+  {
+    "size": "small",
+    "fault": "unwritable ledger dir",
+    "expected": "deny (fail-closed)",
+    "observed": "rc=2",
+    "class": "FAIL-CLOSED",
+    "evidence": "{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUteamos-gate: gate-error (PermissionError) \u2014 failing closed\n"
+  },
+  {
+    "size": "medium",
+    "fault": "send fails post-gate",
+    "expected": "ledger reflects failed send",
+    "observed": "raised ConnectionError; L2 outcome=gate_passed (no send-receipt)",
+    "class": "SILENT-LOSS",
+    "evidence": "gate_passed"
+  },
+  {
+    "size": "medium",
+    "fault": "poison proposal in batch",
+    "expected": "isolate (reject 1, commit rest)",
+    "observed": "committed=2 rejected=1",
+    "class": "GRACEFUL",
+    "evidence": "{'committed': ['prop-716da2950ada', 'prop-828274e90bfd'], 'rejected': [('bad', 'parser-abuse')]}"
+  },
+  {
+    "size": "medium",
+    "fault": "corrupt checkpoint on resume",
+    "expected": "recover or restart clean",
+    "observed": "raised JSONDecodeError",
+    "class": "CRASH",
+    "evidence": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+  },
+  {
+    "size": "large",
+    "fault": "tampered record",
+    "expected": "detect (raise)",
+    "observed": "raised ValueError",
+    "class": "DETECT",
+    "evidence": "/private/tmp/claude-504/-Users-jsk-Projects-teamOS/5e2f2683-e53c-4e87-b82f-2963f3b00ef3/scratchpad/teamos-sim3/flt/l1_tamper/led/l2.jsonl:1: hash mismatch \u2014 record tampered"
+  },
+  {
+    "size": "large",
+    "fault": "ledger file deleted",
+    "expected": "detect gap / refuse",
+    "observed": "new chain prev_hash=None, len=1",
+    "class": "SILENT-LOSS",
+    "evidence": "append started a fresh chain with no record that 5 entries vanished"
+  },
+  {
+    "size": "large",
+    "fault": "cascade: send under open breaker",
+    "expected": "degrade (skip/queue), not crash",
+    "observed": "uncaught PermissionError from scheduled run",
+    "class": "CRASH",
+    "evidence": "gate blocked the brief send: circuit-open"
+  },
+  {
+    "size": "large",
+    "fault": "corrupt skill.json",
+    "expected": "tolerate/degrade",
+    "observed": "no skill.json present",
+    "class": "GRACEFUL",
+    "evidence": "n/a"
+  }
+]
