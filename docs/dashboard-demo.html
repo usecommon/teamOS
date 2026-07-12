@@ -72,6 +72,13 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .vers{white-space:normal}.ver{display:inline-block;font-family:var(--mono);font-size:.8rem;
 background:var(--surface-2);border:1px solid var(--rule);border-radius:6px;padding:.15rem .45rem;margin:.15rem .3rem .15rem 0}
 .up{color:var(--good)}.dn{color:var(--crit)}
+.insightgrid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.insight{background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.3rem}
+.insight .ihead{display:flex;justify-content:space-between;gap:.5rem}
+.insight h3{margin:.3rem 0 .1rem;font-size:1.02rem}
+.insight .iobs{margin:.1rem 0;font-size:.9rem;color:var(--ink-soft)}
+.insight .isug{margin:.3rem 0;font-size:.92rem}
+.insight .ifoot{display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;padding-top:.6rem;border-top:1px solid var(--rule)}
 .workrow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule)}
 .workrow:last-child{border-bottom:none}
 .spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent-2);
@@ -83,8 +90,8 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
       <div class="tile good"><span class="k">Unprompted, accepted</span>
         <span class="v">4<span class="sub">/ 3 floor</span></span><div class="bar good"><span style="width:100%"></span></div>
         <span class="note">kept, principal-authenticated</span></div>
-      <div class="tile"><span class="k">Gate decisions</span><span class="v">8</span>
-        <span class="chips"><span class="chip good">6 permit</span>
+      <div class="tile"><span class="k">Gate decisions</span><span class="v">9</span>
+        <span class="chips"><span class="chip good">7 permit</span>
         <span class="chip warn">1 ask</span>
         <span class="chip crit">1 deny</span></span></div>
       <div class="tile"><span class="k">Skills scored</span><span class="v">1</span>

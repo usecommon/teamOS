@@ -80,6 +80,24 @@ class GateProcessor(unittest.TestCase):
             p.write_text(json.dumps(obj))
         return p
 
+    def test_skill_proposal_creates_skill_on_approval(self):
+        door.propose_skill(self.inbox, "meeting-notes", "Summarize a meeting.", tools=["Read"])
+        result = self._proc()
+        self.assertEqual(len(result["committed"]), 1)
+        sd = self.d / "stores" / "skills" / "meeting-notes"
+        self.assertTrue((sd / "SKILL.md").exists())
+        self.assertTrue((sd / "skill.json").exists())
+        self.assertTrue((sd / "SKILL.lineage.json").exists())
+
+    def test_skill_proposal_missing_purpose_rejected(self):
+        d = self.inbox / "proposals"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "prop-ns.json").write_text(json.dumps(
+            {"kind": "skill", "target": "stores/skills/x/SKILL.md", "name": "x",
+             "proposal_id": "prop-ns"}))
+        result = self._proc()
+        self.assertIn("parser-abuse", [r[1] for r in result["rejected"]])
+
     def test_path_traversal_rejected(self):
         self._raw_proposal({"kind": "corpus_entry", "target": "stores/corpus/../../hooks/gate.py",
                             "title": "x", "blocks": ["x"]})

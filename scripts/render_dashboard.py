@@ -111,6 +111,13 @@ ul.plain{margin:0;padding-left:1.1rem;font-size:.85rem}ul.plain li{margin:.25rem
 .vers{white-space:normal}.ver{display:inline-block;font-family:var(--mono);font-size:.8rem;
 background:var(--surface-2);border:1px solid var(--rule);border-radius:6px;padding:.15rem .45rem;margin:.15rem .3rem .15rem 0}
 .up{color:var(--good)}.dn{color:var(--crit)}
+.insightgrid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.insight{background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.3rem}
+.insight .ihead{display:flex;justify-content:space-between;gap:.5rem}
+.insight h3{margin:.3rem 0 .1rem;font-size:1.02rem}
+.insight .iobs{margin:.1rem 0;font-size:.9rem;color:var(--ink-soft)}
+.insight .isug{margin:.3rem 0;font-size:.92rem}
+.insight .ifoot{display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;padding-top:.6rem;border-top:1px solid var(--rule)}
 .workrow{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule)}
 .workrow:last-child{border-bottom:none}
 .spin{width:11px;height:11px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent-2);
@@ -361,6 +368,31 @@ def _activity(demo):
         <tbody>{crows}</tbody></table></div>"""
 
 
+def _insights(demo, jg):
+    ins = __import__("insights").generate(demo, demo/"stores", jg)
+    KIND = {"new_skill": ("New skill", "good"), "improve": ("Improve", "warn"),
+            "efficiency": ("Efficiency", "warn"), "pattern": ("Pattern", "")}
+    CONF = {"high": "good", "medium": "warn", "low": ""}
+    if not ins:
+        return '<div class="panel"><h2>Insights</h2><p class="faint">No insights yet.</p></div>'
+    cards = ""
+    for x in ins:
+        label, kcls = KIND.get(x["kind"], (x["kind"], ""))
+        cards += f"""<div class="insight">
+          <div class="ihead"><span class="chip {kcls}">{label}</span>
+            <span class="chip {CONF.get(x['confidence'],'')}">{_esc(x['confidence'])}</span></div>
+          <h3>{_esc(x['title'])}</h3>
+          <p class="iobs">{_esc(x['observation'])}</p>
+          <p class="isug"><b>→ {_esc(x['suggestion'])}</b></p>
+          <div class="ifoot"><span class="mono small faint">{_esc(x['evidence'])}</span>
+            <span class="approve">{_esc(x['action_label'])}</span></div>
+        </div>"""
+    return (f'<div class="insightgrid">{cards}</div>'
+            '<p class="small faint" style="margin-top:1rem">Insights come from the discovery '
+            'loop: agents watch what recurs and what improves, then propose an action or a '
+            '<b>new skill</b>. Nothing is created until you accept.</p>')
+
+
 def _recommendations(demo):
     recs = __import__("recommend").load(demo)
     openr = [r for r in recs if r.get("status") == "open"]
@@ -434,12 +466,14 @@ def _learning(demo, est):
 
 def render_console(demo, est, pol, jg):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    tabs = [("overview", "Overview"), ("recommendations", "Recommendations"),
-            ("learning", "Learning"), ("agents", "Agents"), ("activity", "Activity"),
+    tabs = [("overview", "Overview"), ("insights", "Insights"),
+            ("recommendations", "Recommendations"), ("learning", "Learning"),
+            ("agents", "Agents"), ("activity", "Activity"),
             ("brief", "Brief"), ("inbox", "Inbox"), ("corpus", "Corpus"),
             ("skills", "Skills"), ("templates", "Templates"), ("envelope", "Envelope"),
             ("audit", "Audit")]
-    surfaces = {"overview": _overview(demo), "recommendations": _recommendations(demo),
+    surfaces = {"overview": _overview(demo), "insights": _insights(demo, jg),
+                "recommendations": _recommendations(demo),
                 "learning": _learning(demo, est), "agents": _agents(demo),
                 "activity": _activity(demo), "brief": _brief(demo, jg), "inbox": _inbox(demo),
                 "corpus": _corpus(demo), "skills": _skills(demo), "templates": _templates(demo),
@@ -539,6 +573,10 @@ def build_demo():
                               ["We adopted the cache layer; owner: platform team."], source="scout")
     door.propose_corpus_entry(demo/"inbox", "Release cadence",
                               ["Monthly releases cut from git tags."])
+    # a NEW SKILL proposed by discovery, then created on approval (fills one gap)
+    door.propose_skill(demo/"inbox", "meeting-summary",
+                       "Draft a meeting summary from meeting notes: decisions, owners, follow-ups.",
+                       tools=["Read", "Write"])
     gate_processor.process_inbox(demo/"inbox", demo, demo)
     door.propose_schedule(demo/"inbox", "weekly gap fill", "0 9 * * 1",
                           "Review the week; propose_schedule for gaps via the Team OS door.")

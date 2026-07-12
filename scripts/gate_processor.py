@@ -24,7 +24,7 @@ import hashchain  # noqa: E402
 import gate  # noqa: E402
 
 PROC_AGENT_ID = "teamos-gate-processor/0.1"
-ALLOWED_ROOTS = ("stores/corpus", "schedules")
+ALLOWED_ROOTS = ("stores/corpus", "schedules", "stores/skills")
 
 
 class ProposalRejected(ValueError):
@@ -48,14 +48,15 @@ def _validate_structure(proposal):
     if not isinstance(proposal, dict):
         raise ProposalRejected("parser-abuse", "proposal is not an object")
     kind = proposal.get("kind")
-    if kind not in ("corpus_entry", "schedule"):
+    if kind not in ("corpus_entry", "schedule", "skill"):
         raise ProposalRejected("parser-abuse", f"unknown kind {kind!r}")
     target = proposal.get("target")
     if not isinstance(target, str) or not target:
         raise ProposalRejected("parser-abuse", "missing/invalid target")
-    if kind == "corpus_entry":
-        if not isinstance(proposal.get("blocks"), list):
-            raise ProposalRejected("parser-abuse", "corpus_entry needs blocks[]")
+    if kind == "corpus_entry" and not isinstance(proposal.get("blocks"), list):
+        raise ProposalRejected("parser-abuse", "corpus_entry needs blocks[]")
+    if kind == "skill" and not (proposal.get("name") and proposal.get("purpose")):
+        raise ProposalRejected("parser-abuse", "skill needs name + purpose")
     return kind, target
 
 
@@ -77,6 +78,25 @@ def _commit(proposal, resolved, repo_root, ledger_dir, kind):
         body = f"# {proposal['title']}\n\n" + "\n\n".join(
             b if isinstance(b, str) else b.get("text", "") for b in proposal["blocks"])
         resolved.write_text(body)
+    elif kind == "skill":
+        name, purpose = proposal["name"], proposal["purpose"]
+        tools = proposal.get("tools", [])
+        resolved.write_text(f"---\ndescription: {purpose}\n---\n\n# {name}\n\n{purpose}\n")
+        skill_dir = resolved.parent
+        (skill_dir / "skill.json").write_text(json.dumps({
+            "skill_id": f"personal/{skill_dir.name}", "name": skill_dir.name,
+            "description": purpose, "namespace": "personal",
+            "version": hashchain.sha256_str(purpose),
+            "capability_manifest": {"capture_surface": "cloud+synced+local-folders", "tools": tools},
+            "evidence_links": [], "body_path": f"stores/skills/{skill_dir.name}/SKILL.md",
+            "lineage_sidecar": f"stores/skills/{skill_dir.name}/SKILL.lineage.json"}, indent=2))
+        (skill_dir / "SKILL.lineage.json").write_text(hashchain.canonical({
+            "entity_id": f"personal/{skill_dir.name}",
+            "generated_by": {"transformation": "skill-proposal", "at": "2026-07-11T00:00:00Z"},
+            "agent": PROC_AGENT_ID,
+            "sources": [{"source_type": "agent-derivation", "locator": proposal["proposal_id"],
+                         "content_hash": hashchain.sha256_str(purpose)}],
+            "evidence": [proposal["proposal_id"]], "confidence": "medium", "update_history": []}))
     else:
         resolved.write_text(json.dumps(
             {k: proposal[k] for k in ("name", "cron", "prompt")}, indent=2))
