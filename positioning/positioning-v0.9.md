@@ -121,7 +121,7 @@ Direct code inspection + `make test` (230 tests). Full evidence: `positioning-v0
 | **Earned autonomy enforced at the gate** (interior dial) | ✅ **now built (WO-1)** | `envelope_gate.py` + `gate.py`; `test_gate.EnvelopeEnforcement` |
 | **Autonomy can't be forged/replayed** | ✅ **now built (WO-2)** | `principal_auth.verified_fresh`; `test_principal_auth` |
 | Reversibility boundary + falsifiable guarantee (exterior dial) | ⏳ **next (WO-3/WO-4)** | frozen §7.3 + vision §8; work order queued |
-| Plane A primary, door secondary | ⏳ verify (WO-5) | loops/connectors gated; door propose-only |
+| Plane A primary, door secondary | ✅ **verified (WO-5)** | Plane-A action gated+ledgered; door propose-only, no ledger write — `test_planes.py` |
 | Multi-model portfolio via a hooked conductor | 🟡 mechanism real | gate inspects a conductor's egress/API calls |
 | Team / joint operation | ❌ unbuilt | single-user primitives only; the multiplayer wiring is the build |
 | Cross-account transfer measurably works | 🟡 instrument built | `transfer.py`; needs A-P3 collaborators |
