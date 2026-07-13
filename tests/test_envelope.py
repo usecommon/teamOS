@@ -136,6 +136,44 @@ class Envelope(unittest.TestCase):
         level = envelope.process_signal(sig(), "send", self.d, self.state, posture="fk6")
         self.assertEqual(level, 1)                           # 6th widens
 
+    def test_replayed_signed_endorsement_does_not_double_widen(self):
+        # WO-2: a captured signed ✓ replayed N times counts ONCE (nonce spent);
+        # only distinct real acceptances widen. Envelope spends nonces in
+        # ledger_dir/seen-nonces via verified_fresh.
+        import os
+        import principal_auth
+        keydir = self.d / "pkeys"
+        os.environ[principal_auth.ENV_KEYDIR] = str(keydir)
+        try:
+            principal_auth.ensure_key("principal:jeff", keydir)
+
+            def signed(nonce):
+                b = {"signal_type": "endorsement",
+                     "attribution": "principal_authenticated",
+                     "principal_id": "principal:jeff",
+                     "artifact_ref": {"store": "b", "path": "p",
+                                      "content_hash": "sha256:x"},
+                     "outcome": "accepted", "edit_distance_normalized": 0.0,
+                     "nonce": nonce,
+                     "harvest": {"method": "m", "harvested_at": hashchain.utc_now()}}
+                b["auth_sig"] = principal_auth.sign(b, keydir)
+                return b
+
+            replay = signed("dup")
+            level = None
+            for _ in range(3):                       # same nonce x3 -> counts once
+                level = envelope.process_signal(replay, "send", self.d,
+                                                self.state, posture=self.posture)
+            self.assertEqual(level, 0)               # below threshold: no widen
+
+            state2 = self.d / "s2.json"
+            for i in range(3):                       # 3 DISTINCT nonces -> widen
+                level = envelope.process_signal(signed(f"u{i}"), "send", self.d,
+                                                state2, posture=self.posture)
+            self.assertEqual(level, 1)
+        finally:
+            os.environ.pop(principal_auth.ENV_KEYDIR, None)
+
     def test_manual_reset_restores_base_and_ledgers(self):
         self._feed(sig(), "send", n=3)                       # -> 1
         base = envelope.reset("send", self.d, self.state)
