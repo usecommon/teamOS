@@ -26,6 +26,7 @@ protected_paths:
   - .github/workflows/
   - docs/team-os-fork-harness-native.md   # divergence log — append via PR only
   - config/envelope-policy.json           # envelope ceiling — script can never touch its own ceiling
+  - config/allow-policy.md                # exterior dial — agent can't loosen its own boundary
   - envelope-state.json                   # the dial — agent can't widen its own envelope
   - breaker.json                          # the stop — agent can't disarm the kill switch
   - .claude/settings.json                 # hook registration — gate can't be unplugged at source

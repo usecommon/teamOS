@@ -58,9 +58,28 @@ Paraphrase-exfiltration through a sanctioned send is invisible to any pattern
 pass by construction; that risk is carried by the taint rule and the send gate,
 not by this scan.
 
+**Autonomy — two zones (WO-1/3/4, severity × reversibility).** After inspection,
+a clean action passes through one post-gate (scripts/boundary.py); it only ever
+ADDS friction, never turns a safety ask/deny into a permit:
+- **Reversible interior** (drafts, corpus writes, local edits, local exec — git +
+  lineage is the rewind): the **earned-autonomy envelope** (WO-1). A clean
+  side-effectful action auto-permits only once the principal has earned the level
+  in that category (envelope-state.json, a protected path the gate READS, never
+  writes); below the floor it ASKS (the labeling period, §7.4). Enforced when
+  `TEAMOS_ENVELOPE_STATE` points at the maintained state; unset ⇒ no envelope gating.
+- **Irreversible boundary** (external send/mutation/disclosure/destruction/spend —
+  can't be taken back): **deny-by-default**. Auto-permits ONLY on a match in the
+  user-owned `config/allow-policy.md` (a protected path; ships EMPTY ⇒ everything
+  asks), otherwise ASKS for a confirmation. Reversibility is labeled in every L2
+  record (`reversibility:{reversible|irreversible}` in checks_run).
+- **The one falsifiable guarantee:** no irreversible action is auto-permitted
+  without an allow-match or a hand, and every one is recorded before it acts. A
+  deployment where one slips through is a falsifying bug.
+
 **Env knobs:** `TEAMOS_POLICY` (policy file), `TEAMOS_LEDGER_DIR` (ledger dir),
-`TEAMOS_POSTURE` (recorded posture). Defaults: repo policy, repo ledgers/,
-"attended".
+`TEAMOS_POSTURE` (recorded posture), `TEAMOS_ENVELOPE_STATE` (earned-autonomy
+state), `TEAMOS_ALLOW_POLICY` (irreversible allow policy). Defaults: repo policy,
+repo ledgers/, "attended", envelope unconfigured, config/allow-policy.md.
 
 **Line budget:** gate.py ≤ 300 lines including comments (CI-enforced; taint
 helpers live in hooks/taint.py, same protected dir).

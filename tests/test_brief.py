@@ -4,6 +4,7 @@ report yields NO L8 ✓; CN-1 only principal-authenticated counts; missed schedu
 => catch-up, never silent skip."""
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -29,6 +30,12 @@ class BriefBase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.d = Path(self.tmp.name)
+        # WO-4: the brief delivers via an irreversible send (slack_post_message).
+        # The runtime authorizes the principal's OWN delivery channel in the
+        # allow policy; without it, deny-by-default would hold every delivery.
+        pol = self.d / "allow-policy.md"
+        pol.write_text("slack_post_message\n")
+        os.environ["TEAMOS_ALLOW_POLICY"] = str(pol)
         self.out = self.d / "out"
         items = cf.load_footprint(FOOTPRINT / "artifacts")
         self.compiled = cf.compile_footprint(items, self.out, self.d)
@@ -36,6 +43,7 @@ class BriefBase(unittest.TestCase):
         self.slack = FakeSlack()
 
     def tearDown(self):
+        os.environ.pop("TEAMOS_ALLOW_POLICY", None)
         self.tmp.cleanup()
 
 

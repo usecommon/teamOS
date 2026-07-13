@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
-import envelope_gate  # noqa: E402 — WO-1 earned-autonomy hold
+import boundary  # noqa: E402 — WO-1/3/4 autonomy: envelope + irreversible boundary
 import taint  # noqa: E402 — FR2 Layer A (same protected dir)
 import yaml  # noqa: E402
 
@@ -218,9 +218,9 @@ def process(hook_input, policy=None):
     action_class, known = classify(policy, tool_name)
     checks, findings, verdict, rule_id = inspect(
         policy, tool_name, action_class, tool_input, known, session_id)
-    # WO-1: earned-autonomy — hold a clean side-effectful permit below its floor
-    verdict, rule_id = envelope_gate.apply(
-        action_class, verdict, rule_id, checks, findings)
+    # WO-1/3/4: reversible -> earned-autonomy envelope; irreversible -> allow-policy
+    verdict, rule_id = boundary.apply(tool_name, action_class,
+        target_of(tool_input), verdict, rule_id, checks, findings)
 
     # mark taint AFTER inspection: a permitted/asked read of untrusted content
     # (corpus, inbox, external fetch) taints the session going forward
