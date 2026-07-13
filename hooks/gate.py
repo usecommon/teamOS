@@ -5,10 +5,8 @@ Line budget (X-1): <=300 lines, reviewable in ~15 minutes.
 stdin: harness hook JSON {tool_name, tool_input, session_id, ...}
 stdout: permission decision JSON. Side effect: hash-chained L2 record.
 
-FR2: the gate looks INSIDE the action — bash egress scan, sensitive-read scan,
-synced-path-as-send, tool-parameter scan, mandatory outbound-content scan on
-sends. Payload inspection is always-on; posture only changes what happens
-AFTER a finding, never whether inspection runs.
+FR2: the gate looks INSIDE the action — bash-egress, sensitive-read, synced-path-
+as-send, tool-parameter, outbound-content scans; always-on regardless of posture.
 """
 
 import json
@@ -20,8 +18,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import hashchain  # noqa: E402
+import envelope_gate  # noqa: E402 — WO-1 earned-autonomy hold
 import taint  # noqa: E402 — FR2 Layer A (same protected dir)
-
 import yaml  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -39,9 +37,8 @@ def load_policy():
 
 
 def _breaker_open():
-    """Circuit breaker check — UNCONDITIONAL (T3). The stop is always wired:
-    a corrupt, missing, or unreadable breaker file counts as OPEN (deny), so
-    deleting or mangling the state file bricks instead of disarming."""
+    """Circuit breaker — UNCONDITIONAL (T3). A corrupt/missing/unreadable breaker
+    file counts as OPEN (deny), so mangling the state file bricks, never disarms."""
     path = Path(os.environ.get("TEAMOS_BREAKER",
                                REPO_ROOT / "ledgers" / "breaker.json"))
     try:
@@ -221,6 +218,9 @@ def process(hook_input, policy=None):
     action_class, known = classify(policy, tool_name)
     checks, findings, verdict, rule_id = inspect(
         policy, tool_name, action_class, tool_input, known, session_id)
+    # WO-1: earned-autonomy — hold a clean side-effectful permit below its floor
+    verdict, rule_id = envelope_gate.apply(
+        action_class, verdict, rule_id, checks, findings)
 
     # mark taint AFTER inspection: a permitted/asked read of untrusted content
     # (corpus, inbox, external fetch) taints the session going forward

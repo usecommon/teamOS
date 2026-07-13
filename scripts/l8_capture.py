@@ -12,6 +12,7 @@ nothing — no penalty, T6).
 
 import difflib
 import sys
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -66,6 +67,9 @@ def capture_edit(draft_path, edited_path, principal_id, ledger_dir=None,
         "attribution": "unattributed",  # a claim needs a key to become evidence
         "outcome": outcome,
         "edit_distance_normalized": distance,
+        # WO-2: per-record nonce — signed, so a captured endorsement can't be
+        # replayed to widen autonomy a second time (verified_fresh consumes it).
+        "nonce": uuid.uuid4().hex,
         "unprompted": bool(unprompted),
         "diff_ref": {
             "store": "l8-sidestore",

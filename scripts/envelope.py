@@ -87,8 +87,12 @@ def process_signal(l8_record, category, ledger_dir, state_path,
     level = state["levels"][category]
 
     # CN-1/T7: cryptographically verified when a principal keydir is
-    # configured; a bare attribution field is a claim, not evidence
-    principal = principal_auth.verified(l8_record)
+    # configured; a bare attribution field is a claim, not evidence.
+    # WO-2: verified_fresh also refuses a replayed or stale signature — the
+    # envelope is the one consumer that WIDENS, so it must not act twice on a
+    # captured ✓. Nonces are spent in a store beside the ledger.
+    principal = principal_auth.verified_fresh(
+        l8_record, Path(ledger_dir) / "seen-nonces")
     signal = l8_record.get("signal_type")
     dist = l8_record.get("edit_distance_normalized")
 
