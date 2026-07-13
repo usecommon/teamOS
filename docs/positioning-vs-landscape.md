@@ -1,4 +1,4 @@
-**`v0.1 — 2026-07-12`** *(POSITIONING — market/competitive context for Team OS. Not governing. Snapshot of the 2026 "agent control plane" landscape and where Team OS sits. Sources are external and dated; re-check before quoting in a raise.)*
+**`v0.2 — 2026-07-12`** *(POSITIONING — market/competitive context for Team OS. Not governing. Snapshot of the 2026 "agent control plane" landscape and where Team OS sits. Sources are external and dated; re-check before quoting in a raise.)*
 
 # Team OS vs. the landscape — the emerging agent control surface
 
@@ -81,8 +81,23 @@ So Team OS is **guardian-agents-plus**: it monitors-and-stops on trajectory (gua
 
 Team OS is an **agent control surface that treats control as an enabler, not a cage.** It is **proportional** (autonomy is earned per trust boundary, not uniform), **vendor-independent** (governance is user-owned code + owned inference that can exclude the model vendor), and **gap-before-incident** (one falsifiable guarantee, pre-act records). It **subsumes the guardian-agent pattern** (semantic stop-on-deviation) and goes past it with a **deterministic deny-by-default permit boundary**. And uniquely, it points the control surface at a person's **whole job across a human team** — with **cross-person skill transfer** as the wedge — rather than at a single codebase.
 
+## Rebuttal — "but it runs on the vendor's harness"
+
+The sharpest investor objection: *Gartner says the control plane can't be owned by the agent vendor, and Team OS runs on Claude Code — isn't your governance captured?* The prepared answer:
+
+**One line:** *Claude Code is our runtime, not our control plane. Gartner's rule is about who owns the governance — ours is user-owned code in the user's own git repo, owned by no vendor at all.*
+
+The unpack, when they push:
+
+1. **Runtime ≠ control plane.** Your firewall rules aren't "owned by Intel" because they run on an Intel CPU; a bank's controls aren't AWS's because they run on AWS. Gartner's rule is about who owns the *governance*, not who provides the *compute*.
+2. **Our control plane is literally files.** The gate, the ten ledgers, the allow/stop policy — plain files in the user's git repo, running as user-owned code. Anthropic doesn't write, host, or see them. Nothing for the vendor to wave through, because the vendor doesn't operate the governor.
+3. **Owned inference removes the model dependence.** Plane A runs on the user's API key or a local model and can **exclude the Claude account entirely**. The inference behind the agents need not be the vendor's.
+4. **Portability is the proof.** Only a thin adapter touches harness internals; swap runtimes by fixing the adapter, not the governance. Exit = `git clone`. A control plane you can walk out with is, by definition, not vendor-owned.
+5. **The inversion — we are *more* independent than the analyst's own examples.** Microsoft Agent 365 and peers are still *someone's SaaS*: independent of the agent vendor, but still *vendor-owned governance*. Team OS's governance is owned by **no vendor at all** — your code, your repo, your keys. Pushed hard, the objection flips into the purest form of Gartner's own recommendation.
+6. **The honest boundary (say it first).** If you *choose* the Claude account for inference, you depend on Anthropic for the **model** — but that is *buying the agent*, which Gartner explicitly permits; it is the *governance* that must stay independent, and it does. Plane A removes even that. A purchasing choice, not governance capture.
+
 ## Honest tensions
 
-- **Runs on the harness.** Gartner says the control plane shouldn't be owned by the agent vendor; Team OS runs *on* Claude Code. Defense: governance is user-owned code (hooks/ledgers/gate) + owned inference that can exclude Claude — but this is a nuance to explain, not a clean pass.
+- **Runs on the harness.** See the rebuttal above — a nuance to explain, not a weakness, but be ready with the one-liner.
 - **Contrarian on emergence.** The market is *fleeing* autonomous agency; "emergence you can see, bound, and take back" is a bet that a different posture beats retreat. Unproven until a dense deployment.
 - **Density-gated.** The emergence payoff needs scale (FK7+); the near-term, buildable piece is the deny-by-default boundary + allow/stop policy, which needs no density.
