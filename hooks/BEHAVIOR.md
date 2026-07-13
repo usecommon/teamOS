@@ -69,8 +69,9 @@ ADDS friction, never turns a safety ask/deny into a permit:
   `TEAMOS_ENVELOPE_STATE` points at the maintained state; unset ⇒ no envelope gating.
 - **Irreversible boundary** (external send/mutation/disclosure/destruction/spend —
   can't be taken back): **deny-by-default**. Auto-permits ONLY on a match in the
-  user-owned `config/allow-policy.md` (a protected path; ships EMPTY ⇒ everything
-  asks), otherwise ASKS for a confirmation. Reversibility is labeled in every L2
+  user-owned `config/allow-policy.md` (a protected path; ships with ONE rule —
+  the agent's delivery to its own principal, so briefs/digests arrive done;
+  everything else deny-by-default), otherwise ASKS. Reversibility is labeled in every L2
   record (`reversibility:{reversible|irreversible}` in checks_run).
 - **The one falsifiable guarantee:** no irreversible action is auto-permitted
   without an allow-match or a hand, and every one is recorded before it acts. A

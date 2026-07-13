@@ -7,8 +7,8 @@ communication, external mutation, disclosure, destruction, spend).
 
 - Reversible interior -> the earned-autonomy envelope (WO-1) is the only friction.
 - Irreversible boundary -> DENY-BY-DEFAULT: auto-permits ONLY on a match in the
-  user's allow policy (config/allow-policy.md — a protected path, ships EMPTY),
-  otherwise ASKS for a human confirmation.
+  user's allow policy (config/allow-policy.md — a protected path; ships with just
+  ONE rule, the agent's delivery to its own principal), otherwise ASKS.
 
 The one falsifiable guarantee: no irreversible action is auto-permitted without
 an allow-match or a hand, and the gate records it before it acts. Deterministic;

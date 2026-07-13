@@ -56,6 +56,15 @@ class AllowPolicy(unittest.TestCase):
         self.assertFalse(
             boundary.allow_match("SlackPost", "#random", str(self.pol)))
 
+    def test_shipped_default_authorizes_principal_delivery(self):
+        # DP-1: the SHIPPED config/allow-policy.md authorizes the agent's delivery
+        # to its principal, so the brief/digests arrive done out of the box —
+        # while everything else irreversible stays deny-by-default.
+        d = str(boundary.DEFAULT_ALLOW_POLICY)
+        self.assertTrue(boundary.allow_match("slack_post_message", "D_PRINCIPAL_DM", d))
+        self.assertFalse(boundary.allow_match("DeployProd", "prod", d))
+        self.assertFalse(boundary.allow_match("make_payment", "100", d))
+
 
 class FalsifiableGuarantee(unittest.TestCase):
     """No irreversible action auto-permits without an allow-match; each is
