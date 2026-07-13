@@ -1,4 +1,4 @@
-**`v0.6 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
+**`v0.7 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
 
 # Team OS — Emergence Architecture
 
@@ -242,14 +242,16 @@ It runs **two detectors**, both interior discovery aids:
   *unexpectedly*, precisely *because* it is unexpected. A system tuned to
   suppress outliers cannot invent; its bias is to *preserve* anomalies. The
   discovery half.
-- **Concern detector** — surfaces what looks *worrying*, with the opposite bias:
-  the **boring, slow, compounding** trail the curiosity detector ignores. It does
-  **not** block and it is **not** the gate; it *proposes* — flags a trend for human
-  review and for tuning the allowlist (§8). Because it only advises, it may use the
-  read-only model to reason semantically about a trend; its output is a proposal a
-  human accepts or rejects. Novel ≠ worrying; worrying ≠ novel. Honest limit:
-  best-effort recall — it is a curation aid, not the thing safety rests on. Safety
-  rests on the deny-by-default boundary (§8), not on this detector's cleverness.
+- **Concern detector** — surfaces what looks *worrying*: the **boring, slow,
+  compounding** trail the curiosity detector ignores. It is **not** the permit gate.
+  It does two *safe* things: it *proposes* allowlist entries for human review (§8),
+  and — per the user's **stop-rules** (§8) — it can **trip the circuit breaker** to
+  halt. Because it only *advises permits* and *triggers halts* (never permits an
+  irreversible act itself), it may use the read-only model to reason semantically —
+  including guardian-style "this deviates from the intended goal." Novel ≠ worrying;
+  worrying ≠ novel. Honest limit: best-effort recall — a curation-and-halt aid, not
+  the thing safety rests on. Safety rests on the deny-by-default boundary (§8), not
+  on this detector's cleverness.
 
 Shared discipline across both:
 
@@ -286,6 +288,28 @@ unattended until the user says so) and **neutral** (the tool ships *no* opinion 
 harm; it asserts only "irreversible acts need explicit say-so" — the minimal floor
 any safe tool has). Auto-approve (§12) is the user *populating* the allowlist; the
 concern detector (§7) *proposes* entries; the user disposes.
+
+**The policy has two sides, governed by one asymmetry.** The allowlist above is the
+*permit* side. The user can also write **stop-rules** — goals and tripwires, e.g.
+"if the agent deviates from goal G, halt." These are enforced by the concern
+detector (§7) and safety agent, which **trip the circuit breaker** — a halt, never
+a permit. The two sides are governed differently on purpose:
+
+- **Deterministic about permitting.** A wrong permit of an irreversible act is
+  irreversible, so permitting is deny-by-default and model-free — no guessing at
+  novel harm (the allowlist).
+- **Semantic about stopping.** A wrong stop is reversible — you just resume — so
+  stopping *may* use the read-only model's judgment, including guardian-style "this
+  deviates from the intended goal." A false stop costs a recoverable pause; a false
+  permit cannot be undone.
+
+So Team OS does **not** discard the guardian-agent pattern (monitor → detect
+deviation → intervene). It **contains it on the safe side** (stop) and **adds
+deny-by-default on the unsafe side** (permit) that guardian-only systems lack. If
+the user writes "stop when the agent leaves goal G," it stops; if an irreversible
+act is not on the allow list, it is denied. Both, from one user policy. (Residual:
+a semantic stop can false-fire — an availability nuisance, not a safety failure,
+and human-resettable.)
 
 **Emergence still flows here.** The trend "this agent keeps wanting to do X" is
 data — studied, surfaced, proposed for the allowlist like anything else. Only the
