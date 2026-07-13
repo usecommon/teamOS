@@ -1,4 +1,4 @@
-**`v0.3 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
+**`v0.4 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
 
 # Team OS — Emergence Architecture
 
@@ -310,7 +310,8 @@ nobody else can explain what emerged. The safety and the emergence come from the
   compute — and who sets it? Emergence has a real, permanent price tag.
 - **Candidate volume.** At density, the curiosity function could produce more
   candidates than a human can study. What is the triage — and does triage
-  re-introduce a suppression bias the whole design rejects?
+  re-introduce a suppression bias the whole design rejects? *(Addressed in §12:
+  expire-to-inert default + user-set auto-approve; triage ranks, never kills.)*
 - **Density threshold.** How much scale before emergence is real and not
   proto-noise? This is the FK7+ gating question.
 - **The contrarian bet.** Does "emergence you can always take back" actually
@@ -329,6 +330,98 @@ nobody else can explain what emerged. The safety and the emergence come from the
   safety detector is near-term; the discovery detector is later.
 - The **hard gates** (§8) already exist — this doc changes nothing about them; it
   only clarifies that they are the *boundary*, and the interior is free.
+
+## 12. Auto-approve — the gate is a user setting, not a system opinion
+
+The judgment bottleneck (a human must decide every graduation) is real only in
+one mode. It is a *setting*, not a law — policy-neutral, like every other source
+and rule in the system. The two regimes of §2 are the **default**; the user may
+move the line.
+
+Three modes:
+
+- **Review (default).** Free reversible micro-compounding in the window; the
+  human promotes each graduation to durable influence. Safety-by-judgment,
+  throughput-limited.
+- **Auto-approve interior.** Reversible graduation happens automatically per the
+  user's policy; the irreversible boundary (§4) still gates. Removes the
+  bottleneck for the cheap, recoverable work; keeps a hand on the door.
+- **Auto-approve all.** Full autonomy within the user's cost ceilings. Maximum
+  throughput; the user owns the risk.
+
+Two invariants hold across **all three** — this is what keeps auto-approve honest
+rather than reckless:
+
+1. **Observability never turns off.** Auto-approve removes the *decision*, never
+   the *record*. The harm detector (§7) still runs; under auto-approve it
+   *notifies without blocking* instead of blocking. "Nothing happens invisibly"
+   holds in every mode. This is why safety = observability (§2) was the right
+   base: it survives the user switching the gate off.
+2. **Cost governors still bind the irreversible boundary.** Even under
+   auto-approve-all, the §5 caps (spend / token / spawn) stand — they protect
+   against *unrecoverable loss*, not *reversible outcomes*. The user can raise a
+   ceiling; they cannot make the ceiling not exist.
+
+Auto-approve is the principal **pre-widening their own envelope**, authenticated
+(CN-1, §8). It is the user's own attributed standing policy — not an emergent
+trend widening itself — so it does not reopen the forged-signal attack chain. The
+system still never widens on an *unattributed* signal; it honors an *attributed*
+one set in advance.
+
+Net: **the gate is a dial the user holds. Observability and the cost floor are
+the system's only non-negotiables.**
+
+## 13. Deletion on an append-only record — key-destruction erasure
+
+The record is append-only and hash-chained: rewriting it breaks the chain, and
+the chain's integrity is the tamper-evidence the whole system rests on. But
+erasure must work (Ledger 9; the deletion invariant; the right to be forgotten).
+Append-only durability vs. mandatory erasure — head-on.
+
+**Resolution — key-destruction erasure (a.k.a. crypto-shredding; "crypto" =
+cryptography, nothing to do with coins).** Each principal's content is already
+encrypted with a per-principal key held outside the repo. To delete, **destroy
+the key.** The encrypted bytes stay in the ledger — so the chain is *never
+rewritten*, and the structure survives (that an entry existed, which agent
+authored it, when, which cluster it joined, that it was deleted at T by principal
+X). The *content* becomes permanently unreadable.
+
+- Shred the only key to the drawer, not the filing cabinet. Cabinet stays (proof
+  and structure); contents gone.
+- **Deletion propagates** over the lineage DAG (Ledger 9 machinery, inherited not
+  reinvented): the walk destroys the right keys; independent downstream artifacts
+  survive but their citations are redacted to the tombstone.
+- **The deletion is itself ledgered** — "nothing happens invisibly" (§2) includes
+  erasures. You keep proof-you-erased; you do not keep the erased content.
+- **Distilled conclusions survive** their raw sources: a candidate promoted to a
+  durable skill/insight was re-encrypted under its own scope at graduation
+  (distill-then-discard), so the *discovery* outlives erasure of the *evidence*.
+
+**Why this and not history-rewrite.** How others do it:
+- *git / GitHub* — rewrite history + garbage-collect unreachable objects.
+  Expensive, breaks the chain, best-effort (copies linger in forks / caches);
+  their own guidance for a leaked secret is "assume compromised, rotate" — §4's
+  one-way door, confirmed by the largest immutable-history system in the world.
+- *event-sourcing / append-only logs* — crypto-shredding, exactly this pattern.
+- *blockchain / GDPR* — keep content off the immutable store, hold only a hash
+  inside; delete the off-store content and the hash becomes a dangling commitment.
+
+Key-destruction wins here because we already hold the keys, it never touches the
+chain, and it is instant and total.
+
+**Caveat — erasure by inaccessibility, not physical destruction.** Acceptable
+under most readings of the right to erasure (data rendered permanently
+unrecoverable). For the strictest cases, or against a future key compromise,
+combine it with the blockchain pattern: store the raw content in an off-ledger
+store you can *physically* wipe, keep only a hash in the chain. Belt and
+suspenders.
+
+**Line: structure durable, content erasable.** The chain and the emergent
+*shape* are studiable as long as the system lives; the *content* only until its
+key is destroyed. The person's erasure right beats the system's memory — as it
+must.
+
+---
 
 This doc is the record of the direction. It drives no work until a separate,
 explicit scoping decision promotes a piece of it into the build order.
