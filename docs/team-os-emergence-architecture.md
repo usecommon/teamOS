@@ -1,4 +1,4 @@
-**`v0.5 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
+**`v0.6 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
 
 # Team OS — Emergence Architecture
 
@@ -20,7 +20,8 @@ discussion. It is:
 - **A contrarian bet.** The market is fleeing autonomous agency — trust is
   falling, ~40% of agent projects are forecast dead by 2027, and the cause is
   emergent agency in the wild (agents doing unplanned things). Going *toward*
-  emergence is the risk. The Observatory (§7) is what makes the bet defensible.
+  emergence is the risk. The **deny-by-default boundary and its one falsifiable
+  guarantee** (§8), plus full observability, are what make the bet defensible.
 
 Nothing here overrides an invariant in `team-os-fork-harness-native.md` or the
 architecture. Where this doc and a governing doc appear to conflict, the
@@ -61,8 +62,8 @@ mechanism but two zones:
   revert what proves wrong. Judgment comes *after*, from outcomes — never
   *before*, from rules.
 - **Where unwind does not reach (§4; coupled; aged) → safety is prevention.** The
-  boundary gate and the user's harm policy (§7, §12) stand *ahead* of the act.
-  Nothing else can protect an act you cannot take back.
+  deny-by-default boundary and the user's allow policy (§8) stand *ahead* of the
+  act. Nothing else can protect an act you cannot take back.
 
 **Observability is not the safety — it is what makes safety possible, and it is
 the promise.** You can only unwind what you can see, and candidates (§7) are how
@@ -82,17 +83,20 @@ move you make on a flagged candidate, not a net always under you.
 For this to hold rather than degrade into excellent post-mortems, three things are
 load-bearing — requirements, not nice-to-haves:
 
-- **(a) Keep the boundary gate.** Irreversible acts (§4) are prevented, not merely
-  observed. The gate does not go away; it is confined to the door, and it enforces
-  the user's harm policy (§7).
-- **(b) Two detectors, not one.** The Observatory needs a *curiosity* detector
-  (surface the novel) **and** a distinct *harm* detector (surface the dangerous —
-  especially the boring, slow, irreversible trail a curiosity detector ignores by
-  design). Novel ≠ harmful; harmful ≠ novel. See §7.
-- **(c) Detection latency under the reversibility half-life.** Unwind-on-candidate
-  only works if candidacy is caught while the rewind is still clean. For
-  irreversible acts this collapses to (a): the harm detector must fire *ahead* of
-  the trigger, which makes it a gate, not an observer.
+- **(a) Deny-by-default at the boundary.** Irreversible acts (§4) are not
+  *detected-and-maybe-blocked* — they are **denied unless explicitly permitted**:
+  an allowlist, not a harm-blocklist (§8). This needs no semantic judgment and no
+  model in the gate path (SE-1/CN-2); it is deterministic, and it is the doc's one
+  falsifiable guarantee.
+- **(b) Detectors are interior discovery aids, not the gate.** The Observatory's
+  *curiosity* and *concern* detectors (§7) study the reversible interior — they may
+  use a read-only, quarantined model — and they *propose* candidates and allowlist
+  changes. They never sit in the boundary gate; safety at the door is the
+  allowlist, not their judgment.
+- **(c) Reversibility half-life bounds the interior unwind decision.** Inside, a
+  candidate should be caught while the rewind is still clean — a latency target for
+  the discovery aids. It no longer loads the boundary: the boundary denies by
+  default, so it never depends on catching harm in time.
 
 ## 3. The one line that defines the field — reversible vs. irreversible
 
@@ -221,37 +225,31 @@ removes influence, never information.)
 Compounding is the engine *and* the source of the interesting anomalies. It is
 not the danger — under §2 there is no danger from a reversible trend, only data.
 
-## 7. The Observatory — instrument and safety surface
+## 7. The Observatory — discovery and allowlist curation
 
-The Observatory studies emergence; it also carries the safety-critical half of
-the system — it makes unwind targetable (candidates), it hosts the harm detector
-that enforces the user's policy at the boundary, and it is where the "nothing
-silent" promise lives (§2). That makes it load-bearing — not a deferrable v2
-nicety (see §11).
+The Observatory studies emergence and curates the allowlist. It is where unwind is
+aimed (candidates) and where the "nothing silent" promise lives (§2). It is
+**not** the boundary gate — safety at the door is the deterministic deny-by-default
+allowlist of §8. Because the Observatory only *advises* (it proposes; it never
+blocks), it *may* use a read-only, quarantined model: SE-1/CN-2 permits a model to
+**read**, never to **gate**. So the Observatory can do the semantic judgment the
+boundary is forbidden — and it hands the result to a human as a proposal, keeping
+the gate itself model-free.
 
-It runs **two detectors**, deliberately distinct:
+It runs **two detectors**, both interior discovery aids:
 
 - **Curiosity detector** — surfaces what is surprising, novel, or compounding
   *unexpectedly*, precisely *because* it is unexpected. A system tuned to
-  suppress outliers cannot invent; this detector's bias is to *preserve*
-  anomalies. This is the discovery half.
-- **Harm / irreversibility detector** — surfaces what is *dangerous*, with the
-  opposite bias: it must catch the **boring, slow, irreversible** trail the
-  curiosity detector ignores. Novel ≠ harmful; harmful ≠ novel. It is
-  latency-critical and boundary-facing — for irreversible acts (§4) it fires
-  *ahead* of the trigger, i.e. it is the gate of §2(a)/(c), not a rear-view. This
-  is the safety half.
-
-  **"Harmful" is the user's policy, not the tool's opinion.** Harm is defined in
-  an **editable markdown file the user owns** and can change anytime — the tool
-  holds the *mechanism*, the user holds the *definition*. This is what keeps the
-  harm detector policy-neutral (§3a of the fork) instead of the tool imposing a
-  view of "bad": the detector enforces whatever the policy says, no more, no less.
-  Default: the harm detector is **ON**. Honest limit: recall is bounded by how
-  completely the policy names real harms — a file will not enumerate everything,
-  so this detector is **best-effort**, and the user owns its completeness. Safety
-  here is "unwind (limited) + a best-effort, user-defined boundary policy," never
-  a claim of total prevention.
+  suppress outliers cannot invent; its bias is to *preserve* anomalies. The
+  discovery half.
+- **Concern detector** — surfaces what looks *worrying*, with the opposite bias:
+  the **boring, slow, compounding** trail the curiosity detector ignores. It does
+  **not** block and it is **not** the gate; it *proposes* — flags a trend for human
+  review and for tuning the allowlist (§8). Because it only advises, it may use the
+  read-only model to reason semantically about a trend; its output is a proposal a
+  human accepts or rejects. Novel ≠ worrying; worrying ≠ novel. Honest limit:
+  best-effort recall — it is a curation aid, not the thing safety rests on. Safety
+  rests on the deny-by-default boundary (§8), not on this detector's cleverness.
 
 Shared discipline across both:
 
@@ -269,22 +267,44 @@ labor, cross-person knowledge that assembled itself) is structure **no one
 authored**, even though every underlying write was authorized. Gated ≠ planned;
 authorized ≠ authored. Emergence lives in that gap.
 
-## 8. What stays hard-gated, and why it is not a contradiction
+## 8. The boundary — deny-by-default, and the one falsifiable guarantee
 
-Two boundaries hold, and both are consistent with "study the trend, don't stop
-it":
+The hard line is **not** "detect harm and block it." That needs semantic judgment
+the gate is forbidden to do (no model in the gate path, SE-1/CN-2), and novel harm
+has no pattern to match — so a harm-*detecting* gate is either model-blind (misses
+novel harm) or model-driven (violates the invariant). The polarity is flipped:
 
-1. **The irreversible commit** (external send, delete, spend — §4). Emergence
-   still *flows* here — the trend "this agent keeps wanting to do X" is data,
-   studied and surfaced like any other. Only the final irreversible *trigger*
-   waits for a hand. Emergence is not suppressed at the boundary; it is
-   *converted to a proposal a human ratifies*.
-2. **Autonomy widening on authenticated consent only** (CN-1). An emergent trend
-   may *propose* a wider envelope; only the principal's authenticated ✓
-   *executes* it. This is security, not conservatism: drop it and an attacker
-   seeds a trail, the trail compounds, and the envelope widens *itself* — the one
-   third-party attack chain, reopened. Emergence proposes; authenticated human
-   commits.
+> **The boundary permits only what is explicitly allowed, and denies everything
+> else.** Allowlist, not blocklist. This asks no question of "is it bad?" — only
+> "is it on the allow list?" — which is deterministic and model-free.
+
+**The allow policy.** What may cross the irreversible boundary (§4) is the
+**user's allow policy — an editable markdown file the user owns** and changes
+anytime. Default: **empty** — so every irreversible act needs an explicit human
+confirmation. That default is both **safe** (nothing irreversible happens
+unattended until the user says so) and **neutral** (the tool ships *no* opinion of
+harm; it asserts only "irreversible acts need explicit say-so" — the minimal floor
+any safe tool has). Auto-approve (§12) is the user *populating* the allowlist; the
+concern detector (§7) *proposes* entries; the user disposes.
+
+**Emergence still flows here.** The trend "this agent keeps wanting to do X" is
+data — studied, surfaced, proposed for the allowlist like anything else. Only the
+final irreversible *trigger* waits for an allow-match or a hand.
+
+> **The one falsifiable guarantee.** No irreversible action ever occurs without
+> either (i) a match in the user's explicit allow policy, or (ii) a human
+> confirmation — and every such action has a *pre-act* ledger record. **A
+> deployment in which an irreversible act occurred with neither is a falsifying
+> bug**, not a tolerable residual. This is the doc's one claim strong enough to be
+> wrong — and therefore the one you can trust. Everything else here is best-effort;
+> this is not.
+
+**The second boundary — autonomy widening on authenticated consent only** (CN-1).
+An emergent trend may *propose* a wider envelope; only the principal's
+authenticated ✓ executes it. Drop it and an attacker seeds a trail, the trail
+compounds, the envelope widens *itself* — the one third-party attack chain,
+reopened. Auto-approve is the principal's own attributed standing consent, so it
+does not reopen this.
 
 Everywhere else — the whole reversible interior — emergence runs free.
 
@@ -311,6 +331,11 @@ nobody else can explain what emerged. The safety and the emergence come from the
   downstream system that already read it — is secretly a §4-irreversible act and
   must be treated as boundary, not interior. Audit relentlessly for hidden
   residues; a leaky interior is how "safe emergence" quietly stops being safe.
+- **The unwindable fraction.** In a coupled system, what share of consequential
+  interior actions are still *cleanly* unwindable by the time anyone decides? If it
+  is small, the interior leans on observation + the concern detector, and the real
+  protection is the §8 boundary. Measure it — do not assume unwind carries the
+  interior.
 - **Resource-governor calibration.** Spend / spawn caps are the only interior
   brakes; where are they set, and are they truly outcome-blind (protecting cost,
   not judging behavior)?
@@ -332,14 +357,12 @@ nobody else can explain what emerged. The safety and the emergence come from the
 - The **autocatalytic trail engine** (§6) is a near-term, buildable primitive
   that is useful *even with no emergence* — stigmergic coordination is real
   product at any scale. It could be scoped as a fork-adjacent item.
-- The **Observatory** (§7) is now *load-bearing for safety*, not a density-gated
-  nicety: because its harm detector enforces the user's boundary policy and its
-  candidates are how unwind is aimed (§2), its **harm-detector half must ship with
-  the boundary gate, day one**. Its **curiosity half** — the discovery payoff — is
-  what earns its keep only at density (FK7+ / v2). Split the two: the safety
-  detector is near-term; the discovery detector is later.
-- The **hard gates** (§8) already exist — this doc changes nothing about them; it
-  only clarifies that they are the *boundary*, and the interior is free.
+- The **deny-by-default boundary + allow policy** (§8) is the near-term, buildable
+  safety primitive: deterministic, model-free, no density required. It is what
+  ships day one, and it carries the one falsifiable guarantee.
+- The **Observatory** (§7) is discovery and allowlist-curation, *not* the safety
+  gate. Both detectors earn their keep mainly at density (FK7+ / v2); the concern
+  detector can advise the allowlist earlier, but safety never waits on it.
 
 ## 12. Auto-approve — the gate is a user setting, not a system opinion
 
@@ -354,36 +377,40 @@ Three modes:
   human promotes each graduation to durable influence. Safety-by-judgment,
   throughput-limited.
 - **Auto-approve interior.** Reversible graduation happens automatically per the
-  user's policy; the irreversible boundary (§4) still gates. Removes the
+  user's policy; the irreversible boundary (§4) still **denies by default** — an
+  irreversible act needs an allow-match or a confirmation (§8). Removes the
   bottleneck for the cheap, recoverable work; keeps a hand on the door.
 - **Auto-approve all.** Full autonomy within the user's cost ceilings. Maximum
   throughput; the user owns the risk.
 
-Across every mode, what counts as harm is the **user's harm policy — the editable
-markdown file** of §7, owned by the user; the tool enforces it, never its own
-opinion. **Defaults: harm detector ON, no auto-approve.** The user always chooses
-— edit the policy, turn auto on or off, per category. The default protects; the
-hatch is the user's owned, attributed choice (see the honest note below).
+Across every mode, what may cross the irreversible boundary is the **user's allow
+policy — the editable markdown file** of §8, owned by the user; the tool enforces
+it, never its own opinion of harm. **Defaults: allowlist empty (every irreversible
+act needs human confirmation), no auto-approve, concern detector ON as an
+advisor.** The user always chooses — add allow entries, turn auto on or off, per
+category. The default protects; the hatch is the user's owned, attributed choice
+(see the honest note below).
 
 Three invariants hold across **all three modes** — this is what keeps auto-approve
 honest rather than reckless:
 
 1. **Observability never turns off.** Auto-approve removes the *decision*, never
-   the *record*. The harm detector (§7) still runs; under auto-approve it
-   *notifies without blocking* instead of blocking. "Nothing happens invisibly"
-   holds in every mode — observability is the one thing auto-approve cannot
-   disable (§2), so unwind stays targetable and the promise stays kept even with
-   the gate off.
+   the *record*. The concern detector (§7) still runs and still surfaces. "Nothing
+   happens invisibly" holds in every mode — observability is the one thing
+   auto-approve cannot disable (§2), so unwind stays targetable and the promise
+   stays kept even with review off.
 2. **Cost governors bind the irreversible boundary.** Even under auto-approve-all,
    the §5 caps (spend / token / spawn) stand — they protect against *unrecoverable
    loss*, not *reversible outcomes*. The user can raise a ceiling; they cannot make
    it not exist.
-3. **A harm-rate limit stands beside the cost cap — because harm ⊥ cost.** Spend
-   caps stop a $10k burn; they do nothing about 500 individually-cheap irreversible
-   sends, or a single $0.02 disclosure. So an **irreversible-action-rate limit**
-   (sends / deletes / disclosures per window), governed by the harm policy, runs
-   alongside the spend caps; a spike trips the circuit breaker. Cheap harm is still
-   harm.
+3. **Cheap harm can't sneak past — but the allowlist stops it, not the rate limit.**
+   The old worry (500 individually-cheap irreversible sends, a $0.02 disclosure)
+   escapes a spend cap (harm ⊥ cost), and escapes a rate cap too if it is set high
+   enough to allow real throughput. It is stopped because **every irreversible act
+   needs an allow-match or a confirmation** (§8); fragmenting a harm into cheap
+   pieces doesn't help when each piece must be permitted. A separate **action-rate
+   limit** remains — but only as a *resource-runaway* guard (a spawn / loop storm),
+   never as a harm control.
 
 **Honest note (not a resolved point).** Auto-approve-all is the hatch that lets a
 throughput-seeking user revert to an unsupervised autonomous agent — the category
@@ -398,8 +425,9 @@ trend widening itself — so it does not reopen the forged-signal attack chain. 
 system still never widens on an *unattributed* signal; it honors an *attributed*
 one set in advance.
 
-Net: **the gate is a dial the user holds. Observability and the cost floor are
-the system's only non-negotiables.**
+Net: **the review dial is the user's; the deny-by-default boundary, its one
+falsifiable guarantee (§8), and full observability are the system's only
+non-negotiables.**
 
 ## 13. Deletion on an append-only record — key-destruction erasure
 
@@ -479,8 +507,8 @@ erasure right beats the system's memory — as it must.
 Every safety property here assumes the recorder and the detector are trustworthy
 and complete. But the emergent agents *generate* the records. In a system built to
 let agents develop unplanned behavior, an agent that emergently learns to
-under-report, or learns what the harm policy flags and routes around it, attacks
-safety **from the inside**. The fork's threat model covers the *external* forged
+under-report, or learns what the concern detector flags and routes around it,
+attacks safety **from the inside**. The fork's threat model covers the *external* forged
 signal (CN-1); this is the *internal* one, and the emergence thesis cannot
 pre-forbid it without contradicting itself.
 
@@ -492,17 +520,24 @@ Two guards, mostly inherited:
   model. The emergence layer inherits this: **an agent can act, but it cannot write
   its own ledger.** Observability is recorded *about* the agents by code they do
   not control, so an agent cannot quietly stop being observed.
-- **Evasion is itself a flagged pattern.** "An agent's observability is dropping,"
-  "actions increasingly cluster just under a harm-policy threshold," "trails
-  reshaped to skirt the detector" — these are exactly the boring, compounding
-  patterns the harm detector (§7) exists to surface. Evasion of the detector falls
-  inside the detector's own remit; a falling observability metric is a first-class
-  candidate.
+- **Distributed harm still meets the boundary.** The subtle evasion — fragmenting
+  a harm into individually-innocuous, faithfully-logged actions whose *aggregate* is
+  harmful — does not slip the door: each fragment that is irreversible still needs
+  an allow-match or a confirmation (§8). Composition can hide from a detector; it
+  cannot escape deny-by-default, because every irreversible piece is permitted
+  individually or not at all.
+- **Evasion is also a concern-detector target (best-effort).** "Observability
+  dropping," "actions clustering just under a threshold," "trails reshaped to skirt
+  review" are the kind of boring, compounding patterns the concern detector (§7)
+  exists to surface — advisory, not the floor.
 
-Residual, honest: a guard detector can be evaded the way any detector can (recall
-< 1). The deterministic, non-agent record path is the **hard floor**; the evasion
-detector is best-effort on top. This threat is **bounded and watched, not
-eliminated** — stated so it is on the record rather than assumed away.
+Residual, honest: the *concern* detector can be evaded the way any detector can
+(recall < 1), and cannot reliably catch every route around itself — so it is
+**not** where safety rests. Safety rests on two deterministic floors: agents
+**cannot write their own ledger** (nothing goes unlogged), and irreversible acts
+**cannot cross without an allow-match or confirmation** (§8; nothing crosses
+unpermitted). The detector is a best-effort advisor on top of those floors. This
+threat is bounded by *mechanism*, not by the detector's cleverness.
 
 ---
 
