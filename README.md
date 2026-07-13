@@ -1,10 +1,13 @@
 # Team OS — Harness-Native Fork
 
-**Human teams. Agent fabric.** A tool for human teams: each person has their own
-proactive agent, and the agents form the **agent fabric** — the connective layer
-that carries what the team knows (who knows what, skills that transfer between
-people, memory that outlives turnover). Not an agent-orchestration framework; the
-unit is a person, and the payoff is the team getting better together.
+**You run your agents; then your team does.** Team OS is how *one person* runs
+their own agents — on the record, under gates they own, with autonomy they can
+dial from tight command-and-control up to a free-running lab — and then grows into
+how their **team** runs together. Human-centric by design: the unit is a *person*,
+and the agents are the **fabric** that carries what the person and the team know
+(who knows what, skills that transfer between people, memory that outlives
+turnover). Not an agent-orchestration framework — the payoff is people getting
+better together. (Full positioning: `positioning/positioning-v0.9.md`.)
 
 This repo is the harness-native fork: Team OS implemented using a
 Claude-Code-class harness's own primitives (CLAUDE.md cascade = scope; skills =
@@ -14,7 +17,7 @@ gates are `docs/team-os-fork-validation-plan.md`. Onboarding:
 `docs/INSTALL.md` and `docs/onboarding.html`.
 
 **One test command:** `make test` (schemas + FR1 mapping gate + hook budget +
-138 unit tests + chain verification). CI runs the same on every push.
+240 unit tests + chain verification). CI runs the same on every push.
 
 ## Build status — FK1..FK8 mechanisms complete
 
