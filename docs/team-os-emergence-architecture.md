@@ -1,4 +1,4 @@
-**`v0.4 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
+**`v0.5 — 2026-07-12`** *(VISION — thesis-level; NOT governing, NOT driving FK work. Beyond the validated fork. Written to be on the record before it drifts. Precedence: below every doc in the fork spec's precedence order. Do not build from this without an explicit, separate scoping decision.)*
 
 # Team OS — Emergence Architecture
 
@@ -43,7 +43,7 @@ total and cheap, letting behavior run wild is not reckless — it is free.
 The category: **the agent system that lets emergence run and can always take it
 back — a lab, not a cage.**
 
-## 2. The core principle — safety is observability; unwind is a decision on candidates
+## 2. The core principle — safety is unwind (limited); observability makes it possible
 
 A brake that halts a compounding trend **destroys the thing you wanted to
 study**. "Off the rails" is not a failure state to prevent; it is a *result to
@@ -51,52 +51,48 @@ observe and then judge from outcomes*. Pre-defining "off the rails" with
 thresholds presumes you already know what is bad — the exact assumption that
 kills discovery. So the safety mechanism is not a governor that stops.
 
-But it is not "unwind," either — unwind is not a guarantee you can make. In a
-live, coupled system the clean rewind degrades the instant other agents read a
-trail and act on it, and it is gone entirely for the things §4 catalogs. So the
-always-on safety property is the one thing that does *not* degrade under
-coupling or time:
+**Safety is the ability to unwind — honestly limited.** Unwind is total for
+private, uncoupled, fresh state. It **degrades** the instant another agent reads
+a trail and acts on it (coupling), and further with time (the reversibility
+half-life). It is **void** for the things §4 catalogs. So safety is not one
+mechanism but two zones:
 
-**Safety is observability.** Every emergent act, every token burned, every
-boundary-crossing is on the record and surfaceable — by construction (files as
-truth + lineage). Nothing happens invisibly. That is the promise the system can
-actually keep, and the honest one: *not "the agent never errs," but "no error is
-silent — you will see every one, with the receipts, and hold the switch."*
+- **Where unwind reaches → that is the safety.** Let it run, study the trend,
+  revert what proves wrong. Judgment comes *after*, from outcomes — never
+  *before*, from rules.
+- **Where unwind does not reach (§4; coupled; aged) → safety is prevention.** The
+  boundary gate and the user's harm policy (§7, §12) stand *ahead* of the act.
+  Nothing else can protect an act you cannot take back.
 
-**Unwind is demoted from guarantee to verb.** It is one option a human exercises
-**at the candidate stage** — when the Observatory surfaces something to decide
-on. Generate, observe, let the detector flag a candidate, then choose: promote,
-keep watching, or unwind. Judgment comes *after*, from results — never *before*,
-from rules. Unwind is real, but bounded (see the requirements below); it is a
-move you make, not a net that is always under you.
+**Observability is not the safety — it is what makes safety possible, and it is
+the promise.** You can only unwind what you can see, and candidates (§7) are how
+unwind is aimed; so observability is the *enabler*. And "nothing happens
+invisibly" is the *honesty promise* the system can always keep: *not "the agent
+never errs," but "no error is silent — you will see every one, with the receipts,
+and hold the switch."* But a complete record of an act you cannot undo is
+**forensics, not safety** — which is precisely why observability *enables and
+promises*, while unwind (limited) + prevention do the *protecting*.
 
-### Safety splits at the reversibility line
-
-Observability is *sufficient* safety only where the act is reversible. Watching
-an irreversible act is not safety — it is forensics: the perfect audit log of a
-crash whose passengers are still dead. So:
-
-- **Interior (reversible): safety = observability + unwind-on-candidate.**
-- **Boundary (irreversible, §4): safety = prevention** — the gate still stands
-  ahead of the act. Observability is true inside and false at the door.
+**Unwind is a decision on candidates.** The Observatory surfaces; a human — or the
+user's standing policy (§12) — chooses promote / keep watching / unwind. It is a
+move you make on a flagged candidate, not a net always under you.
 
 ### The three standing requirements
 
-For "safety is observability" to hold rather than degrade into excellent
-post-mortems, three things are load-bearing — requirements, not nice-to-haves:
+For this to hold rather than degrade into excellent post-mortems, three things are
+load-bearing — requirements, not nice-to-haves:
 
-- **(a) Keep the boundary gate.** Irreversible acts (§4) are prevented, not
-  merely observed. The gate does not go away; it is confined to the door.
+- **(a) Keep the boundary gate.** Irreversible acts (§4) are prevented, not merely
+  observed. The gate does not go away; it is confined to the door, and it enforces
+  the user's harm policy (§7).
 - **(b) Two detectors, not one.** The Observatory needs a *curiosity* detector
-  (surface the novel/surprising) **and** a distinct *harm / irreversibility*
-  detector (surface the dangerous — especially the boring, slow, irreversible
-  trail a curiosity detector ignores by design). Novel ≠ harmful; harmful ≠
-  novel. See §7.
-- **(c) Detection latency under the reversibility half-life.** Unwind-on-
-  candidate only works if candidacy is caught while the rewind is still clean.
-  Detect too slow and you are "unwinding" a thing that already coupled. For
-  irreversible acts this collapses to (a): the harm detector must fire *ahead*
-  of the trigger, which makes it a gate, not an observer.
+  (surface the novel) **and** a distinct *harm* detector (surface the dangerous —
+  especially the boring, slow, irreversible trail a curiosity detector ignores by
+  design). Novel ≠ harmful; harmful ≠ novel. See §7.
+- **(c) Detection latency under the reversibility half-life.** Unwind-on-candidate
+  only works if candidacy is caught while the rewind is still clean. For
+  irreversible acts this collapses to (a): the harm detector must fire *ahead* of
+  the trigger, which makes it a gate, not an observer.
 
 ## 3. The one line that defines the field — reversible vs. irreversible
 
@@ -227,9 +223,11 @@ not the danger — under §2 there is no danger from a reversible trend, only da
 
 ## 7. The Observatory — instrument and safety surface
 
-The Observatory studies emergence; it also *is* the safety surface, because
-safety is observability (§2) and this is where observability lives. That makes it
-load-bearing — not a deferrable v2 nicety (see §11).
+The Observatory studies emergence; it also carries the safety-critical half of
+the system — it makes unwind targetable (candidates), it hosts the harm detector
+that enforces the user's policy at the boundary, and it is where the "nothing
+silent" promise lives (§2). That makes it load-bearing — not a deferrable v2
+nicety (see §11).
 
 It runs **two detectors**, deliberately distinct:
 
@@ -243,6 +241,17 @@ It runs **two detectors**, deliberately distinct:
   latency-critical and boundary-facing — for irreversible acts (§4) it fires
   *ahead* of the trigger, i.e. it is the gate of §2(a)/(c), not a rear-view. This
   is the safety half.
+
+  **"Harmful" is the user's policy, not the tool's opinion.** Harm is defined in
+  an **editable markdown file the user owns** and can change anytime — the tool
+  holds the *mechanism*, the user holds the *definition*. This is what keeps the
+  harm detector policy-neutral (§3a of the fork) instead of the tool imposing a
+  view of "bad": the detector enforces whatever the policy says, no more, no less.
+  Default: the harm detector is **ON**. Honest limit: recall is bounded by how
+  completely the policy names real harms — a file will not enumerate everything,
+  so this detector is **best-effort**, and the user owns its completeness. Safety
+  here is "unwind (limited) + a best-effort, user-defined boundary policy," never
+  a claim of total prevention.
 
 Shared discipline across both:
 
@@ -324,10 +333,11 @@ nobody else can explain what emerged. The safety and the emergence come from the
   that is useful *even with no emergence* — stigmergic coordination is real
   product at any scale. It could be scoped as a fork-adjacent item.
 - The **Observatory** (§7) is now *load-bearing for safety*, not a density-gated
-  nicety: because safety is observability (§2), its **harm-detector half must
-  ship with the boundary gate, day one**. Its **curiosity half** — the discovery
-  payoff — is what earns its keep only at density (FK7+ / v2). Split the two: the
-  safety detector is near-term; the discovery detector is later.
+  nicety: because its harm detector enforces the user's boundary policy and its
+  candidates are how unwind is aimed (§2), its **harm-detector half must ship with
+  the boundary gate, day one**. Its **curiosity half** — the discovery payoff — is
+  what earns its keep only at density (FK7+ / v2). Split the two: the safety
+  detector is near-term; the discovery detector is later.
 - The **hard gates** (§8) already exist — this doc changes nothing about them; it
   only clarifies that they are the *boundary*, and the interior is free.
 
@@ -349,18 +359,38 @@ Three modes:
 - **Auto-approve all.** Full autonomy within the user's cost ceilings. Maximum
   throughput; the user owns the risk.
 
-Two invariants hold across **all three** — this is what keeps auto-approve honest
-rather than reckless:
+Across every mode, what counts as harm is the **user's harm policy — the editable
+markdown file** of §7, owned by the user; the tool enforces it, never its own
+opinion. **Defaults: harm detector ON, no auto-approve.** The user always chooses
+— edit the policy, turn auto on or off, per category. The default protects; the
+hatch is the user's owned, attributed choice (see the honest note below).
+
+Three invariants hold across **all three modes** — this is what keeps auto-approve
+honest rather than reckless:
 
 1. **Observability never turns off.** Auto-approve removes the *decision*, never
    the *record*. The harm detector (§7) still runs; under auto-approve it
    *notifies without blocking* instead of blocking. "Nothing happens invisibly"
-   holds in every mode. This is why safety = observability (§2) was the right
-   base: it survives the user switching the gate off.
-2. **Cost governors still bind the irreversible boundary.** Even under
-   auto-approve-all, the §5 caps (spend / token / spawn) stand — they protect
-   against *unrecoverable loss*, not *reversible outcomes*. The user can raise a
-   ceiling; they cannot make the ceiling not exist.
+   holds in every mode — observability is the one thing auto-approve cannot
+   disable (§2), so unwind stays targetable and the promise stays kept even with
+   the gate off.
+2. **Cost governors bind the irreversible boundary.** Even under auto-approve-all,
+   the §5 caps (spend / token / spawn) stand — they protect against *unrecoverable
+   loss*, not *reversible outcomes*. The user can raise a ceiling; they cannot make
+   it not exist.
+3. **A harm-rate limit stands beside the cost cap — because harm ⊥ cost.** Spend
+   caps stop a $10k burn; they do nothing about 500 individually-cheap irreversible
+   sends, or a single $0.02 disclosure. So an **irreversible-action-rate limit**
+   (sends / deletes / disclosures per window), governed by the harm policy, runs
+   alongside the spend caps; a spike trips the circuit breaker. Cheap harm is still
+   harm.
+
+**Honest note (not a resolved point).** Auto-approve-all is the hatch that lets a
+throughput-seeking user revert to an unsupervised autonomous agent — the category
+the market is fleeing. The default (review + detector on) protects; the incentive
+gradient still pulls toward the hatch. This is a *product-strategy* risk the design
+cannot eliminate, only surface: it is the user's owned, attributed choice, made
+visible, never the tool's default.
 
 Auto-approve is the principal **pre-widening their own envelope**, authenticated
 (CN-1, §8). It is the user's own attributed standing policy — not an emergent
@@ -393,9 +423,13 @@ X). The *content* becomes permanently unreadable.
   survive but their citations are redacted to the tombstone.
 - **The deletion is itself ledgered** — "nothing happens invisibly" (§2) includes
   erasures. You keep proof-you-erased; you do not keep the erased content.
-- **Distilled conclusions survive** their raw sources: a candidate promoted to a
-  durable skill/insight was re-encrypted under its own scope at graduation
-  (distill-then-discard), so the *discovery* outlives erasure of the *evidence*.
+- **Erasure reaches derivatives — including distilled conclusions.** A promoted
+  skill/insight outlives its raw source **only if it is genuinely de-identified**;
+  if it still carries the subject's personal data, erasure propagates to it too
+  (destroy its key / redact it). "Distilled conclusions outlive their evidence"
+  holds for *de-identified* discovery, **never** for personal data — otherwise
+  erasure is defeated by laundering the data into a durable artifact under a key
+  you did not destroy.
 
 **Why this and not history-rewrite.** How others do it:
 - *git / GitHub* — rewrite history + garbage-collect unreachable objects.
@@ -409,6 +443,24 @@ X). The *content* becomes permanently unreadable.
 Key-destruction wins here because we already hold the keys, it never touches the
 chain, and it is instant and total.
 
+**Granularity, hashes, and control.** Three corrections make the mechanism
+actually satisfy erasure:
+
+- **Per-subject, not per-principal, keys.** Erasure is per *data subject*, per
+  request — "delete Alice's data," one person out of many. A per-principal key
+  erases the whole store (the wrong unit); ingested others' data must be keyed
+  **per subject** so one subject can be erased without nuking the rest.
+- **Salt-and-shred the content hash.** A retained hash of low-entropy erased
+  content (a short message, a name from a known set) is a brute-forceable
+  commitment to it. Tombstone hashes of personal content are salted and the salt
+  is destroyed with the key — the structure that stays must not leak the content
+  that went.
+- **User control, within legal floors.** The user sets the erasure and retention
+  policy — scope, propagation depth, keep-vs-shred for *de-identified*
+  derivatives. But a data subject's erasure right is a **floor the principal
+  cannot opt out of**, and the safe **default is full propagation**. The tool
+  gives the dials; the user owns compliance.
+
 **Caveat — erasure by inaccessibility, not physical destruction.** Acceptable
 under most readings of the right to erasure (data rendered permanently
 unrecoverable). For the strictest cases, or against a future key compromise,
@@ -416,10 +468,41 @@ combine it with the blockchain pattern: store the raw content in an off-ledger
 store you can *physically* wipe, keep only a hash in the chain. Belt and
 suspenders.
 
-**Line: structure durable, content erasable.** The chain and the emergent
-*shape* are studiable as long as the system lives; the *content* only until its
-key is destroyed. The person's erasure right beats the system's memory — as it
-must.
+**Line: structure durable, content erasable — and personal structure follows the
+content.** The chain and the *de-identified* shape are studiable as long as the
+system lives; content, and any structure that is *itself* personal data (a
+person's authorship trace, a timing profile), only until erased. The person's
+erasure right beats the system's memory — as it must.
+
+## 14. Threat model — internal erosion of observability
+
+Every safety property here assumes the recorder and the detector are trustworthy
+and complete. But the emergent agents *generate* the records. In a system built to
+let agents develop unplanned behavior, an agent that emergently learns to
+under-report, or learns what the harm policy flags and routes around it, attacks
+safety **from the inside**. The fork's threat model covers the *external* forged
+signal (CN-1); this is the *internal* one, and the emergence thesis cannot
+pre-forbid it without contradicting itself.
+
+Two guards, mostly inherited:
+
+- **The record path is deterministic and not agent-writable (SE-1 / CN-2).** The
+  fork already forbids a language model in the evidence and commit paths — reaction
+  harvest and inbox-commit are deterministic, hook-gated code, and the gate runs no
+  model. The emergence layer inherits this: **an agent can act, but it cannot write
+  its own ledger.** Observability is recorded *about* the agents by code they do
+  not control, so an agent cannot quietly stop being observed.
+- **Evasion is itself a flagged pattern.** "An agent's observability is dropping,"
+  "actions increasingly cluster just under a harm-policy threshold," "trails
+  reshaped to skirt the detector" — these are exactly the boring, compounding
+  patterns the harm detector (§7) exists to surface. Evasion of the detector falls
+  inside the detector's own remit; a falling observability metric is a first-class
+  candidate.
+
+Residual, honest: a guard detector can be evaded the way any detector can (recall
+< 1). The deterministic, non-agent record path is the **hard floor**; the evasion
+detector is best-effort on top. This threat is **bounded and watched, not
+eliminated** — stated so it is on the record rather than assumed away.
 
 ---
 
