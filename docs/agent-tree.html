@@ -1,0 +1,215 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Team OS — Agent Spawn Tree</title>
+<style>
+*{box-sizing:border-box}
+:root{
+--bg:#F4F6FA;--surface:#FBFCFD;--surface-2:#EEF1F7;--rule:#DCE2EC;
+--ink:#111722;--ink-soft:#45505F;--faint:#828C9B;
+--accent:#2F4B7C;--accent-2:#3B67C4;--sub:#6E86BE;
+--good:#2E7D5B;--good-bg:#E4F1EA;--warn:#8F6210;--warn-bg:#F6ECD8;--crit:#AF3A3A;--crit-bg:#F6E1E1;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media(prefers-color-scheme:dark){:root{
+--bg:#0A0D13;--surface:#141A23;--surface-2:#1A212C;--rule:#26303C;
+--ink:#E8EDF4;--ink-soft:#A6B1C0;--faint:#6C7686;
+--accent:#88A6E4;--accent-2:#9DBAF6;--sub:#5E77AE;
+--good:#5DBE90;--good-bg:#16271F;--warn:#D6A64E;--warn-bg:#2A2314;--crit:#E0716B;--crit-bg:#2C1717}}
+:root[data-theme="light"]{--bg:#F4F6FA;--surface:#FBFCFD;--surface-2:#EEF1F7;--rule:#DCE2EC;--ink:#111722;--ink-soft:#45505F;--faint:#828C9B;--accent:#2F4B7C;--accent-2:#3B67C4;--sub:#6E86BE;--good:#2E7D5B;--good-bg:#E4F1EA;--warn:#8F6210;--warn-bg:#F6ECD8;--crit:#AF3A3A;--crit-bg:#F6E1E1}
+:root[data-theme="dark"]{--bg:#0A0D13;--surface:#141A23;--surface-2:#1A212C;--rule:#26303C;--ink:#E8EDF4;--ink-soft:#A6B1C0;--faint:#6C7686;--accent:#88A6E4;--accent-2:#9DBAF6;--sub:#5E77AE;--good:#5DBE90;--good-bg:#16271F;--warn:#D6A64E;--warn-bg:#2A2314;--crit:#E0716B;--crit-bg:#2C1717}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:1.4rem}
+.eyebrow{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-size:1.5rem;margin:.4rem 0 .3rem;letter-spacing:-.02em}
+.lead{color:var(--ink-soft);margin:0 0 1rem;max-width:70ch}
+.bar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:1rem 0;padding:.7rem .8rem;background:var(--surface);border:1px solid var(--rule);border-radius:10px}
+button{font:inherit;font-size:.82rem;font-weight:600;background:var(--surface-2);color:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:.45rem .8rem;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media(prefers-color-scheme:dark){button.primary{color:#0A0D13}}
+:root[data-theme="dark"] button.primary{color:#0A0D13}
+.bar .spacer{flex:1}
+.bar .stat{font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+.bar .stat b{color:var(--ink)}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.76rem;color:var(--faint);margin:.2rem 0 1rem}
+.legend span{display:inline-flex;align-items:center;gap:.4rem}
+.sw{width:12px;height:12px;border-radius:4px;flex:none}
+.stage{border:1px solid var(--rule);border-radius:12px;background:var(--surface);overflow:auto;position:relative}
+svg{display:block}
+.edge{fill:none;stroke:var(--rule);stroke-width:1.6}
+.edge.hot{stroke:var(--accent-2)}
+.node{cursor:pointer}
+.node .box{rx:9;stroke-width:1.5}
+.node.principal .box{fill:var(--accent);stroke:var(--accent)}
+.node.agent .box{fill:var(--surface);stroke:var(--accent)}
+.node.sub .box{fill:var(--surface);stroke:var(--sub)}
+.node.blocked .box{fill:var(--crit-bg);stroke:var(--crit);stroke-dasharray:4 3}
+.node.sel .box{stroke-width:3}
+.node .lbl{font-family:var(--sans);font-size:12.5px;font-weight:600;fill:var(--ink)}
+.node.principal .lbl{fill:#fff}
+:root[data-theme="dark"] .node.principal .lbl{fill:#0A0D13}
+.node .sublbl{font-family:var(--mono);font-size:9.5px;fill:var(--faint)}
+.node.principal .sublbl{fill:rgba(255,255,255,.8)}
+.dotm{r:4}
+.dotm.working{fill:var(--warn)}.dotm.done{fill:var(--good)}.dotm.blocked{fill:var(--crit)}.dotm.ok{fill:var(--accent-2)}
+.toggle{font-family:var(--mono);font-size:12px;font-weight:700;fill:var(--accent);cursor:pointer}
+.enter{animation:pop .38s cubic-bezier(.2,1.2,.3,1)}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.enter{animation:none}}
+.ceiling{stroke:var(--crit);stroke-width:1;stroke-dasharray:5 4;opacity:.5}
+.ceilinglbl{font-family:var(--mono);font-size:10px;fill:var(--crit);opacity:.8}
+.detail{margin-top:1rem;background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:1rem 1.2rem;min-height:96px}
+.detail h3{margin:0 0 .5rem;font-size:1rem}
+.detail .grid{display:grid;grid-template-columns:auto 1fr;gap:.3rem .9rem;font-size:.86rem}
+.detail .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);padding-top:.15rem}
+.detail .chip{font-family:var(--mono);font-size:.66rem;padding:.14rem .5rem;border-radius:999px;font-weight:600;display:inline-block}
+.chip.working{background:var(--warn-bg);color:var(--warn)}.chip.done{background:var(--good-bg);color:var(--good)}
+.chip.blocked{background:var(--crit-bg);color:var(--crit)}.chip.ok{background:var(--surface-2);color:var(--accent)}
+.note{font-size:.78rem;color:var(--faint);margin-top:1rem;font-family:var(--mono)}
+</style></head>
+<body><div class="wrap">
+<p class="eyebrow">Team OS · fleet · spawn tree</p>
+<h1>Agent spawn tree — live as agents spin up</h1>
+<p class="lead">Rooted at you. Each agent, and each subagent it spins up, is a node — added in spawn
+order, from the <span class="mono">spawns.jsonl</span> ledger. Every spawn is depth-bounded and
+rate-bounded; the tree shows the ceiling being enforced. Click a node to inspect; use the caret to
+collapse a branch.</p>
+
+<div class="bar">
+  <button class="primary" id="replay">▶ Replay spin-up</button>
+  <button id="showall">Show all</button>
+  <button id="expand">Expand all</button>
+  <button id="collapse">Collapse subagents</button>
+  <span class="spacer"></span>
+  <span class="stat">nodes <b id="cnt">0</b> · max depth <b>3</b> · max rate <b>20/win</b></span>
+</div>
+<div class="legend">
+  <span><span class="sw" style="background:var(--accent)"></span> you (principal)</span>
+  <span><span class="sw" style="background:var(--surface);border:1.5px solid var(--accent)"></span> agent</span>
+  <span><span class="sw" style="background:var(--surface);border:1.5px solid var(--sub)"></span> subagent</span>
+  <span><span class="sw" style="background:var(--crit-bg);border:1.5px dashed var(--crit)"></span> spawn denied (bound hit)</span>
+  <span>● <span style="color:var(--warn)">working</span> · <span style="color:var(--good)">done</span></span>
+</div>
+
+<div class="stage"><svg id="svg"></svg></div>
+
+<div class="detail" id="detail">
+  <h3>Select a node</h3>
+  <p class="faint" style="margin:0;font-size:.86rem">Click any node in the tree to see its task, parent, depth, and status.</p>
+</div>
+
+<p class="note">Demo data, shaped like a real run. The live version reads spawns.jsonl and re-renders
+on each spawn — same tree, populated by the ledger. Node "spawn denied" shows MAX_DEPTH=3 refusing a
+4th level: autonomy is bounded and auditable by construction.</p>
+
+<script>
+const NODES=[
+ {id:'you',parent:null,label:'You',sub:'principal:jeff',type:'principal',task:'Root of all agency — every spawn traces here',depth:0,order:0,status:'ok'},
+ {id:'compiler',parent:'you',label:'Compiler',sub:'agent',type:'agent',task:'Compile footprint → job graph, profile, skills',depth:1,order:1,status:'done'},
+ {id:'loops',parent:'you',label:'Daily loops',sub:'agent',type:'agent',task:'Draft recurring deliverables on cadence',depth:1,order:2,status:'working'},
+ {id:'scout',parent:'you',label:'Discovery scout',sub:'agent',type:'agent',task:'Scan corpus for recurring patterns',depth:1,order:3,status:'working'},
+ {id:'researcher',parent:'you',label:'Researcher',sub:'agent',type:'agent',task:'Vendor comparison for the queue',depth:1,order:4,status:'working'},
+ {id:'reviewer',parent:'you',label:'Code reviewer',sub:'agent',type:'agent',task:'Review PR #128 (cache rollout)',depth:1,order:5,status:'done'},
+ {id:'dw_wd',parent:'loops',label:'draft-worker',sub:'weekly-digest',type:'sub',task:'Draft the weekly digest',depth:2,order:6,status:'done'},
+ {id:'dw_su',parent:'loops',label:'draft-worker',sub:'standup',type:'sub',task:'Draft the standup',depth:2,order:7,status:'working'},
+ {id:'fmt',parent:'dw_wd',label:'format-check',sub:'house-style',type:'sub',task:'Check house style on the digest',depth:3,order:8,status:'done'},
+ {id:'denied',parent:'fmt',label:'spawn denied',sub:'depth 4',type:'blocked',task:'A 4th level would exceed MAX_DEPTH=3 → denied by the safety agent and ledgered',depth:4,order:9,status:'blocked'},
+ {id:'scan',parent:'scout',label:'entity-scan',sub:'unlinked refs',type:'sub',task:'Scan corpus for unlinked references',depth:2,order:10,status:'working'},
+ {id:'src_a',parent:'researcher',label:'source-fetch',sub:'vendor A',type:'sub',task:'Fetch vendor A documentation',depth:2,order:11,status:'done'},
+ {id:'src_b',parent:'researcher',label:'source-fetch',sub:'vendor B',type:'sub',task:'Fetch vendor B documentation',depth:2,order:12,status:'done'},
+ {id:'cite',parent:'researcher',label:'cite-verify',sub:'claims',type:'sub',task:'Verify and cite each claim',depth:2,order:13,status:'working'},
+ {id:'diff',parent:'reviewer',label:'diff-scan',sub:'changed lines',type:'sub',task:'Scan the changed lines for issues',depth:2,order:14,status:'done'}
+];
+const byId={}, kids={};
+NODES.forEach(n=>{byId[n.id]=n;kids[n.id]=[]});
+NODES.forEach(n=>{if(n.parent)kids[n.parent].push(n)});
+const MAXORDER=Math.max(...NODES.map(n=>n.order));
+const COL=176, ROW=112, NW=150, NH=44, PADX=90, PADY=34;
+let reveal=MAXORDER, collapsed={}, selected=null, justNew=-1;
+const svg=document.getElementById('svg'), detail=document.getElementById('detail'), cnt=document.getElementById('cnt');
+
+function shown(n){
+  if(n.order>reveal) return false;
+  let p=n.parent;
+  while(p){ if(collapsed[p]) return false; if(byId[p].order>reveal) return false; p=byId[p].parent; }
+  return true;
+}
+function layout(){
+  let leaf=0;
+  function assign(n){
+    const cs=kids[n.id].filter(c=>shown(c));
+    if(collapsed[n.id]||cs.length===0){ n._x=leaf++; }
+    else { cs.forEach(assign); n._x=(cs[0]._x+cs[cs.length-1]._x)/2; }
+  }
+  assign(byId.you);
+  const vis=NODES.filter(shown);
+  vis.forEach(n=>{ n._px=PADX+n._x*COL; n._py=PADY+n.depth*ROW; });
+  return {vis, leaves:Math.max(1,leaf)};
+}
+function edgePath(p,c){
+  const x1=p._px, y1=p._py+NH/2, x2=c._px, y2=c._py-NH/2, my=(y1+y2)/2;
+  return `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`;
+}
+function render(){
+  const {vis,leaves}=layout();
+  const W=PADX*2+(leaves-1)*COL+NW, maxD=Math.max(...vis.map(n=>n.depth));
+  const H=PADY*2+maxD*ROW+NH;
+  svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  let s='';
+  // depth-3 ceiling guide
+  const cy=PADY+3*ROW+NH/2+PADY-10;
+  const yLine=PADY+3*ROW-ROW/2+NH/2;
+  s+=`<line class="ceiling" x1="20" y1="${yLine}" x2="${W-20}" y2="${yLine}"></line>`;
+  s+=`<text class="ceilinglbl" x="24" y="${yLine-6}">spawn-depth ceiling = 3</text>`;
+  // edges
+  vis.forEach(n=>{ if(n.parent && shown(byId[n.parent]) && !collapsed[n.parent]){
+    const hot=(selected&&(selected===n.id||selected===n.parent))?' hot':'';
+    s+=`<path class="edge${hot}" d="${edgePath(byId[n.parent],n)}"></path>`;
+  }});
+  // nodes
+  vis.forEach(n=>{
+    const cs=kids[n.id].filter(c=>c.order<=MAXORDER);
+    const hasKids=cs.length>0;
+    const isNew=(n.order===justNew)?' enter':'';
+    const sel=(selected===n.id)?' sel':'';
+    const x=n._px-NW/2, y=n._py-NH/2;
+    s+=`<g class="node ${n.type}${sel}${isNew}" data-id="${n.id}" style="transform-box:fill-box;transform-origin:center">`;
+    s+=`<rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="9"></rect>`;
+    s+=`<circle class="dotm ${n.status}" cx="${x+13}" cy="${n._py}" r="4"></circle>`;
+    s+=`<text class="lbl" x="${x+24}" y="${n._py-2}">${n.label}</text>`;
+    s+=`<text class="sublbl" x="${x+24}" y="${n._py+11}">${n.sub}</text>`;
+    if(hasKids){ const tg=collapsed[n.id]?'＋':'－';
+      s+=`<text class="toggle" data-toggle="${n.id}" x="${x+NW-14}" y="${n._py+4}" text-anchor="middle">${tg}</text>`;
+    }
+    s+=`</g>`;
+  });
+  svg.innerHTML=s;
+  cnt.textContent=vis.length;
+  svg.querySelectorAll('.node').forEach(g=>g.addEventListener('click',e=>{
+    if(e.target.dataset.toggle) return;
+    select(g.dataset.id);
+  }));
+  svg.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',e=>{
+    e.stopPropagation(); const id=t.dataset.toggle; collapsed[id]=!collapsed[id]; justNew=-1; render();
+  }));
+}
+function select(id){ selected=id; render(); const n=byId[id];
+  detail.innerHTML=`<h3>${n.label} <span style="color:var(--faint);font-weight:400">· ${n.sub}</span></h3>
+   <div class="grid">
+    <span class="k">Type</span><span>${n.type==='sub'?'subagent':n.type}</span>
+    <span class="k">Parent</span><span>${n.parent?byId[n.parent].label+' · '+byId[n.parent].sub:'— (root)'}</span>
+    <span class="k">Depth</span><span>${n.depth} ${n.depth>=3?'(at/over ceiling)':''}</span>
+    <span class="k">Task</span><span>${n.task}</span>
+    <span class="k">Status</span><span><span class="chip ${n.status}">${n.status}</span></span>
+   </div>`;
+}
+document.getElementById('showall').onclick=()=>{reveal=MAXORDER;collapsed={};justNew=-1;render();};
+document.getElementById('expand').onclick=()=>{collapsed={};justNew=-1;render();};
+document.getElementById('collapse').onclick=()=>{NODES.forEach(n=>{if(n.type==='agent')collapsed[n.id]=true});justNew=-1;render();};
+document.getElementById('replay').onclick=()=>{
+  collapsed={};selected=null;reveal=0;justNew=-1;render();
+  let i=0; const iv=setInterval(()=>{ i++; reveal=i; justNew=i; render(); if(i>=MAXORDER){clearInterval(iv);justNew=-1;} },420);
+};
+render();
+</script>
+</div></body></html>
