@@ -1,4 +1,4 @@
-**`v0.2 — 2026-07-12`** *(POSITIONING — market/competitive context for Team OS. Not governing. Snapshot of the 2026 "agent control plane" landscape and where Team OS sits. Sources are external and dated; re-check before quoting in a raise.)*
+**`v0.3 — 2026-07-16`** *(POSITIONING — market/competitive context for Team OS. Not governing. Snapshot of the 2026 "agent control plane" landscape and where Team OS sits. Sources are external and dated; re-check before quoting in a raise.)*
 
 # Team OS vs. the landscape — the emerging agent control surface
 
@@ -76,6 +76,24 @@ The user's policy has **two sides**:
 So Team OS is **guardian-agents-plus**: it monitors-and-stops on trajectory (guardian) *and* permits-only-known-safe on irreversibles (deny-by-default). Strictly more than a guardian, not a rejection of one. If the user writes "stop when the agent leaves goal G," it stops; if an irreversible act isn't allow-listed, it's denied — both from one policy.
 
 ---
+
+## Visualization & observability — don't rebuild, interoperate
+
+Interactive agent / spawn-tree visualization is a **crowded, mature 2026 category**, not a differentiator:
+
+- **Framework IDEs** — [LangGraph Studio](https://www.langchain.com/blog/langgraph-studio-the-first-agent-ide) (graph mode, node paths, time-travel replay); [LangSmith](https://docs.langchain.com/langsmith/studio) (per-node traces, token counts).
+- **Observability platforms** — [Langfuse Agent Graphs](https://langfuse.com/docs/observability/features/agent-graphs), Arize, [Laminar](https://laminar.sh/article/2026-04-23-top-6-agent-observability-platforms) (trace trees auto-inferred from OpenTelemetry).
+- **Claude-Code monitors** (closest analogs) — [Agent Flow](https://github.com/patoles/agent-flow), [AgentsRoom](https://agentsroom.dev/claude-code-subagents), [Claude Code Agent Monitor](https://github.com/hoangsonww/Claude-Code-Agent-Monitor).
+
+The Team OS spawn tree (`agent-tree.html`) is **not novel as a visualization** — and shouldn't be sold as one. What differs is *what it renders*:
+
+| | Market tools | Team OS |
+|---|---|---|
+| Data source | Telemetry copy (sampled, lossy, can be dropped) | The **authoritative hash-chained ledger** (`spawns.jsonl`) |
+| Purpose | Debug / observe (failures, tokens, replay) | **Govern / audit** — it shows *refusals* (depth ceiling, "spawn denied") |
+| Coupling | Framework-bound or SaaS (data leaves) | Files in your repo; portable |
+
+**Strategic line: be the governed, auditable spine that *feeds* best-in-class tooling — don't rebuild it.** Emit ledger events as **OpenTelemetry** so users can point Langfuse / Arize / LangSmith at Team OS. The ledger stays the source of truth; OTel is one more derived, rebuildable view. Rebuilding LangSmith is a losing use of effort; being the authoritative record that feeds it is the winning one. Sketch: `otel-export-sketch.md`.
 
 ## The differentiated position (one paragraph)
 
