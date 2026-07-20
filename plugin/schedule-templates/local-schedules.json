@@ -1,0 +1,26 @@
+[
+  {
+    "name": "teamos-morning-brief",
+    "cron": "0 7 * * *",
+    "args": "deliver",
+    "desc": "Deliver the Day One Brief (gated send; dry-run until a DM target + token are set)"
+  },
+  {
+    "name": "teamos-evening-harvest",
+    "cron": "0 18 * * *",
+    "args": "harvest",
+    "desc": "Harvest the day's principal-authenticated reactions into L8 (deterministic)"
+  },
+  {
+    "name": "teamos-nightly-loop",
+    "cron": "30 2 * * *",
+    "args": "loop",
+    "desc": "Run the daily loop: score shadow deliverables, anchor the chain heads"
+  },
+  {
+    "name": "teamos-weekly-verify",
+    "cron": "0 9 * * 1",
+    "args": "verify",
+    "desc": "Verify all ledger hash chains weekly"
+  }
+]

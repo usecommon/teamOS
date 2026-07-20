@@ -13,6 +13,7 @@ protected paths the gate can only READ.
       python3 scripts/teamos.py deliver   [--out stores]   # live brief (dry-run until configured)
       python3 scripts/teamos.py harvest                    # ✓/✗ reactions on last brief -> L8
       python3 scripts/teamos.py loop      [--out stores]
+      python3 scripts/teamos.py schedule                   # print path-(a) crontab (deliver/harvest/loop)
       python3 scripts/teamos.py verify
 
     operator controls (the frightened-user surface):
@@ -128,6 +129,16 @@ def cmd_loop(args):
 def cmd_verify(args):
     import verify_chains
     return verify_chains.main()
+
+
+def cmd_schedule(args):
+    """Print the path-(a) local crontab that runs deliver/harvest/loop/verify at
+    the runtime of record — the loops that start the A-A4 streak. Print-only;
+    review and install yourself (`teamos schedule >> mycron && crontab mycron`)."""
+    import schedule
+    templates = schedule.load(REPO / "plugin" / "schedule-templates" / "local-schedules.json")
+    print(schedule.render_crontab(templates, repo=str(REPO), python=sys.executable))
+    return 0
 
 
 def cmd_deliver(args):
@@ -303,6 +314,7 @@ def main():
     l = sub.add_parser("loop"); l.add_argument("--out", default="stores")
     l.add_argument("--run-id", default="loop-1"); l.set_defaults(fn=cmd_loop)
     sub.add_parser("verify").set_defaults(fn=cmd_verify)
+    sub.add_parser("schedule").set_defaults(fn=cmd_schedule)
 
     # operator controls
     sub.add_parser("status").set_defaults(fn=cmd_status)
