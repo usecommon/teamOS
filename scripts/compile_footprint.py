@@ -69,8 +69,11 @@ def load_footprint(artifacts_dir, provenance=None, extract_nonmd=False, converte
     silent bad exemplar."""
     base = provenance or {"source_id": "footprint", "type": "local-folder",
                           "workspace": str(artifacts_dir)}
+    root = Path(artifacts_dir)
+    if not root.is_dir():          # missing dir -> empty (glob's old behavior), never a crash
+        return []
     items = []
-    for path in sorted(Path(artifacts_dir).iterdir()):
+    for path in sorted(root.iterdir()):
         if not path.is_file():
             continue
         suf = path.suffix.lower()

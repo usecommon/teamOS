@@ -26,6 +26,11 @@ class FakeConverter:
 
 
 class ExtractionAdapter(unittest.TestCase):
+    def test_missing_dir_returns_empty_not_crash(self):
+        # regression: iterdir() raises on a missing dir where glob returned []
+        items = cf.load_footprint(Path(tempfile.gettempdir()) / "teamos-does-not-exist-xyz")
+        self.assertEqual(items, [])
+
     def test_default_is_markdown_only(self):
         with tempfile.TemporaryDirectory() as t:
             d = Path(t)

@@ -81,7 +81,7 @@ class HttpSlackClient(SlackClient):
     def reactions_get(self, channel, ts):
         resp = self._call("reactions.get", {"channel": channel, "timestamp": ts})
         msg = resp.get("message", {})
-        return [{"name": r["name"], "users": r["users"]} for r in msg.get("reactions", [])]
+        return [{"name": r["name"], "users": r.get("users", [])} for r in msg.get("reactions", [])]
 
 
 def from_env_or_dry(token_env="SLACK_BOT_TOKEN"):
