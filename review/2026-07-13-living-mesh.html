@@ -1,0 +1,207 @@
+<title>Team OS — Living Mesh</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #070a0d; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: block; cursor: grab; }
+  #stage.grabbing { cursor: grabbing; }
+
+  .overlay { position: fixed; inset: 0; pointer-events: none; font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; color: #cdd8dd; }
+  .mark { position: absolute; top: clamp(1.1rem, 3vw, 2.2rem); left: clamp(1.1rem, 3vw, 2.4rem); }
+  .mark .ey { font-size: .68rem; letter-spacing: .34em; text-transform: uppercase; color: #efb15a; opacity: .9; }
+  .mark h1 { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-weight: 300; font-size: clamp(1.6rem, 5vw, 3rem); letter-spacing: -.02em; margin: .45rem 0 .5rem; color: #f2f6f8; }
+  .mark h1 b { font-weight: 600; }
+  .mark p { font-size: clamp(.74rem, 1.4vw, .86rem); max-width: 34ch; line-height: 1.55; color: #8fa1aa; margin: 0; }
+  .mark p .amber { color: #efb15a; }
+
+  .legend { position: absolute; bottom: clamp(1.1rem, 3vw, 2rem); left: clamp(1.1rem, 3vw, 2.4rem); display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; font-size: .68rem; color: #7e9099; max-width: 70vw; }
+  .legend span { display: inline-flex; align-items: center; gap: .45rem; }
+  .legend i { width: .6rem; height: .6rem; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+  .hint { position: absolute; bottom: clamp(1.1rem, 3vw, 2rem); right: clamp(1.1rem, 3vw, 2.4rem); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: #55666e; }
+
+  @media (prefers-reduced-motion: reduce) { .hint::after { content: " · motion reduced"; } }
+</style>
+
+<canvas id="stage"></canvas>
+<div class="overlay">
+  <div class="mark">
+    <div class="ey">Team OS</div>
+    <h1>One agent, <b>on the record</b></h1>
+    <p>Every draft, skill, and decision is a node in one <span class="amber">append-only memory</span> — sources feed skills, skills make deliverables, deliverables write ledgers, ledgers chain. This is that memory, alive.</p>
+  </div>
+  <div class="legend">
+    <span style="color:#efb15a"><i></i>you</span>
+    <span style="color:#69b4c8"><i></i>agents</span>
+    <span style="color:#7fd7e6"><i></i>skills</span>
+    <span style="color:#ad9ee0"><i></i>ledgers</span>
+    <span style="color:#e8cf94"><i></i>deliverables</span>
+    <span style="color:#5f7480"><i></i>sources</span>
+    <span style="color:#e58f72"><i></i>guards</span>
+  </div>
+  <div class="hint">drag · hover</div>
+</div>
+
+<script>
+(function(){
+  var cv = document.getElementById('stage'), ctx = cv.getContext('2d');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0, cx = 0, cy = 0;
+  function resize(){ W = innerWidth; H = innerHeight; cx = W/2; cy = H/2; cv.width = W*DPR; cv.height = H*DPR; cv.style.width = W+'px'; cv.style.height = H+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  resize(); addEventListener('resize', resize);
+
+  var CAT = {
+    principal:   { c:'#efb15a', r:15, glow:44 },
+    agent:       { c:'#69b4c8', r:8.5, glow:26 },
+    skill:       { c:'#7fd7e6', r:5.5, glow:18 },
+    ledger:      { c:'#ad9ee0', r:7,  glow:22 },
+    deliverable: { c:'#e8cf94', r:3.8, glow:12 },
+    source:      { c:'#5f7480', r:5.5, glow:14 },
+    guard:       { c:'#e58f72', r:7.5, glow:24 }
+  };
+
+  var nodes = [], edges = [], byCat = {};
+  function add(cat, label){ var n = { cat:cat, label:label||'', x:cx+(Math.random()-.5)*180, y:cy+(Math.random()-.5)*180, vx:0, vy:0, r:CAT[cat].r, c:CAT[cat].c, glow:CAT[cat].glow, pulse:Math.random()*6.28 }; (byCat[cat]=byCat[cat]||[]).push(nodes.length); nodes.push(n); return nodes.length-1; }
+  function link(a, b, w){ edges.push({a:a, b:b, L:w||78}); }
+
+  // --- build a system-shaped graph (decorative, but plausibly structured) ---
+  var P = add('principal','you');
+  var agentNames = ['brief','loops','reviewer','researcher','compiler'];
+  var agents = agentNames.map(function(n){ var i=add('agent',n); link(P,i,120); return i; });
+  var guards = ['gate','breaker','safety'].map(function(n){ var i=add('guard',n); link(P,i,150); return i; });
+  var ledgers = [];
+  for(var L=1; L<=10; L++){ var i=add('ledger','L'+L); ledgers.push(i); if(L>1) link(ledgers[L-2], i, 46); }  // hash-chain ring
+  link(ledgers[9], ledgers[0], 46);
+  var skills = [];
+  var skillNames = ['release-notes','daily digest','triage','standup','retro','pr-summary','oncall','roadmap','changelog','invoices','follow-ups','meeting-notes','research-brief','deploy-watch'];
+  skillNames.forEach(function(n){ var i=add('skill',n); skills.push(i); link(agents[skills.length % agents.length], i, 84); });
+  // sparse skill<->skill (knowledge exchange)
+  for(var k=0;k<8;k++){ link(skills[(k*3)%skills.length], skills[(k*5+2)%skills.length], 110); }
+  var sources = ['gmail','slack','drive','calendar','repo','notes'].map(function(n){ return add('source',n); });
+  sources.forEach(function(s,ix){ link(s, skills[(ix*2)%skills.length], 96); link(s, skills[(ix*2+1)%skills.length], 96); });
+  var delivs = [];
+  for(var d=0; d<20; d++){ var i=add('deliverable',''); delivs.push(i); link(skills[d%skills.length], i, 58); link(i, ledgers[d%ledgers.length], 64); }
+
+  // guards touch ledgers L2/L9
+  link(guards[0], ledgers[1], 90); link(guards[1], ledgers[1], 90); link(guards[2], ledgers[8], 90);
+
+  // adjacency for hover highlight
+  var adj = nodes.map(function(){ return {}; });
+  edges.forEach(function(e){ adj[e.a][e.b]=1; adj[e.b][e.a]=1; });
+
+  // initial radial placement by category so it settles pretty
+  var groups = Object.keys(byCat);
+  groups.forEach(function(cat, gi){
+    var ring = { principal:0, agent:150, guard:150, skill:300, ledger:250, source:430, deliverable:380 }[cat] || 300;
+    byCat[cat].forEach(function(idx, j){ var a = (j/byCat[cat].length)*6.283 + gi*0.7; nodes[idx].x = cx + Math.cos(a)*ring*(0.55+Math.random()*.2); nodes[idx].y = cy + Math.sin(a)*ring*(0.55+Math.random()*.2); });
+  });
+  nodes[P].x = cx; nodes[P].y = cy;
+
+  // --- force sim ---
+  var KREP = 1700, KSPR = 0.018, CENTER = 0.0016, DAMP = 0.9, VCAP = 5, MIND2 = 380;
+  function step(){
+    for(var i=0;i<nodes.length;i++){ var a=nodes[i];
+      for(var j=i+1;j<nodes.length;j++){ var b=nodes[j];
+        var dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy; if(d2<MIND2) d2=MIND2;
+        var f=KREP/d2, d=Math.sqrt(d2), fx=f*dx/d, fy=f*dy/d;
+        a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+      }
+    }
+    edges.forEach(function(e){ var a=nodes[e.a], b=nodes[e.b];
+      var dx=b.x-a.x, dy=b.y-a.y, d=Math.sqrt(dx*dx+dy*dy)||1, f=KSPR*(d-e.L);
+      var fx=f*dx/d, fy=f*dy/d; a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+    });
+    for(var k=0;k<nodes.length;k++){ var n=nodes[k];
+      n.vx += (cx-n.x)*(k===P?0.02:CENTER); n.vy += (cy-n.y)*(k===P?0.02:CENTER);
+      if(k===dragIx) continue;
+      n.vx*=DAMP; n.vy*=DAMP;
+      var s=Math.hypot(n.vx,n.vy); if(s>VCAP){ n.vx*=VCAP/s; n.vy*=VCAP/s; }
+      n.x+=n.vx; n.y+=n.vy;
+    }
+    nodes[P].x=cx+(nodes[P].x-cx)*0.9; nodes[P].y=cy+(nodes[P].y-cy)*0.9;
+  }
+  for(var warm=0; warm<(reduce?260:120); warm++) step();  // pre-settle
+
+  // --- particles flowing along edges ---
+  var parts = [];
+  var flowEdges = edges.filter(function(e){ return nodes[e.a].cat!=='ledger' || nodes[e.b].cat!=='ledger'; });
+  for(var p=0;p<34;p++){ var e=flowEdges[(p*7)%flowEdges.length]; parts.push({e:e, t:Math.random(), sp:0.0025+Math.random()*0.004}); }
+
+  // --- interaction ---
+  var mx=-1e3, my=-1e3, hover=-1, dragIx=-1, ox=0, oy=0, tox=0, toy=0;
+  function pick(){ var best=-1, bd=1e9; for(var i=0;i<nodes.length;i++){ var dx=nodes[i].x+ox-mx, dy=nodes[i].y+oy-my, d=dx*dx+dy*dy; if(d<bd && d < (nodes[i].r+9)*(nodes[i].r+9)){ bd=d; best=i; } } return best; }
+  cv.addEventListener('pointermove', function(e){ mx=e.clientX; my=e.clientY; if(dragIx>=0){ nodes[dragIx].x=mx-ox; nodes[dragIx].y=my-oy; nodes[dragIx].vx=nodes[dragIx].vy=0; } else { hover=pick(); } tox=(mx-cx)*-0.018; toy=(my-cy)*-0.018; });
+  cv.addEventListener('pointerdown', function(e){ mx=e.clientX; my=e.clientY; dragIx=pick(); if(dragIx>=0){ cv.classList.add('grabbing'); cv.setPointerCapture(e.pointerId);} });
+  cv.addEventListener('pointerup', function(e){ dragIx=-1; cv.classList.remove('grabbing'); });
+  cv.addEventListener('pointerleave', function(){ mx=my=-1e3; hover=-1; });
+
+  // --- render ---
+  var t0 = performance.now();
+  function draw(now){
+    var time = (now-t0)/1000;
+    if(!reduce) step();
+    ox += (tox-ox)*0.06; oy += (toy-oy)*0.06;
+
+    // background wash + vignette
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle = '#070a0d'; ctx.fillRect(0,0,W,H);
+    var vg = ctx.createRadialGradient(cx,cy*0.9,60, cx,cy, Math.max(W,H)*0.75);
+    vg.addColorStop(0,'rgba(24,34,44,0.55)'); vg.addColorStop(1,'rgba(7,10,13,0)');
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+    ctx.translate(ox,oy);
+
+    // edges
+    ctx.lineWidth=1;
+    edges.forEach(function(e){ var a=nodes[e.a], b=nodes[e.b];
+      var hot = hover>=0 && (e.a===hover||e.b===hover);
+      ctx.strokeStyle = hot ? 'rgba(160,210,225,0.55)' : 'rgba(120,160,180,0.07)';
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    });
+
+    // particles
+    ctx.globalCompositeOperation='lighter';
+    parts.forEach(function(pt){ if(!reduce){ pt.t+=pt.sp; if(pt.t>1){ pt.t=0; pt.e=flowEdges[(Math.random()*flowEdges.length)|0]; } }
+      var a=nodes[pt.e.a], b=nodes[pt.e.b], x=a.x+(b.x-a.x)*pt.t, y=a.y+(b.y-a.y)*pt.t;
+      var col = a.cat==='source'? '#8fb3c0' : (a.cat==='ledger'?'#ad9ee0':'#bfe6f0');
+      var g=ctx.createRadialGradient(x,y,0,x,y,6); g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,6,0,6.283); ctx.fill();
+    });
+
+    // nodes
+    for(var i=0;i<nodes.length;i++){ var n=nodes[i];
+      var near = hover>=0 && (i===hover || adj[hover][i]);
+      var dim = hover>=0 && !near && i!==hover ? 0.32 : 1;
+      var pulse = reduce?0:Math.sin(time*1.4 + n.pulse)*0.12+1;
+      var rr = n.r*(near?1.35:1)*(0.94+0.06*pulse);
+      // glow
+      var gr = n.glow*(near?1.5:1);
+      var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,gr);
+      g.addColorStop(0, hexA(n.c, 0.55*dim)); g.addColorStop(0.5, hexA(n.c, 0.14*dim)); g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(n.x,n.y,gr,0,6.283); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+    for(var i2=0;i2<nodes.length;i2++){ var n2=nodes[i2];
+      var near2 = hover>=0 && (i2===hover || adj[hover][i2]);
+      var dim2 = hover>=0 && !near2 && i2!==hover ? 0.4 : 1;
+      var rr2 = n2.r*(near2?1.35:1);
+      ctx.fillStyle = hexA('#0a0f13', dim2); ctx.beginPath(); ctx.arc(n2.x,n2.y,rr2+1.5,0,6.283); ctx.fill();
+      ctx.fillStyle = hexA(n2.c, dim2); ctx.beginPath(); ctx.arc(n2.x,n2.y,rr2,0,6.283); ctx.fill();
+      // bright core
+      ctx.fillStyle = hexA('#ffffff', 0.55*dim2); ctx.beginPath(); ctx.arc(n2.x-rr2*0.28, n2.y-rr2*0.28, rr2*0.4, 0, 6.283); ctx.fill();
+    }
+
+    // labels: principal always; hovered node + neighbours
+    ctx.font='600 12px ui-monospace, Menlo, monospace'; ctx.textAlign='center';
+    for(var i3=0;i3<nodes.length;i3++){ var n3=nodes[i3];
+      var show = i3===P || (hover>=0 && (i3===hover || adj[hover][i3])) ;
+      if(!show || !n3.label) continue;
+      var big = i3===hover || i3===P;
+      ctx.fillStyle = big ? 'rgba(240,246,248,0.96)' : 'rgba(200,214,220,0.7)';
+      ctx.fillText(n3.label, n3.x, n3.y - n3.r - 8);
+    }
+
+    requestAnimationFrame(draw);
+  }
+  function hexA(hex, a){ if(hex[0]!=='#') return hex; var h=hex.slice(1); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+  requestAnimationFrame(draw);
+})();
+</script>

@@ -1,0 +1,255 @@
+<title>Team OS — Four More Ways to See the System</title>
+<style>
+  :root {
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg:#e9ecee; --surface:#f7f8f9; --surface-2:#eef1f2; --plot:#fcfcfb;
+    --ink:#161c21; --soft:#4d5960; --faint:#859299; --line:#d3d9dc; --grid:rgba(20,25,29,.09);
+    --amber:#b0761c; --permit:#2f7d4f; --ask:#b0761c; --deny:#a8442c; --steel:#5f7885; --cyan:#2b7f95;
+    --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 10px 26px -18px rgba(20,25,29,.4);
+    --r0:#f2e7d4; --r1:#e8c78a; --r2:#d9a04a; --r3:#bd7c1e; --r4:#8a5510;
+  }
+  @media (prefers-color-scheme: dark){
+    :root {
+      --bg:#0c1013; --surface:#141a1f; --surface-2:#182027; --plot:#101619;
+      --ink:#e7edf0; --soft:#93a3ac; --faint:#63727b; --line:#26313a; --grid:rgba(232,238,241,.08);
+      --amber:#e7ab4d; --permit:#5fb488; --ask:#e7ab4d; --deny:#e5735a; --steel:#8397a2; --cyan:#5bbcd0;
+      --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 14px 30px -20px rgba(0,0,0,.7);
+      --r0:#20211a; --r1:#463719; --r2:#755a21; --r3:#b0842f; --r4:#e7ab4d;
+    }
+  }
+  :root[data-theme="light"]{--bg:#e9ecee;--surface:#f7f8f9;--surface-2:#eef1f2;--plot:#fcfcfb;--ink:#161c21;--soft:#4d5960;--faint:#859299;--line:#d3d9dc;--grid:rgba(20,25,29,.09);--amber:#b0761c;--permit:#2f7d4f;--ask:#b0761c;--deny:#a8442c;--steel:#5f7885;--cyan:#2b7f95;--shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 26px -18px rgba(20,25,29,.4);--r0:#f2e7d4;--r1:#e8c78a;--r2:#d9a04a;--r3:#bd7c1e;--r4:#8a5510;}
+  :root[data-theme="dark"]{--bg:#0c1013;--surface:#141a1f;--surface-2:#182027;--plot:#101619;--ink:#e7edf0;--soft:#93a3ac;--faint:#63727b;--line:#26313a;--grid:rgba(232,238,241,.08);--amber:#e7ab4d;--permit:#5fb488;--ask:#e7ab4d;--deny:#e5735a;--steel:#8397a2;--cyan:#5bbcd0;--shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -20px rgba(0,0,0,.7);--r0:#20211a;--r1:#463719;--r2:#755a21;--r3:#b0842f;--r4:#e7ab4d;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem) clamp(1rem,4vw,2.4rem) 5rem;}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin:0 0 .7rem;}
+  h1{font-weight:660;letter-spacing:-.02em;font-size:clamp(1.5rem,3.6vw,2.2rem);margin:0 0 .5rem;text-wrap:balance;}
+  .dek{color:var(--soft);margin:0;max-width:66ch;}
+  .dek b{color:var(--ink);}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1.8rem;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.15rem 1.2rem;box-shadow:var(--shadow);display:flex;flex-direction:column;}
+  .panel h2{font-size:1rem;margin:0;font-weight:640;display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;}
+  .panel h2 .form{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);border:1px solid var(--line);border-radius:5px;padding:.12rem .4rem;}
+  .panel .what{font-size:.82rem;color:var(--soft);margin:.35rem 0 .9rem;}
+  .plot{background:var(--plot);border:1px solid var(--line);border-radius:10px;padding:.6rem;position:relative;flex:1;display:flex;align-items:center;justify-content:center;}
+  svg{display:block;width:100%;height:auto;}
+  .cap{font-size:.76rem;color:var(--soft);margin:.8rem 0 0;}
+  .cap b{color:var(--ink);font-weight:620;}
+  .lg{display:flex;gap:.85rem;flex-wrap:wrap;font-family:var(--mono);font-size:.66rem;color:var(--soft);margin-top:.6rem;}
+  .lg span{display:inline-flex;align-items:center;gap:.35rem;}
+  .lg i{width:.7rem;height:.7rem;border-radius:3px;display:inline-block;}
+  .axl{font-family:var(--mono);font-size:10px;fill:var(--faint);}
+  .nlbl{font-family:var(--mono);font-size:10.5px;fill:var(--ink);}
+  .tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-120%);background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.68rem;padding:.34rem .5rem;border-radius:6px;white-space:nowrap;z-index:5;transition:opacity .08s;}
+
+  /* waffle */
+  .waffle{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;width:100%;}
+  .cell{aspect-ratio:1;border-radius:4px;position:relative;cursor:default;}
+  .cell.unp::after{content:"";position:absolute;inset:26% ;border:2px solid rgba(255,255,255,.85);border-radius:50%;mix-blend-mode:overlay;}
+  .cell.unp::before{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(255,255,255,.9);}
+
+  footer{margin-top:2.4rem;padding-top:1.1rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.7rem;color:var(--faint);}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
+  @media (max-width:760px){.grid{grid-template-columns:1fr;}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Team OS · visualization study · set 2</p>
+  <h1>Four more ways to see the system</h1>
+  <p class="dek">A second set, different shapes from the first: <b>a radial clock of the agent's day, a provenance tree behind one draft, a streamgraph of what it did across the 14-day streak, and a unit chart you can literally count.</b> Same restraint, new forms. Synthetic data, real ledger shapes.</p>
+
+  <div class="grid">
+
+    <div class="panel">
+      <h2>The agent's day <span class="form">radial · polar rose</span></h2>
+      <p class="what">Deliverables by hour, wrapped around a clock. The bulge is dawn; midnight is empty. Same "unprompted schedule" story as a heatmap, but you feel the shape of a day.</p>
+      <div class="plot"><svg id="rose" viewBox="0 0 260 260" role="img" aria-label="Radial clock of deliverables by hour of day."></svg><div class="tip" id="rtip"></div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Why it made this <span class="form">provenance · DAG</span></h2>
+      <p class="what">One draft traced back through the evidence it used to the sources it read, with a confidence it reports. "Show your work" — the fastest way to trust a draft.</p>
+      <div class="plot"><svg id="dag" viewBox="0 0 470 250" role="img" aria-label="Provenance tree from sources through evidence to one deliverable, edges tagged extracted, inferred, or ambiguous."></svg></div>
+      <div class="lg">
+        <span style="color:var(--permit)"><i style="background:var(--permit)"></i>extracted (read directly)</span>
+        <span style="color:var(--ask)"><i style="background:var(--ask)"></i>inferred (agent resolved)</span>
+        <span style="color:var(--deny)"><i style="background:var(--deny)"></i>ambiguous (needs review)</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>What it did, day to day <span class="form">streamgraph</span></h2>
+      <p class="what">The mix of action-classes across the 14-day unattended streak, bands stacked by risk. A flowing river reads change better than stacked bars.</p>
+      <div class="plot"><svg id="stream" viewBox="0 0 470 220" role="img" aria-label="Streamgraph of action classes over 14 days."></svg><div class="tip" id="stip"></div></div>
+      <div class="lg" id="streamlg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>This week's deliverables <span class="form">unit · waffle</span></h2>
+      <p class="what">One square per draft — count them. Ringed squares were <em>unprompted</em>. The floor is 3 accepted-unprompted a week; here there are plenty.</p>
+      <div class="plot"><div class="waffle" id="waffle"></div><div class="tip" id="wtip"></div></div>
+      <div class="lg">
+        <span style="color:var(--permit)"><i style="background:var(--permit)"></i>accepted</span>
+        <span style="color:var(--ask)"><i style="background:var(--ask)"></i>light edit</span>
+        <span style="color:var(--deny)"><i style="background:var(--deny)"></i>heavy / rejected</span>
+        <span><i style="background:var(--soft);border-radius:50%"></i>◦ = unprompted</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Synthetic data, real ledger shapes · per-skill, never per-person · exploration set 2 — pick a form and I'll build it out.</footer>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  var ramp=['var(--r0)','var(--r1)','var(--r2)','var(--r3)','var(--r4)'];
+
+  // ---------- 1. RADIAL ROSE (day clock) ----------
+  (function(){
+    var svg=document.getElementById('rose'), tip=document.getElementById('rtip');
+    var cx=130, cy=130, inner=34, outer=112;
+    function cnt(h){ // deliverables that hour, summed over the week
+      if(h>=6&&h<=9) return 9-(Math.abs(7.5-h)|0)*2+3;
+      if(h>=11&&h<=14) return 4;
+      if(h>=17&&h<=19) return 3;
+      if(h>=1&&h<=5) return 0;
+      return (h%2)?1:0;
+    }
+    var counts=[]; for(var h=0;h<24;h++)counts.push(cnt(h)); var max=Math.max.apply(null,counts);
+    function pol(r,a){return [cx+r*Math.cos(a), cy+r*Math.sin(a)];}
+    // rings + hour ticks
+    [inner,outer].forEach(function(rr){ svg.appendChild(el('circle',{cx:cx,cy:cy,r:rr,fill:'none',stroke:'var(--grid)','stroke-width':1})); });
+    for(var t=0;t<24;t+=3){ var a=-Math.PI/2+t*(Math.PI/12); var p=pol(outer+11,a);
+      var lb=el('text',{x:p[0],y:p[1]+3.5,'text-anchor':'middle',class:'axl'}); lb.textContent=(t===0?'12a':t===12?'12p':t>12?(t-12):t); svg.appendChild(lb); }
+    counts.forEach(function(c,i){
+      var a0=-Math.PI/2+i*(Math.PI/12), a1=a0+(Math.PI/12)-0.02;
+      var r=inner+ (max?c/max:0)*(outer-inner);
+      var b= c<=0?0:Math.min(4,1+Math.floor((c-1)/Math.max(1,max-1)*3.99));
+      if(c<=0){ // faint stub
+        var s0=pol(inner,a0), s1=pol(inner+3,a0), s2=pol(inner+3,a1), s3=pol(inner,a1);
+        svg.appendChild(el('path',{d:'M '+s0[0]+' '+s0[1]+' L '+s1[0]+' '+s1[1]+' A '+(inner+3)+' '+(inner+3)+' 0 0 1 '+s2[0]+' '+s2[1]+' L '+s3[0]+' '+s3[1]+' Z',fill:'var(--grid)'}));
+        return;
+      }
+      var i0=pol(inner,a0), o0=pol(r,a0), o1=pol(r,a1), i1=pol(inner,a1);
+      var d='M '+i0[0]+' '+i0[1]+' L '+o0[0]+' '+o0[1]+' A '+r+' '+r+' 0 0 1 '+o1[0]+' '+o1[1]+' L '+i1[0]+' '+i1[1]+' A '+inner+' '+inner+' 0 0 0 '+i0[0]+' '+i0[1]+' Z';
+      var wedge=el('path',{d:d,fill:ramp[b],stroke:'var(--plot)','stroke-width':1});
+      (function(i,c){ wedge.addEventListener('pointermove',function(e){var rr=svg.getBoundingClientRect();
+        tip.style.opacity=1;tip.style.left=(e.clientX-rr.left)+'px';tip.style.top=(e.clientY-rr.top)+'px';
+        tip.textContent=String(i).padStart(2,'0')+':00 — '+c+' deliverables';});
+        wedge.addEventListener('pointerleave',function(){tip.style.opacity=0;}); })(i,c);
+      svg.appendChild(wedge);
+    });
+    var mid=el('text',{x:cx,y:cy+3,'text-anchor':'middle',class:'nlbl'}); mid.textContent='24h'; mid.style.fill='var(--faint)'; svg.appendChild(mid);
+  })();
+
+  // ---------- 2. PROVENANCE DAG ----------
+  (function(){
+    var svg=document.getElementById('dag');
+    var nodes={
+      s1:{x:52,y:55,t:'source',l:'Slack #eng'}, s2:{x:52,y:125,t:'source',l:'repo commits'}, s3:{x:52,y:195,t:'source',l:'Gmail'},
+      e1:{x:190,y:70,t:'evi',l:'12 messages'}, e2:{x:190,y:140,t:'evi',l:'8 PRs merged'}, e3:{x:190,y:200,t:'evi',l:'2 threads'},
+      k:{x:320,y:120,t:'skill',l:'release-notes'},
+      d:{x:430,y:120,t:'draft',l:'draft'}
+    };
+    // each edge carries a Graphify-style basis: extracted / inferred / ambiguous
+    var links=[
+      ['s1','e1','extracted'],['s2','e2','extracted'],['s3','e3','ambiguous'],
+      ['e1','k','inferred'],['e2','k','inferred'],['e3','k','inferred'],['k','d','inferred']
+    ];
+    var col={source:'var(--steel)',evi:'var(--cyan)',skill:'var(--amber)',draft:'var(--amber)'};
+    var basisCol={extracted:'var(--permit)',inferred:'var(--ask)',ambiguous:'var(--deny)'};
+    links.forEach(function(L){ var a=nodes[L[0]], b=nodes[L[1]], mx=(a.x+b.x)/2, amb=L[2]==='ambiguous';
+      svg.appendChild(el('path',{d:'M '+(a.x+34)+' '+a.y+' C '+mx+' '+a.y+' '+mx+' '+b.y+' '+(b.x-38)+' '+b.y,
+        fill:'none',stroke:basisCol[L[2]],'stroke-width':1.8,'stroke-dasharray':amb?'3 3':'none',opacity:amb?.95:.75}));
+    });
+    Object.keys(nodes).forEach(function(k){ var n=nodes[k];
+      var w = n.t==='draft'?54:n.t==='skill'?86:70, h=n.t==='draft'?40:24;
+      var g=el('g',{});
+      g.appendChild(el('rect',{x:n.x-w/2,y:n.y-h/2,width:w,height:h,rx:7,fill:'var(--surface-2)',stroke:col[n.t],'stroke-width':n.t==='draft'?2:1.4}));
+      var tx=el('text',{x:n.x,y:n.y+3.5,'text-anchor':'middle',class:'nlbl'}); tx.textContent=n.l; tx.style.fill= n.t==='draft'||n.t==='skill'?'var(--ink)':'var(--soft)'; g.appendChild(tx);
+      if(n.t==='draft'){ var cf=el('text',{x:n.x,y:n.y+17,'text-anchor':'middle',class:'axl'}); cf.textContent='conf 0.86'; cf.style.fill='var(--permit)'; g.appendChild(cf); }
+      svg.appendChild(g);
+    });
+    // column captions
+    [['sources',52],['evidence',190],['skill',320],['deliverable',430]].forEach(function(c){
+      var t=el('text',{x:c[1],y:20,'text-anchor':'middle',class:'axl'}); t.textContent=c[0]; svg.appendChild(t);
+    });
+  })();
+
+  // ---------- 3. STREAMGRAPH ----------
+  (function(){
+    var svg=document.getElementById('stream'), tip=document.getElementById('stip');
+    var W=470,H=220, mL=8,mR=8,mT=14,mB=26, pw=W-mL-mR, ph=H-mT-mB;
+    var days=14, cats=['read','write','send','execute','schedule'];
+    function val(ci,d){ // synthetic daily volume per category
+      var basev=[10,6,3,2,1][ci]; var wob=Math.sin(d*0.9+ci)*1.6 + Math.cos(d*0.4)*1.2;
+      return Math.max(0, basev + wob + (d>7?1.5-ci*0.3:0));
+    }
+    // stack with silhouette (streamgraph) baseline
+    var series=cats.map(function(_,ci){ var arr=[]; for(var d=0;d<days;d++)arr.push(val(ci,d)); return arr; });
+    var totals=[]; for(var d=0;d<days;d++){ var s=0; for(var ci=0;ci<cats.length;ci++)s+=series[ci][d]; totals.push(s); }
+    var maxTot=Math.max.apply(null,totals);
+    function X(d){ return mL + (d/(days-1))*pw; }
+    function Yc(v){ return (v/maxTot)*ph; } // height in px for a value
+    // baselines: center
+    var lower=[]; for(var d=0;d<days;d++){ lower.push(mT+ph/2 + Yc(totals[d])/2); }
+    function catmull(points){ // returns smooth path string through [x,y]
+      if(points.length<2) return '';
+      var p='M '+points[0][0]+' '+points[0][1];
+      for(var i=0;i<points.length-1;i++){
+        var p0=points[i-1]||points[i], p1=points[i], p2=points[i+1], p3=points[i+2]||p2;
+        var c1x=p1[0]+(p2[0]-p0[0])/6, c1y=p1[1]+(p2[1]-p0[1])/6;
+        var c2x=p2[0]-(p3[0]-p1[0])/6, c2y=p2[1]-(p3[1]-p1[1])/6;
+        p+=' C '+c1x+' '+c1y+' '+c2x+' '+c2y+' '+p2[0]+' '+p2[1];
+      }
+      return p;
+    }
+    var cursor=lower.slice();
+    var streamlg=document.getElementById('streamlg');
+    series.forEach(function(arr,ci){
+      var top=[], bot=[];
+      for(var d=0;d<days;d++){ var y1=cursor[d], y0=y1 - Yc(arr[d]); top.push([X(d),y0]); bot.push([X(d),y1]); cursor[d]=y0; }
+      var pathTop=catmull(top);
+      var botRev=bot.slice().reverse();
+      var pathBot=catmull(botRev).replace('M','L');
+      var band=el('path',{d:pathTop+' '+pathBot+' Z',fill:ramp[ci],opacity:.92,stroke:'var(--plot)','stroke-width':.6});
+      (function(name){ band.addEventListener('pointermove',function(e){var rr=svg.getBoundingClientRect();
+        tip.style.opacity=1;tip.style.left=(e.clientX-rr.left)+'px';tip.style.top=(e.clientY-rr.top)+'px';tip.textContent=name;});
+        band.addEventListener('pointerleave',function(){tip.style.opacity=0;});})(cats[ci]);
+      svg.appendChild(band);
+      streamlg.innerHTML += '<span><i style="background:'+ramp[ci]+'"></i>'+cats[ci]+'</span>';
+    });
+    // day axis
+    [0,3,6,9,12,13].forEach(function(d){ var t=el('text',{x:X(d),y:H-8,'text-anchor':'middle',class:'axl'}); t.textContent='d'+(d+1); svg.appendChild(t); });
+  })();
+
+  // ---------- 4. WAFFLE ----------
+  (function(){
+    var wf=document.getElementById('waffle'), tip=document.getElementById('wtip');
+    // 40 cells: outcome + prompted flag
+    var skills=['digest','release-notes','triage','standup','pr-summary','invoices','oncall','retro'];
+    var cells=[];
+    for(var i=0;i<40;i++){
+      var o = i<27?'accepted': i<34?'light': i<37?'heavy':'empty';
+      var unp = (i%3===0) && o!=='empty';
+      cells.push({o:o, unp:unp, sk:skills[i%skills.length]});
+    }
+    var colr={accepted:'var(--permit)',light:'var(--ask)',heavy:'var(--deny)',empty:'var(--surface-2)'};
+    cells.forEach(function(c,i){
+      var d=document.createElement('div'); d.className='cell'+(c.unp?' unp':''); d.style.background=colr[c.o];
+      if(c.o==='empty'){ d.style.opacity=.5; d.style.border='1px dashed var(--line)'; }
+      if(c.o!=='empty'){ d.addEventListener('pointermove',function(e){ var r=wf.getBoundingClientRect();
+        tip.style.opacity=1; tip.style.left=(e.clientX-r.left)+'px'; tip.style.top=(e.clientY-r.top)+'px';
+        tip.textContent=c.sk+' — '+c.o+(c.unp?' · unprompted':' · you asked'); });
+        d.addEventListener('pointerleave',function(){tip.style.opacity=0;}); }
+      wf.appendChild(d);
+    });
+  })();
+})();
+</script>

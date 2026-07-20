@@ -27,8 +27,14 @@ you configure and toggle on.
 git clone https://github.com/usecommon/teamOS.git
 cd teamOS
 python3 -m pip install -r requirements.txt
-make test            # 138 tests + schema/mapping gates should pass
+make test            # full test suite + schema/mapping gates should pass
 ```
+
+> **Quick path (the kit).** `teamos onboard` is a read-only readiness preflight —
+> it checks deps, previews gate activation, runs a compile-once smoke, and lists
+> exactly what's left to go live. Then: review the gate (§2), `teamos install
+> --apply` (§3), configure sources (§4), and `teamos schedule` to start the loops
+> (§7). The manual steps below are what those commands automate.
 
 ## 2. Review the hooks — this is YOUR security control (signing-lite, CN-3)
 
@@ -46,19 +52,14 @@ you're satisfied.
 
 ## 3. Activate the gate
 
-Merge the fragment into your project settings so every tool call is gated +
-ledgered:
+Only after you're satisfied with §2, activate it — one command merges the
+fragment into `.claude/settings.json` (idempotent, preserves existing settings,
+keeps a `.bak`):
 
 ```bash
-mkdir -p .claude
-# merge hooks/settings-fragment.json into .claude/settings.json
-# (it registers hooks/gate.py as a PreToolUse hook)
-```
-
-Verify:
-
-```bash
-python3 scripts/teamos.py doctor      # "gate activated: yes"
+python3 scripts/teamos.py install            # preview the merge (writes nothing)
+python3 scripts/teamos.py install --apply     # activate after review
+python3 scripts/teamos.py doctor              # "gate activated: yes"
 ```
 
 ## 4. Configure your sources (opt-in, policy-neutral)
@@ -90,34 +91,41 @@ mkdir -p ~/.teamos/keys        # NOT inside the cloned repo
 python3 scripts/teamos.py compile \
     --footprint <dir-of-your-artifacts> \
     --cc ~/.claude \
-    --out stores
+    --out stores \
+    --extract          # optional: also ingest PDF/Office/HTML via local markitdown
 ```
 
 You get a job graph (recurring work), imported skills from your Claude Code
-commands, and a profile from your CLAUDE.md. Imperative/injected content in old
-docs is quarantined, never compiled. Raw ingest is not retained (distill-then-
-discard).
+commands, and a profile from your CLAUDE.md. `--extract` (needs `pip install
+markitdown`) converts non-markdown files locally and deterministically — no LLM,
+no network. Imperative/injected content in old docs is quarantined, never
+compiled. Raw ingest is not retained (distill-then-discard).
 
 ## 7. See your Day One Brief (FK5)
 
 ```bash
-python3 scripts/teamos.py brief --out stores      # dry-run render
+python3 scripts/teamos.py brief   --out stores     # dry-run render
+python3 scripts/teamos.py deliver --out stores     # live send (dry-run until a target+token are set)
+python3 scripts/teamos.py harvest                  # ✓/✗ reactions -> L8 (deterministic, principal-authenticated)
 ```
 
-To deliver it live to Slack on a schedule, wire the brief into a local scheduled
-task with your gate active and Slack target set. The send traverses the gate and
-is ledgered; ✓/✗ reactions are harvested deterministically into L8.
+`deliver` stays a dry-run until `config/connectors.json` has an enabled Slack DM
+target **and** `SLACK_BOT_TOKEN` is exported. The send traverses the gate and is
+ledgered; `harvest` reads the day's reactions via the API only (no LLM, SE-1) and
+counts only your authenticated reactions (CN-1).
 
 ## 8. Run the loops (FK6)
 
 ```bash
 python3 scripts/teamos.py loop --out stores       # one pass, produces shadow drafts
+python3 scripts/teamos.py schedule                # print the path-(a) crontab for deliver/harvest/loop
 ```
 
-For the real thing, register this as a **local scheduled task / cron** on your
-always-on machine. The 14-day unattended streak and the 4-week A-A4 clock are
-measured here. Each run is checkpointed (a kill mid-run resumes) and anchors its
-chain heads off-box.
+For the real thing, install the printed crontab on your always-on machine
+(`teamos schedule >> mycron && crontab mycron` — review first; cron has no
+login-shell env, so set `TEAMOS_*`/`SLACK_BOT_TOKEN` there). The 14-day unattended
+streak and the 4-week A-A4 clock are measured here. Each run is checkpointed (a
+kill mid-run resumes) and anchors its chain heads off-box.
 
 ## 9. Verify integrity anytime
 

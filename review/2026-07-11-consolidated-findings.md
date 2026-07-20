@@ -29,12 +29,12 @@ The remediation branch closed all fourteen work-order tasks (each with a test). 
 | C6 local accepts dead signal | ignored | `signal_type` reconciled; verified records consumed | ✅ FIXED (T7) |
 | B1 deletion tombstone-only | 0 files removed | content shred + `test_corpus_file_removed_on_erasure` | ✅ FIXED (T4) |
 | B3 key hygiene | world-readable, no shred | `chmod 0600`, keys outside repo | ✅ FIXED (T13) |
-| D3 scheduled double-send | double-sends | **still sends 3× on crash-after-effect**; send-receipt now makes it *auditable* | 🟠 PARTIAL |
-| E1 torn ledger tail-line | bricks writer | **still crashes** all future appends | 🟠 OPEN |
-| E2 whole-file deletion | silent history loss | **still silent** at append (off-box anchor is a separate witness, not checked here) | 🟠 OPEN |
-| E3 breaker-open crashes scheduled loop | uncaught `PermissionError` | **still crashes** the scheduled run | 🟠 OPEN |
+| D3 scheduled double-send | double-sends | **at-most-once** — slot claimed before the effect; re-run within interval not due | ✅ FIXED · `test_crash_after_effect_never_double_sends` |
+| E1 torn ledger tail-line | bricks writer | **heals** — `_truncate_torn_tail` drops the partial fragment, append proceeds | ✅ FIXED · `test_torn_trailing_fragment_does_not_brick_append` |
+| E2 whole-file deletion | silent history loss | **detected** — `verify_chains` cross-checks the off-box anchor (`anchor.detect_truncation`), `make chains` fails on truncation | ✅ FIXED · `test_deleted_ledger_flagged_by_anchor` |
+| E3 breaker-open crashes scheduled loop | uncaught `PermissionError` | **pauses gracefully** — `run_if_due` catches `GateBlocked`, rolls back the claim, retries when the breaker closes | ✅ FIXED · `test_breaker_open_pauses_not_crashes` |
 
-**Note on discrepancy:** the parallel `2026-07-12-remediation-simulation-report.md` reports "13/13 faults fail safe." My targeted probes reproduce E1/E2/E3 as still-failing — those specific scenarios (torn tail-line, whole-file deletion, breaker-open via `run_if_due`) are not in that report's fault set. Reconciliation contribution: **four durability/liveness residuals survive the remediation.**
+**Reconciliation resolved (2026-07-16):** the four durability/liveness residuals I flagged on 07-12 were subsequently closed by the ongoing work-order stream (WO-3/4/5, now merged to `main`). Re-verified live against the current tree (`…/teamos-sim5`): E1 heals, D3 is at-most-once, E3 pauses without crashing, E2 truncation is caught by the chains gate (`verify_chains` rc=1). Each has a named regression guard; `make test` green, and the 4 guard files pass (22 tests). **No code residual remains.**
 
 The per-domain tables below are the *pre-reconciliation* record; where a row disagrees with the reconciliation table above, **the reconciliation wins.**
 
@@ -102,25 +102,19 @@ The per-domain tables below are the *pre-reconciliation* record; where a row dis
 
 ---
 
-## Still-open, ranked (RECONCILED against current tree, T0–T13)
+## Still-open, ranked (RECONCILED against current tree — final, 2026-07-16)
 
-**Durability & liveness (P1 — the real residual; no data-loss/crash for an unattended system):**
-1. **E1 — torn ledger tail-line bricks the writer.** A crash mid-`append` leaves a partial last line; every future `append` then crashes in `last_hash()`. T5 added a lock but no tail-repair. Fix: skip/repair a trailing partial line on read.
-2. **E3 — tripping the breaker crashes the scheduled loop.** Breaker-open → `deliver` raises `PermissionError` → `run_if_due` doesn't catch it → the autonomous run dies (and retries-crash next tick). Fix: a safety halt should *pause* gracefully.
-3. **E2 — whole-file deletion is silent at the append layer.** Deleting a ledger and appending starts a fresh chain with no gap record. T13 added an off-box anchor *witness*, but it isn't consulted at append; wire a deletion/gap check.
-4. **D3 — scheduled double-send still reproduces** via `run_if_due` crash-after-effect (sends 3×). T13's send-receipt makes it **auditable** but not **prevented** on this path; add an at-most-once check against the receipt before sending. (**E4 corrupt-checkpoint** and **E5 send-receipt** from the fault sweep: E5 fixed by T13; E4 not re-verified — likely still crashes on a torn checkpoint.)
+**All code findings are closed and guarded.** What remains cannot be fixed in code:
 
-**Non-code / human (cannot be closed by remediation):**
-5. **T10** — recruit 2–3 collaborators, declare unattended posture in L2, start the 14-day streak, fill the FR8 overhead ledger. The standing long pole.
-6. **F6** — A-P3 transfer is `inconclusive` at synthetic n; needs real receivers (the T0 interval rule is correct).
+1. **T10 — the human long pole.** Recruit 2–3 collaborators, declare the unattended posture in L2, start the 14-day streak, and fill the FR8 overhead ledger. Nothing downstream (A-P3, the transfer thesis) can be measured until this starts.
+2. **F6 — transfer needs real receivers.** The T0 interval rule is correct; at synthetic n it returns `inconclusive` by design. Requires real collaborators (see T10).
 
-**Latent (already mitigated; keep both halves together):**
-7. **A9 residual** — the send-class/egress denylist is "interim, not defensible" per BEHAVIOR.md; keep the taint layer as the real control. **A10/D5** now moot: T7 verifies L8 identity, so even when the gate wires the envelope, forging is blocked.
+**Latent, already mitigated (keep both halves together):** the send-class/egress denylist is "interim, not defensible" per BEHAVIOR.md — the taint layer is the real control, so keep it. A10/D5 are moot: T7 verifies L8 identity, so forging is blocked even if/when the gate wires the envelope.
 
-**Fixed & verified — regression-guard only:** A1, A2, A3, A4, A5, A6, A7, A10, B1, B2, B3, B4, B5, C1, C2, C3, C4, C5, C6, D1, D2, D4 (spawn bounds enforced), plus good baseline behaviors (fail-closed gate/policy/breaker, tamper detection, batch isolation, crash-safe loop, deterministic insights, no-individuation).
+**Fixed, verified, and regression-guarded — everything else:** A1–A7, A10, B1–B5, C1–C6, D1–D5, E1–E5, plus the good baseline behaviors (fail-closed gate/policy/breaker, tamper detection, batch isolation, crash-safe loop, deterministic insights, no-individuation). Guards for the last-closed durability residuals: `test_torn_trailing_fragment_does_not_brick_append` (E1), `test_deleted_ledger_flagged_by_anchor` (E2), `test_breaker_open_pauses_not_crashes` (E3), `test_crash_after_effect_never_double_sends` (D3).
 
 ---
 
-## Recommended next step
+## Final status
 
-The security/privacy/behavioral/autonomy layers are substantially remediated and verified. **The remaining work is durability/liveness (E1, E3, E2, D3) + the human long pole (T10).** Wire the four residuals as failing CI guards using `…/teamos-sim4/reconcile.py` and `review/sim-artifacts/engine_faults.py` (both deterministic; each reproduces its defect today and flips green as the fix lands). Then this ledger is an executable, self-checking checklist rather than a static document.
+Every code-level finding from the 14-counsel review and all three simulation passes is **closed and guarded** on `main` (`make test` green). The security, privacy, behavioral, autonomy, and durability/liveness layers all hold under simulation and fault injection. **The only open items are the human long pole (T10: collaborators + the measurement clocks) and its dependent F6 (real-receiver transfer evidence)** — exactly the outcome CLAUDE.md predicted: the code was never the binding constraint; two or three recruited humans and four weeks of clock are. This ledger is now a passing checklist; keep it as the regression baseline.

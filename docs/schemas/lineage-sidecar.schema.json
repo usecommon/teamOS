@@ -24,7 +24,8 @@
         "properties": {
           "source_type": { "type": "string", "description": "Load-bearing lineage field: kind of source (principal-direct, harness-artifact, connector:<name>, agent-derivation, external-untrusted)" },
           "locator": { "type": "string", "description": "Where the source is/was (path, id, URL)" },
-          "content_hash": { "type": "string", "description": "Hash of the source content as used (evidence integrity)" }
+          "content_hash": { "type": "string", "description": "Hash of the source content as used (evidence integrity)" },
+          "basis": { "type": "string", "enum": ["extracted", "inferred", "ambiguous"], "description": "How this derivation edge is known (Graphify-borrow, sharper than the free-text confidence label): 'extracted' = read directly/verbatim from the source; 'inferred' = resolved/derived by the agent; 'ambiguous' = uncertain, routes to human review (gate 'ask'). Optional; a missing basis is read as 'ambiguous' by consumers — you always know what was found vs guessed." }
         },
         "required": ["source_type", "locator", "content_hash"]
       }
@@ -35,6 +36,7 @@
       "description": "Load-bearing lineage field: block-level citations supporting the content (entry_id#block_id refs or external locators)"
     },
     "confidence": { "type": "string", "description": "Load-bearing lineage field: graded label or 'unrated'" },
+    "basis": { "type": "string", "enum": ["extracted", "inferred", "ambiguous"], "description": "Entity-level basis = the WEAKEST edge basis among `sources` (any ambiguous edge → ambiguous; else any inferred → inferred; else extracted). Derived by the writer; a missing source basis counts as ambiguous." },
     "update_history": {
       "type": "array",
       "description": "Load-bearing lineage field: prior generations of this entity",

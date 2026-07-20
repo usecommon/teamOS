@@ -1,0 +1,180 @@
+<title>Graphify vs Team OS</title>
+<style>
+  :root {
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg:#e9ecee; --surface:#f7f8f9; --surface-2:#eef1f2; --plot:#fcfcfb;
+    --ink:#161c21; --soft:#4d5960; --faint:#859299; --line:#d3d9dc;
+    --amber:#b0761c; --green:#2f7d4f; --cyan:#25748a; --steel:#5f7885;
+    --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 10px 26px -18px rgba(20,25,29,.4);
+  }
+  @media (prefers-color-scheme: dark){
+    :root {
+      --bg:#0c1013; --surface:#141a1f; --surface-2:#182027; --plot:#101619;
+      --ink:#e7edf0; --soft:#93a3ac; --faint:#63727b; --line:#26313a;
+      --amber:#e7ab4d; --green:#5fb488; --cyan:#5bbcd0; --steel:#8397a2;
+      --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 14px 30px -20px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"]{--bg:#e9ecee;--surface:#f7f8f9;--surface-2:#eef1f2;--plot:#fcfcfb;--ink:#161c21;--soft:#4d5960;--faint:#859299;--line:#d3d9dc;--amber:#b0761c;--green:#2f7d4f;--cyan:#25748a;--steel:#5f7885;--shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 26px -18px rgba(20,25,29,.4);}
+  :root[data-theme="dark"]{--bg:#0c1013;--surface:#141a1f;--surface-2:#182027;--plot:#101619;--ink:#e7edf0;--soft:#93a3ac;--faint:#63727b;--line:#26313a;--amber:#e7ab4d;--green:#5fb488;--cyan:#5bbcd0;--steel:#8397a2;--shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -20px rgba(0,0,0,.7);}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1080px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem) clamp(1rem,4vw,2.2rem) 5rem;}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin:0 0 .7rem;}
+  h1{font-weight:660;letter-spacing:-.02em;font-size:clamp(1.5rem,3.6vw,2.15rem);margin:0 0 .5rem;text-wrap:balance;}
+  .dek{color:var(--soft);margin:0;max-width:64ch;}
+  .dek b{color:var(--ink);}
+
+  .legend{display:flex;gap:1rem;flex-wrap:wrap;margin:1.5rem 0 .4rem;font-family:var(--mono);font-size:.68rem;}
+  .legend span{display:inline-flex;align-items:center;gap:.45rem;color:var(--soft);}
+  .legend i{width:.85rem;height:.85rem;border-radius:3px;}
+
+  .table{margin-top:1rem;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+  .colhead{display:grid;grid-template-columns:1.05fr 1fr 1fr;background:var(--surface-2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2;}
+  .colhead > div{padding:.85rem 1rem;}
+  .colhead .prod{font-weight:680;font-size:1.02rem;display:flex;align-items:center;gap:.5rem;}
+  .colhead .prod .dot{width:.7rem;height:.7rem;border-radius:50%;}
+  .colhead .prod small{display:block;font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:.15rem;}
+  .colhead .g .dot{background:var(--cyan);} .colhead .t .dot{background:var(--amber);}
+  .colhead .lbl{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);align-self:center;}
+
+  .row{display:grid;grid-template-columns:1.05fr 1fr 1fr;border-bottom:1px solid var(--line);background:var(--surface);}
+  .row:last-child{border-bottom:none;}
+  .row > div{padding:.8rem 1rem;font-size:.86rem;}
+  .row .dim{border-left:4px solid var(--steel);background:var(--surface-2);}
+  .row.shared .dim{border-left-color:var(--cyan);}
+  .row.borrow .dim{border-left-color:var(--amber);}
+  .row.moat .dim{border-left-color:var(--green);}
+  .dim .name{font-weight:640;color:var(--ink);}
+  .dim .tag{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.25rem;display:inline-block;}
+  .row.shared .dim .tag{color:var(--cyan);} .row.borrow .dim .tag{color:var(--amber);} .row.moat .dim .tag{color:var(--green);}
+  .g-cell{color:var(--soft);} .t-cell{color:var(--ink);border-left:1px solid var(--line);}
+  .g-cell code,.t-cell code{font-family:var(--mono);font-size:.8em;background:var(--surface-2);padding:.05em .3em;border-radius:4px;color:var(--ink);}
+  .none{color:var(--faint);font-style:italic;}
+
+  .takeaways{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.6rem;}
+  .card{border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;background:var(--surface);box-shadow:var(--shadow);}
+  .card.borrow{border-left:3px solid var(--amber);} .card.moat{border-left:3px solid var(--green);}
+  .card h3{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin:0 0 .6rem;}
+  .card.borrow h3{color:var(--amber);} .card.moat h3{color:var(--green);}
+  .card ul{margin:0;padding-left:1.05rem;display:grid;gap:.45rem;}
+  .card li{font-size:.85rem;color:var(--soft);} .card li b{color:var(--ink);font-weight:620;}
+
+  footer{margin-top:2.2rem;padding-top:1.1rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.7rem;color:var(--faint);}
+  @media (max-width:720px){
+    .colhead,.row{grid-template-columns:1fr;}
+    .t-cell{border-left:none;border-top:1px solid var(--line);}
+    .row .dim{border-top:none;}
+    .colhead .lbl{display:none;}
+    .takeaways{grid-template-columns:1fr;}
+    .g-cell::before{content:"Graphify — ";font-family:var(--mono);font-size:.62rem;text-transform:uppercase;color:var(--cyan);}
+    .t-cell::before{content:"Team OS — ";font-family:var(--mono);font-size:.62rem;text-transform:uppercase;color:var(--amber);}
+  }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Team OS · competitive read</p>
+  <h1>Graphify vs Team OS, side by side</h1>
+  <p class="dek">Two systems built on the same harness primitives and the same anti-RAG conviction — but one <b>reads</b> and one <b>acts</b>. Where the rows share a color, we share DNA. Amber rows are worth borrowing; green rows are the governance layer they don't have.</p>
+
+  <div class="legend">
+    <span><i style="background:var(--cyan)"></i>shared DNA</span>
+    <span><i style="background:var(--amber)"></i>borrow from them</span>
+    <span><i style="background:var(--green)"></i>our moat</span>
+  </div>
+
+  <div class="table">
+    <div class="colhead">
+      <div class="lbl">Dimension</div>
+      <div class="prod g"><span class="dot"></span><span>Graphify<small>read · comprehension</small></span></div>
+      <div class="prod t"><span class="dot"></span><span>Team OS<small>act · initiative</small></span></div>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <div class="takeaways">
+    <div class="card borrow">
+      <h3>Borrow these</h3>
+      <ul>
+        <li><b>The EXTRACTED / INFERRED / AMBIGUOUS edge tag</b> — sharper than our fuzzy <code>confidence:"medium"</code>. Fold it into the L3 lineage schema and the provenance-peek viz.</li>
+        <li><b>Lead with "no model in the trust path"</b> — they sell it as privacy; we treat it as an internal invariant. Say it out loud.</li>
+        <li><b>Their SKILL.md + <code>hook install</code></b> as a reference kit for FK6c packaging.</li>
+        <li><b>An honest efficiency metric</b> (their "71.5× token reduction") alongside our thesis gates.</li>
+        <li><b>"Surprises / questions" report framing</b> for the Day One Brief and FK8 discovery.</li>
+      </ul>
+    </div>
+    <div class="card moat">
+      <h3>Where we can't be copied</h3>
+      <ul>
+        <li><b>Everything green.</b> Graphify has no gate, envelope, breaker, deletion, or per-principal encryption — because it never acts or holds others' data.</li>
+        <li><b>The graph-view lesson:</b> their force-directed <code>graph.html</code> earns its keep only because it's an interface to a traversable <code>graph.json</code>. A graph is UI, not decoration.</li>
+        <li><b>Initiative under gates, on the record</b> is the product Graphify structurally can't become without building our whole governance stack.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>Sources: Graphify README / ARCHITECTURE.md (github.com/Graphify-Labs/graphify) · Team OS fork spec + CLAUDE.md · 2026-07-16</footer>
+</div>
+
+<script>
+(function(){
+  var rows=[
+    { cat:'shared', dim:'Core purpose', tag:'different job',
+      g:'Turn a folder of code/docs/media into a <b>queryable knowledge graph</b> you traverse instead of grep.',
+      t:'A personal agent that <b>works unprompted</b> — drafts arrive done, loops fire, proposals appear — under gates, on the record.' },
+    { cat:'shared', dim:'Anti-RAG stance', tag:'same conviction',
+      g:'"Not a vector index. No embeddings — a real graph you traverse." Explicit, explainable edges.',
+      t:'"Not a memory/RAG product." Files + lineage are how it knows; initiative is what it is.' },
+    { cat:'shared', dim:'Model in the trust path', tag:'same rule',
+      g:'Code parsed with <b>tree-sitter AST — deterministic, no LLM, nothing leaves the machine</b>; LLM only for docs/media semantics.',
+      t:'<b>No language model in the evidence or commit path</b> (SE-1/CN-2); harvest + commit are deterministic, hook-gated code.' },
+    { cat:'borrow', dim:'Provenance model', tag:'borrow the vocabulary',
+      g:'Every edge tagged <code>EXTRACTED</code> / <code>INFERRED</code> / <code>AMBIGUOUS</code> — "you always know what was found vs guessed."',
+      t:'Every write carries lineage (source, evidence, transformation, confidence); unlabelled write <b>rejected by construction</b> — but <code>confidence</code> is a fuzzy "medium".' },
+    { cat:'shared', dim:'Data as record', tag:'derived, rebuildable',
+      g:'Stateless 7-stage pipeline, plain dicts + NetworkX, "no side effects outside <code>graphify-out/</code>"; <code>graph.json</code> is derived.',
+      t:'Files are the system of record; databases and indexes are derived, rebuildable, never authoritative.' },
+    { cat:'shared', dim:'Distribution', tag:'harness-native',
+      g:'<code>SKILL.md</code> + <code>/graphify</code> slash command, <code>--mcp</code> stdio server, <code>hook install</code> (post-commit), incremental <code>--update</code>.',
+      t:'Fork = skills/commands (registry) + hooks (gates) + scheduled tasks (loops) + a plugin (kit) + MCP door. Same primitives.' },
+    { cat:'borrow', dim:'Insight / initiative', tag:'borrow the framing',
+      g:'Leiden clustering names subsystems; <code>analyze</code> surfaces "god nodes, surprises, questions"; <code>GRAPH_REPORT.md</code> suggests queries.',
+      t:'Compiler finds recurring tasks; discovery proposes; Day One Brief. Their "surprises/questions" is a good report pattern for us.' },
+    { cat:'borrow', dim:'Visualization', tag:'the graph-view lesson',
+      g:'<b>vis.js force-directed</b> <code>graph.html</code> — but backed by a traversable <code>graph.json</code> (click, search, filter by community).',
+      t:'Our force-mesh was decoration and got cut. Rule learned: a graph view is legit only as an <b>interface to real structure</b>.' },
+    { cat:'moat', dim:'Gate on every action', tag:'they have none',
+      g:'<span class="none">none — it reads, it never acts</span>',
+      t:'Every tool call gated + ledgered; the hook inspects <b>payloads</b>, not just tool names (permit / ask / deny).' },
+    { cat:'moat', dim:'Earned autonomy (envelope)', tag:'they have none',
+      g:'<span class="none">none</span>',
+      t:'Per-category autonomy that widens slow on accepted work, narrows fast on a rejection.' },
+    { cat:'moat', dim:'Kill switch (breaker)', tag:'they have none',
+      g:'<span class="none">none</span>',
+      t:'A halt switch wired into the gate; fails <b>closed</b>; reachable from the CLI.' },
+    { cat:'moat', dim:'Deletion / data rights', tag:'they have none',
+      g:'<span class="none">n/a — nothing to erase but a local graph</span>',
+      t:'<code>request_erasure</code> removes content + writes L9 tombstones; GDPR deadline tracking; exit = <code>git clone</code>.' },
+    { cat:'moat', dim:'Multi-user & privacy', tag:'they have none',
+      g:'<span class="none">single-user, single machine</span>',
+      t:'Per-principal encryption, access self-ledgering, <b>no individuation surface</b> (per-skill, never per-person).' },
+    { cat:'moat', dim:'Learning loop', tag:'ours is behavioral',
+      g:'Static extraction + incremental re-index of changed files (SHA256 cache).',
+      t:'Acceptance signals (L8) → envelope + promotion + <b>skill transfer across people</b> (FK7) — the thesis gate.' },
+    { cat:'borrow', dim:'Eval metric', tag:'borrow the honesty',
+      g:'Concrete claim: <b>71.5× token reduction</b> on a 52-file corpus vs sequential reading.',
+      t:'Cold-start thesis, production-as-eval, transfer — could add a crisp efficiency number like theirs.' }
+  ];
+  var box=document.getElementById('rows');
+  rows.forEach(function(r){
+    var d=document.createElement('div'); d.className='row '+r.cat;
+    d.innerHTML =
+      '<div class="dim"><div class="name">'+r.dim+'</div><span class="tag">'+r.tag+'</span></div>'+
+      '<div class="g-cell">'+r.g+'</div>'+
+      '<div class="t-cell">'+r.t+'</div>';
+    box.appendChild(d);
+  });
+})();
+</script>

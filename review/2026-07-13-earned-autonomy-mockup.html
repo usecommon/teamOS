@@ -1,0 +1,292 @@
+<title>Earned Autonomy — mockup</title>
+<style>
+  :root {
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg: #e9ecee; --surface: #f7f8f9; --surface-2: #e2e7e9; --plot: #fcfcfb;
+    --ink: #14191d; --ink-soft: #4b575e; --ink-faint: #8a969d; --line: #cfd6d9;
+    --steel: #556b76; --amber: #b06f14; --amber-soft: #d59b4d; --amber-bg: #f2e6cf;
+    --good: #147a45; --narrow: #a8442c; --grid: rgba(20,25,29,.07);
+    --shadow: 0 1px 0 rgba(20,25,29,.03), 0 10px 26px -16px rgba(20,25,29,.30);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c1114; --surface: #141b20; --surface-2: #1c252b; --plot: #10171c;
+      --ink: #e8eef1; --ink-soft: #97a6af; --ink-faint: #6a7a83; --line: #26313a;
+      --steel: #89a2b0; --amber: #e7ab4d; --amber-soft: #b98735; --amber-bg: #291f0f;
+      --good: #4fbf8a; --narrow: #e17f63; --grid: rgba(232,238,241,.06);
+      --shadow: 0 1px 0 rgba(0,0,0,.3), 0 14px 34px -20px rgba(0,0,0,.75);
+    }
+  }
+  :root[data-theme="light"]{--bg:#e9ecee;--surface:#f7f8f9;--surface-2:#e2e7e9;--plot:#fcfcfb;--ink:#14191d;--ink-soft:#4b575e;--ink-faint:#8a969d;--line:#cfd6d9;--steel:#556b76;--amber:#b06f14;--amber-soft:#d59b4d;--amber-bg:#f2e6cf;--good:#147a45;--narrow:#a8442c;--grid:rgba(20,25,29,.07);--shadow:0 1px 0 rgba(20,25,29,.03),0 10px 26px -16px rgba(20,25,29,.30);}
+  :root[data-theme="dark"]{--bg:#0c1114;--surface:#141b20;--surface-2:#1c252b;--plot:#10171c;--ink:#e8eef1;--ink-soft:#97a6af;--ink-faint:#6a7a83;--line:#26313a;--steel:#89a2b0;--amber:#e7ab4d;--amber-soft:#b98735;--amber-bg:#291f0f;--good:#4fbf8a;--narrow:#e17f63;--grid:rgba(232,238,241,.06);--shadow:0 1px 0 rgba(0,0,0,.3),0 14px 34px -20px rgba(0,0,0,.75);}
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .app { max-width: 940px; margin: 0 auto; padding: 0 clamp(.8rem,3vw,1.6rem) 4rem; }
+
+  /* mockup chrome */
+  .chrome { display: flex; align-items: center; gap: .7rem; padding: 1.2rem .2rem .9rem; }
+  .chrome .dots { display: flex; gap: .4rem; }
+  .chrome .dots i { width: .62rem; height: .62rem; border-radius: 50%; background: var(--line); display: block; }
+  .chrome .path { font-family: var(--mono); font-size: .74rem; color: var(--ink-faint); }
+  .chrome .badge { margin-left: auto; font-family: var(--mono); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); border: 1px solid var(--amber-soft); background: var(--amber-bg); border-radius: 5px; padding: .2rem .5rem; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: clamp(1.1rem,3vw,1.9rem); }
+
+  .eyebrow { font-family: var(--mono); font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: var(--amber); margin: 0 0 .5rem; }
+  h1 { font-family: var(--sans); font-weight: 680; letter-spacing: -.02em; font-size: clamp(1.5rem,3.6vw,2.15rem); line-height: 1.08; margin: 0 0 .5rem; text-wrap: balance; }
+  .dek { color: var(--ink-soft); margin: 0; max-width: 62ch; font-size: 1.02rem; }
+  .dek b { color: var(--ink); font-weight: 620; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; margin: 1.5rem 0 0; }
+  .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; padding: .8rem .9rem; }
+  .stat .k { font-family: var(--mono); font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .stat .v { font-size: 1.5rem; font-weight: 680; letter-spacing: -.01em; margin-top: .2rem; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: .4rem; }
+  .stat .v small { font-size: .8rem; font-weight: 600; color: var(--ink-soft); }
+  .stat .v .up { color: var(--good); } .stat .v .dn { color: var(--narrow); }
+  .stat .note { font-size: .74rem; color: var(--ink-soft); margin-top: .15rem; }
+
+  /* chart */
+  .chartwrap { margin-top: 1.6rem; }
+  .charthead { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: .5rem; }
+  .charthead h2 { font-size: 1.06rem; margin: 0; font-weight: 640; }
+  .charthead h2 span { color: var(--amber); }
+  .charthead .legend { font-family: var(--mono); font-size: .7rem; color: var(--ink-soft); display: flex; gap: .9rem; flex-wrap: wrap; }
+  .charthead .legend b { font-weight: 600; }
+  .lg { display: inline-flex; align-items: center; gap: .35rem; }
+  .lg .sw { width: .8rem; height: .8rem; border-radius: 3px; display: inline-block; }
+  .plotbox { position: relative; background: var(--plot); border: 1px solid var(--line); border-radius: 12px; padding: .3rem; }
+  svg { display: block; width: 100%; height: auto; }
+  .axis-l, .axis-b { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-faint); }
+  .rung-lbl { font-family: var(--sans); font-size: 10.5px; fill: var(--ink-soft); }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .ceiling { stroke: var(--steel); stroke-width: 1.5; stroke-dasharray: 4 4; opacity: .8; }
+  .ceiling-lbl { font-family: var(--mono); font-size: 10px; fill: var(--steel); }
+  .area { fill: var(--amber); opacity: .14; }
+  .line { fill: none; stroke: var(--amber); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+  .ev-line { stroke-width: 1.4; stroke-dasharray: 2 3; opacity: .55; }
+  .ev-widen { stroke: var(--good); } .ev-narrow { stroke: var(--narrow); }
+  .ev-badge text { font-family: var(--mono); font-size: 10px; font-weight: 700; }
+  .crosshair { stroke: var(--ink-soft); stroke-width: 1; opacity: 0; pointer-events: none; }
+  .cursor-dot { fill: var(--amber); stroke: var(--plot); stroke-width: 2; opacity: 0; pointer-events: none; }
+  .tip { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -114%); background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: .72rem; padding: .4rem .55rem; border-radius: 7px; white-space: nowrap; box-shadow: 0 6px 18px -8px rgba(0,0,0,.5); transition: opacity .08s; z-index: 5; line-height: 1.4; }
+  .tip .ev { color: var(--amber-soft); }
+  .tip b { color: var(--bg); }
+
+  .caption { display: flex; gap: .6rem; align-items: flex-start; margin-top: .9rem; padding: .8rem .95rem; background: var(--amber-bg); border: 1px solid var(--amber-soft); border-radius: 10px; }
+  .caption .mark { font-family: var(--mono); font-weight: 700; color: var(--amber); flex: none; }
+  .caption p { margin: 0; font-size: .9rem; color: var(--ink); }
+  .caption p b { font-weight: 660; }
+
+  /* category rail */
+  h3.sub { font-family: var(--mono); font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); margin: 2rem 0 .9rem; padding-bottom: .5rem; border-bottom: 1px solid var(--line); }
+  .rail { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; }
+  .cat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; padding: .8rem .85rem; display: flex; flex-direction: column; gap: .55rem; }
+  .cat.active { border-color: var(--amber-soft); box-shadow: inset 0 0 0 1px var(--amber-soft); }
+  .cat .name { font-family: var(--mono); font-weight: 650; font-size: .9rem; display: flex; align-items: center; gap: .4rem; }
+  .cat .name .pip { width: .5rem; height: .5rem; border-radius: 50%; background: var(--amber); }
+  .cat .name.dim .pip { background: var(--ink-faint); }
+  .cat .sub { font-size: .72rem; color: var(--ink-soft); margin-top: -.3rem; }
+  .meter { display: flex; gap: 3px; }
+  .meter i { flex: 1; height: 20px; border-radius: 3px; background: var(--surface); border: 1px solid var(--line); }
+  .meter i.on { background: var(--amber); border-color: var(--amber); }
+  .meter i.cap { border-style: dashed; border-color: var(--steel); }
+  .cat .lvl { font-family: var(--mono); font-size: .7rem; color: var(--ink-soft); }
+  .cat .lvl b { color: var(--ink); }
+
+  .foot-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.6rem; }
+  .btn { font-family: var(--mono); font-size: .76rem; padding: .5rem .8rem; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+  .btn.warn { color: var(--narrow); border-color: color-mix(in srgb, var(--narrow) 40%, var(--line)); }
+  .btn:hover { border-color: var(--steel); }
+  details.data { margin-top: 1rem; font-family: var(--mono); font-size: .74rem; color: var(--ink-soft); }
+  details.data summary { cursor: pointer; color: var(--amber); }
+  table { border-collapse: collapse; margin-top: .6rem; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: .3rem .6rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-faint); font-weight: 600; }
+
+  footer { font-family: var(--mono); font-size: .7rem; color: var(--ink-faint); margin-top: 1.8rem; text-align: center; }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 5px; }
+  @media (max-width: 520px){ .stats{ grid-template-columns: 1fr; } }
+</style>
+
+<div class="app">
+  <div class="chrome">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <span class="path">team-os / trust / envelope</span>
+    <span class="badge">Mockup · synthetic data</span>
+  </div>
+
+  <div class="panel">
+    <p class="eyebrow">The envelope · touchpoint #7</p>
+    <h1>The autonomy you've earned</h1>
+    <p class="dek">Your agent acts on its own inside a boundary <b>you set and it earns</b>. The boundary moves on evidence: a run of accepted work widens it one notch; a single rejection above a severity line snaps it back. <b>It climbs slowly and falls at once</b> — trust in a machine should be hard to win and easy to lose.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Send — current standing</div><div class="v">Act freely <small>lvl 3 / 4</small></div><div class="note">outbound messages, no ask</div></div>
+      <div class="stat"><div class="k">This week</div><div class="v"><span class="up">▲ +1</span></div><div class="note">rebuilt after the week-6 dip</div></div>
+      <div class="stat"><div class="k">Interrupts this week</div><div class="v">2 <small>/ 5 budget</small></div><div class="note">well under the ceiling</div></div>
+    </div>
+
+    <div class="chartwrap">
+      <div class="charthead">
+        <h2><span>Send</span> — autonomy over 8 weeks</h2>
+        <div class="legend">
+          <span class="lg"><span class="sw" style="background:var(--amber)"></span> earned level</span>
+          <span class="lg"><b style="color:var(--good)">▲</b> widened</span>
+          <span class="lg"><b style="color:var(--narrow)">▼</b> narrowed</span>
+          <span class="lg"><span class="sw" style="background:var(--steel);border-radius:0;height:2px"></span> ceiling</span>
+        </div>
+      </div>
+      <div class="plotbox" id="plotbox">
+        <svg id="chart" viewBox="0 0 760 320" role="img" aria-label="Stepped chart of earned Send autonomy over eight weeks, climbing in three single-notch steps and dropping one notch after a rejection at week six."></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+      <div class="caption">
+        <span class="mark">↑ slow&nbsp;&nbsp;↓ fast</span>
+        <p>Three climbs, each <b>+1 notch after ~13 days</b> of accepted sends. One drop, <b>−1 the instant a send was rejected</b> above the severity line. The ceiling (level 4) is never auto-reached — the last notch always needs a human. That asymmetry <b>is</b> the safety model, drawn.</p>
+      </div>
+
+      <details class="data"><summary>Data &amp; events (table view)</summary>
+        <table id="tbl"><thead><tr><th>Day</th><th>Level</th><th>Event</th></tr></thead><tbody></tbody></table>
+      </details>
+    </div>
+
+    <h3 class="sub">Where every category stands</h3>
+    <div class="rail" id="rail"></div>
+
+    <div class="foot-actions">
+      <button class="btn">View the evidence (L8 signals)</button>
+      <button class="btn warn">Reset a category to base</button>
+    </div>
+  </div>
+
+  <footer>Synthetic data for layout. Per-category, never per-person — no leaderboard. Reset is principal-only; the agent can never widen its own envelope.</footer>
+</div>
+
+<script>
+(function(){
+  // ---- data (hand-authored so the narrative is intentional) ----
+  var END = 56;                       // 8 weeks
+  var steps = [ {day:0,level:1}, {day:11,level:2}, {day:25,level:3}, {day:38,level:2}, {day:51,level:3} ];
+  var events = [
+    {day:11, type:'widen', d:'12 accepted sends → earned a notch'},
+    {day:25, type:'widen', d:'streak held → widened to “act freely”'},
+    {day:38, type:'narrow', d:'one rejection above severity → snapped back'},
+    {day:51, type:'widen', d:'trust rebuilt'}
+  ];
+  var rungLabels = ['ask always','ask if risky','act, notify','act freely','full autonomy'];
+  var cats = [
+    {name:'read', sub:'files & context', level:4, ceiling:4, active:false},
+    {name:'write', sub:'drafts & notes', level:3, ceiling:4, active:false},
+    {name:'send', sub:'outbound messages', level:3, ceiling:4, active:true},
+    {name:'execute', sub:'run commands', level:1, ceiling:3, active:false},
+    {name:'schedule', sub:'new loops', level:2, ceiling:3, active:false}
+  ];
+
+  // ---- geometry ----
+  var W=760, H=320, m={t:22,r:96,b:34,l:130};
+  var pw=W-m.l-m.r, ph=H-m.t-m.b, YMAX=4;
+  function sx(day){ return m.l + (day/END)*pw; }
+  function sy(lv){ return m.t + (1 - lv/YMAX)*ph; }
+  function levelAt(day){ var l=steps[0].level; for(var i=0;i<steps.length;i++){ if(steps[i].day<=day) l=steps[i].level; } return l; }
+
+  var NS='http://www.w3.org/2000/svg';
+  function el(n,a){ var e=document.createElementNS(NS,n); for(var k in a) e.setAttribute(k,a[k]); return e; }
+  var svg=document.getElementById('chart');
+
+  // gridlines + y rungs (semantic labels)
+  for(var lv=0; lv<=YMAX; lv++){
+    var y=sy(lv);
+    svg.appendChild(el('line',{class:'gridline',x1:m.l,y1:y,x2:m.l+pw,y2:y}));
+    var num=el('text',{class:'axis-l','text-anchor':'start',x:8,y:y+3.5}); num.textContent=lv; svg.appendChild(num);
+    var rl=el('text',{class:'rung-lbl','text-anchor':'end',x:m.l-12,y:y+3.5}); rl.textContent=rungLabels[lv]; svg.appendChild(rl);
+  }
+  // x ticks (weeks)
+  for(var wk=0; wk<=8; wk+=2){ var day=wk*7; var xx=sx(day);
+    var t=el('text',{class:'axis-b','text-anchor':'middle',x:xx,y:H-14}); t.textContent='wk '+wk; svg.appendChild(t);
+  }
+
+  // ceiling line (send ceiling = 4)
+  svg.appendChild(el('line',{class:'ceiling',x1:m.l,y1:sy(4),x2:m.l+pw,y2:sy(4)}));
+  var cl=el('text',{class:'ceiling-lbl',x:m.l+pw+8,y:sy(4)+3.5}); cl.textContent='ceiling'; svg.appendChild(cl);
+
+  // build stepped path
+  var d='', dArea='';
+  var pts=steps.slice();
+  var px=sx(0), py=sy(pts[0].level);
+  d='M '+px+' '+py; dArea='M '+px+' '+sy(0)+' L '+px+' '+py;
+  for(var i=1;i<pts.length;i++){
+    var x=sx(pts[i].day);
+    d+=' L '+x+' '+py;                 // horizontal to change point
+    py=sy(pts[i].level);
+    d+=' L '+x+' '+py;                 // vertical step
+    dArea+=' L '+x+' '+sy(pts[i-1].level)+' L '+x+' '+py;
+  }
+  var xEnd=sx(END);
+  d+=' L '+xEnd+' '+py;
+  dArea+=' L '+xEnd+' '+py+' L '+xEnd+' '+sy(0)+' Z';
+  svg.appendChild(el('path',{class:'area',d:dArea}));
+  svg.appendChild(el('path',{class:'line',d:d}));
+
+  // event markers
+  events.forEach(function(ev){
+    var x=sx(ev.day), widen=ev.type==='widen';
+    var lvTo=levelAt(ev.day), lvFrom = widen? lvTo-1 : lvTo+1;
+    var yTop=sy(Math.max(lvTo,lvFrom));
+    svg.appendChild(el('line',{class:'ev-line '+(widen?'ev-widen':'ev-narrow'),x1:x,y1:yTop-14,x2:x,y2:m.t+ph}));
+    var g=el('g',{class:'ev-badge'});
+    var tri=el('text',{x:x,y:yTop-16,'text-anchor':'middle'});
+    tri.style.fill = widen ? 'var(--good)' : 'var(--narrow)';
+    tri.textContent = widen?'▲ +1':'▼ −1';
+    g.appendChild(tri); svg.appendChild(g);
+  });
+
+  // start label
+  var sl=el('text',{class:'axis-b',x:m.l+4,y:sy(1)-8}); sl.textContent='base'; svg.appendChild(sl);
+
+  // ---- hover crosshair + tooltip ----
+  var cross=el('line',{class:'crosshair',y1:m.t,y2:m.t+ph}); svg.appendChild(cross);
+  var cdot=el('circle',{class:'cursor-dot',r:5}); svg.appendChild(cdot);
+  var tip=document.getElementById('tip'), box=document.getElementById('plotbox');
+  var overlay=el('rect',{x:m.l,y:m.t,width:pw,height:ph,fill:'transparent',style:'cursor:crosshair'});
+  svg.appendChild(overlay);
+  function evAt(day){ var best=null; events.forEach(function(e){ if(Math.abs(e.day-day)<=1) best=e; }); return best; }
+  overlay.addEventListener('mousemove',function(e){
+    var r=svg.getBoundingClientRect(), scale=W/r.width;
+    var px2=(e.clientX-r.left)*scale; var day=Math.round(Math.max(0,Math.min(END,(px2-m.l)/pw*END)));
+    var lv=levelAt(day), x=sx(day), y=sy(lv);
+    cross.setAttribute('x1',x); cross.setAttribute('x2',x); cross.setAttribute('opacity','.5');
+    cdot.setAttribute('cx',x); cdot.setAttribute('cy',y); cdot.setAttribute('opacity','1');
+    var ev=evAt(day);
+    tip.style.opacity='1';
+    tip.style.left=(x/W*r.width)+'px';
+    tip.style.top=(y/H*r.height)+'px';
+    tip.innerHTML='<b>day '+day+'</b> · level '+lv+' — '+rungLabels[lv]+(ev?'<br><span class="ev">'+(ev.type==='widen'?'▲ ':'▼ ')+ev.d+'</span>':'');
+  });
+  box.addEventListener('mouseleave',function(){ cross.setAttribute('opacity','0'); cdot.setAttribute('opacity','0'); tip.style.opacity='0'; });
+
+  // ---- table ----
+  var tb=document.querySelector('#tbl tbody');
+  steps.forEach(function(s){ var ev=events.filter(function(e){return e.day===s.day;})[0];
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+s.day+'</td><td>'+s.level+' ('+rungLabels[s.level]+')</td><td>'+(ev?(ev.type==='widen'?'▲ ':'▼ ')+ev.d:'—')+'</td>';
+    tb.appendChild(tr);
+  });
+
+  // ---- category rail ----
+  var rail=document.getElementById('rail');
+  cats.forEach(function(c){
+    var div=document.createElement('div'); div.className='cat'+(c.active?' active':'');
+    var rungs='';
+    for(var k=1;k<=4;k++){ var on=k<=c.level, cap=k===c.ceiling && k>c.level;
+      rungs+='<i class="'+(on?'on':'')+(cap?' cap':'')+'"></i>'; }
+    div.innerHTML =
+      '<div class="name'+(c.active?'':' dim')+'"><span class="pip"></span>'+c.name+'</div>'+
+      '<div class="sub">'+c.sub+'</div>'+
+      '<div class="meter">'+rungs+'</div>'+
+      '<div class="lvl">level <b>'+c.level+'</b> / '+c.ceiling+' · '+rungLabels[c.level]+'</div>';
+    rail.appendChild(div);
+  });
+})();
+</script>

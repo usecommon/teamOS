@@ -93,6 +93,10 @@ def _safe_target(repo_root, target):
 
 def _commit(proposal, resolved, repo_root, ledger_dir, kind):
     resolved.parent.mkdir(parents=True, exist_ok=True)
+    # door content is untrusted → ambiguous unless the proposal declares otherwise.
+    # Used for BOTH the on-disk sidecar and the L3 record so they never disagree.
+    lin = proposal.get("lineage", {})
+    basis = lin.get("basis", "ambiguous")
     if kind == "corpus_entry":
         body = f"# {proposal['title']}\n\n" + "\n\n".join(
             b if isinstance(b, str) else b.get("text", "") for b in proposal["blocks"])
@@ -114,20 +118,23 @@ def _commit(proposal, resolved, repo_root, ledger_dir, kind):
             "generated_by": {"transformation": "skill-proposal", "at": "2026-07-11T00:00:00Z"},
             "agent": PROC_AGENT_ID,
             "sources": [{"source_type": "agent-derivation", "locator": proposal["proposal_id"],
-                         "content_hash": hashchain.sha256_str(purpose)}],
-            "evidence": [proposal["proposal_id"]], "confidence": "medium", "update_history": []}))
+                         "content_hash": hashchain.sha256_str(purpose), "basis": basis}],
+            "evidence": [proposal["proposal_id"]], "confidence": "medium",
+            "basis": basis, "update_history": []}))
     else:
         resolved.write_text(json.dumps(
             {k: proposal[k] for k in ("name", "cron", "prompt")}, indent=2))
-    lin = proposal.get("lineage", {})
     hashchain.append(Path(ledger_dir) / "l3.jsonl", {
         "target_id": str(resolved.relative_to(Path(repo_root).resolve())),
         "source_type": lin.get("source_type", "door"),
         "authoring_agent": PROC_AGENT_ID,
         "evidence": [{"store": "inbox", "path": proposal["proposal_id"],
-                      "content_hash": hashchain.sha256_str(json.dumps(proposal, sort_keys=True))}],
+                      "content_hash": hashchain.sha256_str(json.dumps(proposal, sort_keys=True)),
+                      "basis": basis}],
         "transformation": lin.get("transformation", "door-proposal"),
         "confidence": lin.get("confidence", "medium"),
+        # the human-approval step IS the ambiguous→review route (T9).
+        "basis": basis,
         "update_history_ref": {"store": "git", "path": str(resolved), "content_hash": "sha256:0"},
         "parent_ids": [],
     }, PROC_AGENT_ID)

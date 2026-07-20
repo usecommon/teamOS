@@ -171,6 +171,15 @@ class Measurement(unittest.TestCase):
         self.assertEqual(rec["signal_type"], "pulse_response")
         self.assertEqual(rec["outcome"], "4")
 
+    def test_context_efficiency_reports_reduction(self):
+        # Graphify-borrow: an honest efficiency estimate, labelled not-a-benchmark.
+        raw = ["x" * 4000, "y" * 4000, "z" * 4000]   # ~3000 est. tokens of source
+        compiled = "a" * 400                           # ~100 est. tokens
+        eff = measurement.context_efficiency(raw, compiled)
+        self.assertGreater(eff["reduction_x"], 1)
+        self.assertEqual(eff["raw_tokens"], 3000)
+        self.assertIn("estimate", eff["basis"])
+
 
 if __name__ == "__main__":
     unittest.main()

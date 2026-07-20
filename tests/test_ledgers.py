@@ -16,7 +16,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import hashchain  # noqa: E402
 import l1_compile  # noqa: E402
 import l8_capture  # noqa: E402
-from l3_writer import LineageRejected, write_with_lineage  # noqa: E402
+from l3_writer import LineageRejected, write_with_lineage, entity_basis  # noqa: E402
 
 
 def _append_burst(args):
@@ -69,6 +69,28 @@ class Ledgers(unittest.TestCase):
         self.assertEqual(record["verdict"], "deny")
         self.assertEqual(record["rule_id"], "lineage-required")
         self.assertFalse((self.d / "corpus" / "bad.md").exists())
+
+    def test_basis_tag_flows_into_l3_and_defaults_ambiguous(self):
+        # Graphify-borrow: EXTRACTED/INFERRED/AMBIGUOUS per derivation edge.
+        tagged = dict(VALID_SIDECAR,
+                      sources=[{"source_type": "principal-direct", "locator": "chat",
+                                "content_hash": "sha256:x", "basis": "extracted"}])
+        rec = write_with_lineage(self.d / "c1.md", "x", tagged, ledger_dir=self.d)
+        self.assertEqual(rec["basis"], "extracted")
+        self.assertEqual(rec["evidence"][0]["basis"], "extracted")
+        # an untagged edge is read as the cautious value, not silently "trusted"
+        rec2 = write_with_lineage(self.d / "c2.md", "x", VALID_SIDECAR, ledger_dir=self.d)
+        self.assertEqual(rec2["basis"], "ambiguous")
+        # weakest edge wins: one ambiguous drags the entity to ambiguous
+        self.assertEqual(entity_basis([{"basis": "extracted"}, {"basis": "ambiguous"}]),
+                         "ambiguous")
+
+    def test_invalid_basis_value_rejected_by_schema(self):
+        bad = dict(VALID_SIDECAR,
+                   sources=[{"source_type": "principal-direct", "locator": "chat",
+                             "content_hash": "sha256:x", "basis": "definitely"}])
+        with self.assertRaises(LineageRejected):
+            write_with_lineage(self.d / "bad2.md", "x", bad, ledger_dir=self.d)
 
     def test_l8_records_outcome_not_content(self):
         draft = self.d / "draft.md"

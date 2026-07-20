@@ -1,0 +1,456 @@
+<title>Team OS — Where UI Helps</title>
+<style>
+  :root {
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* light (default) */
+    --bg: #e9ecee;
+    --surface: #f6f7f8;
+    --surface-2: #dfe4e6;
+    --ink: #14191d;
+    --ink-soft: #4b575e;
+    --line: #ced5d8;
+    --steel: #556b76;
+    --amber: #a4650f;
+    --amber-line: #c8934a;
+    --amber-bg: #f2e6cf;
+    --guard: #a8442c;
+    --good: #2f6f50;
+    --shadow: 0 1px 0 rgba(20,25,29,.04), 0 6px 18px -12px rgba(20,25,29,.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1215;
+      --surface: #141b20;
+      --surface-2: #1b242a;
+      --ink: #e8eef1;
+      --ink-soft: #95a5ae;
+      --line: #26313a;
+      --steel: #89a2b0;
+      --amber: #e7ab4d;
+      --amber-line: #7a5c22;
+      --amber-bg: #291f0f;
+      --guard: #e17f63;
+      --good: #62b189;
+      --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 30px -18px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #e9ecee; --surface: #f6f7f8; --surface-2: #dfe4e6; --ink: #14191d;
+    --ink-soft: #4b575e; --line: #ced5d8; --steel: #556b76; --amber: #a4650f;
+    --amber-line: #c8934a; --amber-bg: #f2e6cf; --guard: #a8442c; --good: #2f6f50;
+    --shadow: 0 1px 0 rgba(20,25,29,.04), 0 6px 18px -12px rgba(20,25,29,.28);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1215; --surface: #141b20; --surface-2: #1b242a; --ink: #e8eef1;
+    --ink-soft: #95a5ae; --line: #26313a; --steel: #89a2b0; --amber: #e7ab4d;
+    --amber-line: #7a5c22; --amber-bg: #291f0f; --guard: #e17f63; --good: #62b189;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 30px -18px rgba(0,0,0,.7);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 4vw, 2.5rem) 5rem; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--amber); margin: 0 0 1rem;
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .eyebrow::before { content: ""; width: 1.6rem; height: 1px; background: var(--amber-line); display: inline-block; }
+  h1 {
+    font-family: var(--mono); font-weight: 600; letter-spacing: -.01em;
+    font-size: clamp(1.7rem, 4.4vw, 2.7rem); line-height: 1.08; margin: 0 0 .9rem;
+    text-wrap: balance;
+  }
+  .dek { font-size: clamp(1rem, 1.6vw, 1.12rem); color: var(--ink-soft); max-width: 60ch; margin: 0; }
+  .dek b { color: var(--ink); font-weight: 600; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: .5rem .9rem; margin: 1.8rem 0 0; font-family: var(--mono); font-size: .74rem; }
+  .legend span { display: inline-flex; align-items: center; gap: .45rem; color: var(--ink-soft); }
+  .dot { width: .62rem; height: .62rem; border-radius: 50%; flex: none; }
+  .dot.ui { background: var(--amber); }
+  .dot.steel { background: var(--steel); }
+  .dot.guard { background: var(--guard); }
+  .dot.led { background: var(--ink-soft); border-radius: 2px; }
+
+  h2.sec {
+    font-family: var(--mono); font-size: .8rem; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 3.4rem 0 1.1rem; padding-bottom: .5rem;
+    border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline;
+  }
+  h2.sec .n { color: var(--amber); }
+
+  /* ---- system map ---- */
+  .map { display: flex; flex-direction: column; gap: .8rem; }
+  .lane {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 1rem 1rem 1.15rem; box-shadow: var(--shadow); position: relative;
+  }
+  .lane-tag {
+    font-family: var(--mono); font-size: .66rem; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-soft); display: block; margin-bottom: .75rem;
+  }
+  .lane-tag b { color: var(--ink); }
+  .flow { display: flex; align-items: stretch; gap: .35rem; overflow-x: auto; padding-bottom: .3rem; }
+  .stage {
+    flex: 1 0 auto; min-width: 96px; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 9px; padding: .6rem .55rem .5rem; display: flex; flex-direction: column; gap: .35rem;
+  }
+  .stage .name { font-family: var(--mono); font-size: .82rem; font-weight: 600; color: var(--ink); }
+  .stage .sub { font-size: .68rem; color: var(--ink-soft); line-height: 1.3; }
+  .arrow { align-self: center; color: var(--steel); font-family: var(--mono); flex: none; padding: 0 .1rem; }
+  .marks { display: flex; flex-wrap: wrap; gap: .28rem; margin-top: auto; padding-top: .3rem; }
+  .mk {
+    font-family: var(--mono); font-size: .68rem; font-weight: 600; color: var(--amber);
+    background: var(--amber-bg); border: 1px solid var(--amber-line); border-radius: 5px;
+    min-width: 1.25rem; height: 1.25rem; padding: 0 .2rem; display: inline-flex;
+    align-items: center; justify-content: center; line-height: 1;
+  }
+  .lane.guards .flow { gap: .5rem; }
+  .guard-chip {
+    flex: 1 1 30%; min-width: 150px; border: 1px dashed var(--guard); border-radius: 9px;
+    padding: .55rem .6rem; background: color-mix(in srgb, var(--guard) 7%, var(--surface));
+    display: flex; flex-direction: column; gap: .3rem;
+  }
+  .guard-chip .name { font-family: var(--mono); font-size: .8rem; font-weight: 600; color: var(--guard); }
+  .guard-chip .sub { font-size: .68rem; color: var(--ink-soft); }
+  .substrate .strip { display: flex; gap: .3rem; overflow-x: auto; padding-bottom: .3rem; align-items: stretch; }
+  .led {
+    flex: 1 0 auto; min-width: 78px; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 7px; padding: .45rem .45rem .5rem; position: relative;
+  }
+  .led .id { font-family: var(--mono); font-size: .74rem; font-weight: 700; color: var(--ink); }
+  .led .lbl { font-size: .64rem; color: var(--ink-soft); line-height: 1.25; margin-top: .15rem; display: block; }
+  .led::after {
+    content: "⛓"; position: absolute; right: -.42rem; top: 50%; transform: translateY(-50%);
+    font-size: .6rem; color: var(--steel); z-index: 1;
+  }
+  .led:last-child::after { content: ""; }
+
+  /* ---- ranking ---- */
+  .rank { background: var(--amber-bg); border: 1px solid var(--amber-line); border-radius: 12px; padding: 1.1rem 1.25rem; margin-top: 1rem; }
+  .rank h3 { font-family: var(--mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin: 0 0 .7rem; }
+  .rank ol { margin: 0; padding-left: 1.2rem; display: grid; gap: .4rem; }
+  .rank li { color: var(--ink); font-size: .93rem; }
+  .rank li b { font-family: var(--mono); font-weight: 600; }
+  .rank li span { color: var(--ink-soft); }
+
+  /* ---- opportunity cards ---- */
+  .grp { margin-top: 2.2rem; }
+  .grp > h3 {
+    font-family: var(--mono); font-size: .9rem; color: var(--ink); margin: 0 0 .2rem;
+    display: flex; align-items: baseline; gap: .6rem;
+  }
+  .grp > h3 .tag { font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); }
+  .grp > .note { font-size: .8rem; color: var(--ink-soft); margin: 0 0 1rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .8rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+    padding: .95rem 1rem 1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .5rem;
+  }
+  .card .top { display: flex; align-items: flex-start; gap: .6rem; }
+  .card .num {
+    font-family: var(--mono); font-size: .8rem; font-weight: 700; color: var(--amber);
+    background: var(--amber-bg); border: 1px solid var(--amber-line); border-radius: 6px;
+    width: 1.6rem; height: 1.6rem; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .card .ttl { font-weight: 600; font-size: .98rem; color: var(--ink); line-height: 1.25; }
+  .card p { margin: 0; font-size: .86rem; color: var(--ink-soft); }
+  .card p.val { color: var(--ink); }
+  .card .foot { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: auto; padding-top: .3rem; align-items: center; }
+  .chip {
+    font-family: var(--mono); font-size: .64rem; letter-spacing: .04em; text-transform: uppercase;
+    padding: .18rem .42rem; border-radius: 5px; border: 1px solid var(--line); color: var(--ink-soft);
+    background: var(--surface-2); white-space: nowrap;
+  }
+  .chip.built { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, var(--line)); background: color-mix(in srgb, var(--good) 10%, var(--surface)); }
+  .chip.unwired { color: var(--amber); border-color: var(--amber-line); background: var(--amber-bg); }
+  .chip.gap { color: var(--guard); border-color: color-mix(in srgb, var(--guard) 45%, var(--line)); background: color-mix(in srgb, var(--guard) 8%, var(--surface)); }
+  .chip.rule { color: var(--ink-soft); }
+  .chip.rule b { color: var(--ink); font-weight: 600; }
+
+  /* ---- anti-requirements ---- */
+  .anti { margin-top: 2.6rem; border: 1px solid var(--line); border-left: 3px solid var(--guard); border-radius: 10px; padding: 1.1rem 1.25rem; background: var(--surface); }
+  .anti h3 { font-family: var(--mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--guard); margin: 0 0 .6rem; }
+  .anti ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; }
+  .anti li { font-size: .88rem; color: var(--ink-soft); }
+  .anti li b { color: var(--ink); font-weight: 600; }
+
+  footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-family: var(--mono); font-size: .72rem; color: var(--ink-soft); }
+
+  a { color: var(--amber); }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 4px; }
+  @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Team OS · System Map</p>
+  <h1>Where a human could touch the system</h1>
+  <p class="dek">Not a build spec — a map of the <b>opportunity surface</b>. Everything steel is the autonomous machinery; every <b>amber marker is a place a person could act</b>, keyed to the catalog below. The point of the fork is <b>initiative</b>, so most of the system runs unwatched — UI earns its place only at the moments a human decides, calibrates trust, or intervenes.</p>
+
+  <div class="legend">
+    <span><i class="dot ui"></i> UI touchpoint</span>
+    <span><i class="dot steel"></i> autonomous stage</span>
+    <span><i class="dot guard"></i> guard / control</span>
+    <span><i class="dot led"></i> ledger (append-only substrate)</span>
+  </div>
+
+  <h2 class="sec"><span>The system, one screen</span><span class="n">pipeline · guards · substrate</span></h2>
+  <div class="map">
+
+    <div class="lane pipeline">
+      <span class="lane-tag"><b>PIPELINE</b> — what the agent does, unprompted, left to right</span>
+      <div class="flow">
+        <div class="stage">
+          <span class="name">compile</span><span class="sub">footprint → job graph; recurring tasks + skills</span>
+          <div class="marks"><span class="mk">1</span><span class="mk">2</span></div>
+        </div>
+        <span class="arrow">→</span>
+        <div class="stage">
+          <span class="name">brief</span><span class="sub">Day One Brief; shadow drafts</span>
+          <div class="marks"><span class="mk">3</span></div>
+        </div>
+        <span class="arrow">→</span>
+        <div class="stage">
+          <span class="name">loop</span><span class="sub">scheduled runs; checkpoint/resume</span>
+          <div class="marks"><span class="mk">18</span></div>
+        </div>
+        <span class="arrow">→</span>
+        <div class="stage">
+          <span class="name">deliver</span><span class="sub">Slack DM; the only output surface</span>
+          <div class="marks"><span class="mk">4</span><span class="mk">5</span></div>
+        </div>
+        <span class="arrow">→</span>
+        <div class="stage">
+          <span class="name">accept</span><span class="sub">✓/✗ reaction · edit → L8</span>
+          <div class="marks"><span class="mk">6</span></div>
+        </div>
+        <span class="arrow">→</span>
+        <div class="stage">
+          <span class="name">score</span><span class="sub">L7 eval; promotion floor</span>
+          <div class="marks"><span class="mk">14</span><span class="mk">15</span></div>
+        </div>
+        <span class="arrow">→</span>
+        <div class="stage">
+          <span class="name">transfer / discover</span><span class="sub">FK7 cohorts · FK8 miners</span>
+          <div class="marks"><span class="mk">16</span><span class="mk">17</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lane guards">
+      <span class="lane-tag"><b>GUARDS</b> — cross-cutting; sit on every side-effectful call</span>
+      <div class="flow">
+        <div class="guard-chip">
+          <span class="name">gate (L2)</span><span class="sub">payload inspection on every tool call → permit / ask / deny</span>
+          <div class="marks"><span class="mk">11</span></div>
+        </div>
+        <div class="guard-chip">
+          <span class="name">envelope</span><span class="sub">earned per-category autonomy; widens slow, narrows fast</span>
+          <div class="marks"><span class="mk">7</span><span class="mk">8</span></div>
+        </div>
+        <div class="guard-chip">
+          <span class="name">breaker + safety agent</span><span class="sub">halt switch; fails closed. Door → inbox → approval</span>
+          <div class="marks"><span class="mk">9</span><span class="mk">10</span><span class="mk">13</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lane substrate">
+      <span class="lane-tag"><b>SUBSTRATE</b> — ten append-only, hash-chained ledgers; files are the system of record</span>
+      <div class="strip">
+        <div class="led"><span class="id">L1</span><span class="lbl">execution trace</span></div>
+        <div class="led"><span class="id">L2</span><span class="lbl">gate</span></div>
+        <div class="led"><span class="id">L3</span><span class="lbl">memory + lineage</span><span class="marks" style="margin-top:.3rem"><span class="mk">12</span></span></div>
+        <div class="led"><span class="id">L4</span><span class="lbl">knowledge exchange</span></div>
+        <div class="led"><span class="id">L5</span><span class="lbl">delegation</span></div>
+        <div class="led"><span class="id">L6</span><span class="lbl">version (git)</span></div>
+        <div class="led"><span class="id">L7</span><span class="lbl">eval</span></div>
+        <div class="led"><span class="id">L8</span><span class="lbl">human signal</span></div>
+        <div class="led"><span class="id">L9</span><span class="lbl">deletion</span></div>
+        <div class="led"><span class="id">L10</span><span class="lbl">environment</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rank">
+    <h3>Where UI helps most (if you build five things)</h3>
+    <ol>
+      <li><b>#9 The panic surface</b> <span>— live "what is it doing right now" + a reachable kill switch. The one thing a frightened user needs; today CLI-only.</span></li>
+      <li><b>#4–5 The delivery moment</b> <span>— the draft arrives with an inline ✓/✗ and a "why did you make this" provenance peek. Highest frequency; drives every downstream signal.</span></li>
+      <li><b>#7 The envelope dial</b> <span>— autonomy per category, why it moved, the trajectory. Makes "earned autonomy" legible instead of a hidden number.</span></li>
+      <li><b>#13 The proposal inbox</b> <span>— pending schedules/skills with a diff preview, approve/reject. The human-approval step made visible.</span></li>
+      <li><b>#1 Guided install + hook-diff review</b> <span>— today each user hand-reviews ~190 lines of Python; fatal for non-technical adopters.</span></li>
+    </ol>
+  </div>
+
+  <h2 class="sec"><span>The opportunity catalog</span><span class="n">18 touchpoints · 8 human moments</span></h2>
+
+  <div class="grp">
+    <h3><span class="tag">A</span> Setup &amp; first trust</h3>
+    <p class="note">The first hour. Adoption lives or dies here — especially for non-technical principals.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">1</span><span class="ttl">Guided install &amp; hook-diff review</span></div>
+        <p>Walk the gate diff in plain language, connect sources, pick the 3am posture (guard level) with the safe option pre-selected.</p>
+        <p class="val">Value: turns a Python security review into a guided decision — the launch site's fatal onboarding gap.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule">assists, never bypasses <b>PR/human review</b></span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">2</span><span class="ttl">"What will it watch?" source consent</span></div>
+        <p>Toggle each source, see exactly what it grants, opt into DM/email explicitly.</p>
+        <p class="val">Value: makes the opt-in real and legible.</p>
+        <div class="foot"><span class="chip unwired">config exists</span><span class="chip rule"><b>opt-in · ledgered · policy-neutral</b></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">B</span> The daily moment</h3>
+    <p class="note">Highest frequency, and where the acceptance signal — the metric the whole thesis rides on — is born.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">3</span><span class="ttl">The delivery message</span></div>
+        <p>The brief/draft arrives "done," one-line why + link. The message <em>is</em> the UI.</p>
+        <p class="val">Value: this is the product's face. Exists in code (<code>deliver()</code>) but nothing calls it live.</p>
+        <div class="foot"><span class="chip unwired">unwired</span><span class="chip rule">Slack DM <b>only</b> (no multi-surface)</span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">4</span><span class="ttl">Inline accept / reject / edit</span></div>
+        <p>✓/✗ tap; opening the draft to edit round-trips as the acceptance signal.</p>
+        <p class="val">Value: the single most load-bearing interaction in the system.</p>
+        <div class="foot"><span class="chip unwired">harvest unwired</span><span class="chip rule">counted only from <b>principal-authenticated</b> identity (CN-1)</span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">5</span><span class="ttl">"Why did you make this?" provenance peek</span></div>
+        <p>Expand any deliverable to its lineage: source → evidence → transformation → confidence.</p>
+        <p class="val">Value: turns L3 lineage into human-readable "show your work" — the fastest trust-builder.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule">reads <b>L3</b>; no individuation</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">C</span> Trust calibration &amp; autonomy</h3>
+    <p class="note">The story of how much rope the agent has earned — and whether that still feels right.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">6</span><span class="ttl">Signal quality, not just count</span></div>
+        <p>Show when a ✓ was a real read vs. a rubber-stamp; surface the dead-zone edits that register as nothing.</p>
+        <p class="val">Value: counters Goodhart on the acceptance metric.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule">no per-person comparison</span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">7</span><span class="ttl">The envelope dial</span></div>
+        <p>Autonomy level per category, why it widened/narrowed, the trajectory over time; manual reset.</p>
+        <p class="val">Value: makes earned autonomy visible; shows OB-1 asymmetry (widen slow, narrow fast).</p>
+        <div class="foot"><span class="chip built">reset via CLI</span><span class="chip rule">read + reset only; <b>per-category</b></span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">8</span><span class="ttl">Interrupt budget</span></div>
+        <p>How often it asked this week vs. the ≤5 budget, trending.</p>
+        <p class="val">Value: the interrupt-fatigue / FR4 early warning.</p>
+        <div class="foot"><span class="chip gap">gap</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">D</span> Incident &amp; control</h3>
+    <p class="note">Rare, and the whole safety story rests on it being reachable in five seconds.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">9</span><span class="ttl">Live "what is it doing right now" + kill switch</span></div>
+        <p>Current loop, subagents spawned, what's mid-flight; a halt button always in reach.</p>
+        <p class="val">Value: the frightened-user surface. Kill switch now works from the CLI; a GUI panic affordance is the idea.</p>
+        <div class="foot"><span class="chip built">CLI kill switch</span><span class="chip rule">always reachable; fails <b>closed</b></span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">10</span><span class="ttl">Undo / rollback browser</span></div>
+        <p>Recent actions with one-click git-backed revert (L6).</p>
+        <p class="val">Value: makes "reversible interior" tangible.</p>
+        <div class="foot"><span class="chip built">undo via CLI</span><span class="chip rule">reversible actions only</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">E</span> Transparency &amp; audit</h3>
+    <p class="note">The append-only substrate is the product's differentiator — but only if a human can read it.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">11</span><span class="ttl">Gate decision log</span></div>
+        <p>Every permit / ask / deny with the payload-inspection findings that drove it.</p>
+        <p class="val">Value: shows the gate looking <em>inside</em> actions, not just at their names.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule">reads <b>L2</b></span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">12</span><span class="ttl">"What does it know about me?" + erase</span></div>
+        <p>Data-provenance view, one-click erasure, GDPR deadline tracking.</p>
+        <p class="val">Value: data-rights made self-serve; erasure now removes content, not just events.</p>
+        <div class="foot"><span class="chip built">erase via CLI</span><span class="chip rule"><b>L9</b>; exit = clone</span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">11b</span><span class="ttl">Unified ledger timeline</span></div>
+        <p>A filterable stream across L1–L10: what ran, what the gate decided, what it wrote and why.</p>
+        <p class="val">Value: the whole audit story in one human-readable feed.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule"><b>never per-person</b></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">F</span> Proposals &amp; approval</h3>
+    <p class="note">Where untrusted content asks to add plan structure — and a human must say yes first.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">13</span><span class="ttl">Proposal inbox with diff preview</span></div>
+        <p>Pending schedules/skills rendered as a readable diff; approve or reject.</p>
+        <p class="val">Value: the human-approval step made visible. Approve/process now works from the CLI.</p>
+        <div class="foot"><span class="chip built">approve via CLI</span><span class="chip rule"><b>default-deny</b>; no unconfirmed plan structure</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">G</span> Learning &amp; skills</h3>
+    <p class="note">The one place a leaderboard is tempting and forbidden — keep it per-skill.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">14</span><span class="ttl">Per-skill quality board</span></div>
+        <p>Score per skill/version, what improved, promotion status.</p>
+        <p class="val">Value: shows the system getting better over time.</p>
+        <div class="foot"><span class="chip unwired">renderer exists</span><span class="chip rule"><b>per-skill, never per-person</b></span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">15</span><span class="ttl">Skill version history + rollback</span></div>
+        <p>Diff a skill across versions; restore a prior one byte-identically.</p>
+        <p class="val">Value: safe iteration on the shared skill set.</p>
+        <div class="foot"><span class="chip unwired">rollback in code</span><span class="chip rule">git-backed <b>L6</b></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h3><span class="tag">H</span> Multi-user &amp; transfer (FK7)</h3>
+    <p class="note">The thesis gate. Each collaborator sees only their own everything.</p>
+    <div class="cards">
+      <div class="card"><div class="top"><span class="num">16</span><span class="ttl">Collaborator's own view</span></div>
+        <p>Their own Day One Brief, their own loops, their own ledgers — never anyone else's.</p>
+        <p class="val">Value: makes "exit = clone" and per-principal isolation concrete.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule"><b>per-principal encrypted</b>; no cross-read</span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">17</span><span class="ttl">Transfer experiment status</span></div>
+        <p>Cohort adoption, invocations vs. floor, and the pre-registered rule's live state (inconclusive until the interval excludes zero).</p>
+        <p class="val">Value: keeps the science honest and visible.</p>
+        <div class="foot"><span class="chip gap">gap</span><span class="chip rule">consented, time-boxed, disclosed telemetry</span></div>
+      </div>
+      <div class="card"><div class="top"><span class="num">18</span><span class="ttl">Loop &amp; schedule view</span></div>
+        <p>What's scheduled, what fired, missed-run catch-ups, checkpoint/resume state.</p>
+        <p class="val">Value: the "is it actually running unattended?" answer.</p>
+        <div class="foot"><span class="chip gap">gap</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="anti">
+    <h3>Anti-requirements — UI that would be wrong to build</h3>
+    <ul>
+      <li><b>A per-person leaderboard.</b> Ranked people/agents by acceptance or quality violates the no-individuation invariant. The temptation lives at #14 — keep it per-skill.</li>
+      <li><b>The full operator console (§16).</b> On the do-not-build list. The incident controls belong in the CLI (and, minimally, the delivery surface), not a bespoke mission-control.</li>
+      <li><b>Any output surface beyond Slack DM.</b> Multi-surface projection and phone Door 2 are mainline-deferred.</li>
+      <li><b>A marketing dashboard shipped before the clocks run.</b> Interface before initiative is the exact inversion the spec forbids.</li>
+    </ul>
+  </div>
+
+  <footer>Team OS fork · system + UI-opportunity map · 2026-07-13 · amber = human touchpoint · built-this-session controls surface via <code>teamos {status,breaker,envelope,inbox,undo,erase}</code></footer>
+</div>

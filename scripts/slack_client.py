@@ -35,3 +35,61 @@ class FakeSlack(SlackClient):
     def reactions_get(self, channel, ts):
         agg = self._reactions.get((channel, ts), {})
         return [{"name": name, "users": sorted(users)} for name, users in agg.items()]
+
+
+class DryRunSlack(SlackClient):
+    """Prints instead of sending — the default until a real target + token are
+    configured. Lets the live pipeline run end-to-end (through the gate) with no
+    network side effect, so the streak scaffolding is exercisable safely."""
+    def __init__(self):
+        self.sent = []
+
+    def post_message(self, channel, text, blocks=None):
+        self.sent.append((channel, text))
+        print(f"[dry-run] would post to {channel}:\n{text}\n")
+        return "dry-run-0"
+
+    def reactions_get(self, channel, ts):
+        return []
+
+
+class HttpSlackClient(SlackClient):
+    """Real Slack Web API client (stdlib urllib — no new deps). Only constructed
+    when a bot token is present; and the SEND still traverses the FK2 gate in
+    day_one_brief.deliver() BEFORE this posts. reactions come from reactions.get
+    only, never message text (SE-1)."""
+    def __init__(self, token):
+        self.token = token
+
+    def _call(self, method, payload):
+        import json as _json
+        import urllib.request
+        req = urllib.request.Request(
+            f"https://slack.com/api/{method}",
+            data=_json.dumps(payload).encode(),
+            headers={"Authorization": f"Bearer {self.token}",
+                     "Content-Type": "application/json; charset=utf-8"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return _json.loads(r.read())
+
+    def post_message(self, channel, text, blocks=None):
+        resp = self._call("chat.postMessage", {"channel": channel, "text": text, "blocks": blocks or []})
+        if not resp.get("ok"):
+            raise RuntimeError(f"slack chat.postMessage error: {resp.get('error')}")
+        return resp["ts"]
+
+    def reactions_get(self, channel, ts):
+        resp = self._call("reactions.get", {"channel": channel, "timestamp": ts})
+        if not resp.get("ok"):
+            # raise, don't return [] — a swallowed auth/rate-limit error would be
+            # indistinguishable from "no reactions" and silently deflate the floor.
+            raise RuntimeError(f"slack reactions.get error: {resp.get('error')}")
+        msg = resp.get("message", {})
+        return [{"name": r["name"], "users": r.get("users", [])} for r in msg.get("reactions", [])]
+
+
+def from_env_or_dry(token_env="SLACK_BOT_TOKEN"):
+    """Real client when a bot token is set; otherwise a safe dry-run client."""
+    import os
+    tok = os.environ.get(token_env)
+    return HttpSlackClient(tok) if tok else DryRunSlack()

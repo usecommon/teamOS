@@ -139,6 +139,7 @@ groups:
       construction.
     fields:
       - ledger-l3-memory-write.schema.json#/authoring_agent
+      - ledger-l3-memory-write.schema.json#/basis
       - ledger-l3-memory-write.schema.json#/confidence
       - ledger-l3-memory-write.schema.json#/parent_ids
       - ledger-l3-memory-write.schema.json#/transformation
@@ -323,11 +324,17 @@ groups:
     status: fork-native
     source: >
       Entity id, transformation, generation time, authoring agent, confidence
-      grade, and update history (git/L6) are supplied by the writer performing
-      the translation; a sidecar missing any field fails schema validation.
+      grade, update history (git/L6), and derivation basis are supplied by the
+      writer performing the translation; a sidecar missing any required field
+      fails schema validation. basis (extracted/inferred/ambiguous) is derived
+      per edge by the writer and reduced to an entity value by l3_writer.
+      entity_basis (weakest edge wins); a missing edge basis is read as
+      ambiguous — the Graphify-style "you always know what was found vs guessed".
     fields:
       - lineage-sidecar.schema.json#/agent
       - lineage-sidecar.schema.json#/confidence
+      - lineage-sidecar.schema.json#/basis
+      - lineage-sidecar.schema.json#/sources[]/basis
       - lineage-sidecar.schema.json#/entity_id
       - lineage-sidecar.schema.json#/generated_by/at
       - lineage-sidecar.schema.json#/generated_by/transformation

@@ -58,8 +58,10 @@ def assemble_brief(job_graph, out_dir, store_prefix="stores"):
     } for n in nodes]
 
     first_deliverable = None
+    top_type = None
     if nodes:
         top = max(nodes, key=lambda n: n["occurrences"])
+        top_type = top["task_type"]
         draft_path = out_dir / "deliverables" / f"{top['task_type']}-draft.md"
         # rendered from the node's exemplar REFERENCES (no raw bodies inlined)
         draft_path.write_text(
@@ -74,7 +76,36 @@ def assemble_brief(job_graph, out_dir, store_prefix="stores"):
         }
 
     return {"digest": digest, "job_draft": job_draft,
-            "first_deliverable": first_deliverable}
+            "first_deliverable": first_deliverable,
+            "surprises": _surprises(nodes, top_type),
+            "questions": _questions(nodes)}
+
+
+# --- Graphify-borrow: "surprises / questions" framing (deterministic, no model)
+# The brief doesn't just list work — it volunteers what stood out and what it
+# wants a decision on. Both are computed from the job graph, never a language model.
+
+def _surprises(nodes, top_type):
+    """Recurring work that ISN'T the headline draft — the hidden-frequency finds.
+    A node at/above the median occurrence count, other than the top deliverable."""
+    if not nodes:
+        return []
+    counts = sorted(n["occurrences"] for n in nodes)
+    median = counts[len(counts) // 2]
+    out = []
+    for n in nodes:
+        if n["task_type"] == top_type or n["occurrences"] < max(median, 3):
+            continue
+        out.append(f"{n['task_type']}: {n['occurrences']}× via {', '.join(n['sources'])}"
+                   f" — recurring, no draft yet")
+    return out[:3]
+
+
+def _questions(nodes):
+    """Decisions the brief wants from the principal (suggested, not taken)."""
+    ordered = sorted(nodes, key=lambda n: n["occurrences"], reverse=True)
+    return [f"Automate {n['task_type']} ({n['cadence']})? seen {n['occurrences']}×"
+            for n in ordered[:3]]
 
 
 def render_dm(brief):
@@ -86,6 +117,12 @@ def render_dm(brief):
     if brief["first_deliverable"]:
         fd = brief["first_deliverable"]
         lines += ["", f"*First deliverable:* {fd['summary']}", f"→ {fd['link']}"]
+    if brief.get("surprises"):
+        lines += ["", "*Surprises* (recurring work you didn't ask me to flag):"]
+        lines += [f"• {s}" for s in brief["surprises"]]
+    if brief.get("questions"):
+        lines += ["", "*Questions for you:*"]
+        lines += [f"• {q}" for q in brief["questions"]]
     return "\n".join(lines)
 
 

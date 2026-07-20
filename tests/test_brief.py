@@ -60,6 +60,16 @@ class Assembly(BriefBase):
         self.assertIn("deliverables/", dm)
         self.assertNotIn("Shipped: parser fix", dm)
 
+    def test_brief_volunteers_surprises_and_questions(self):
+        # Graphify-borrow: the brief doesn't just list — it flags + asks.
+        self.assertIn("surprises", self.brief)
+        self.assertIn("questions", self.brief)
+        self.assertTrue(self.brief["questions"])  # at least one decision asked
+        dm = brief.render_dm(self.brief)
+        self.assertIn("Questions for you:", dm)
+        # surprises/questions are deterministic — never inline raw source bodies
+        self.assertNotIn("SECRETSAUCE", dm)
+
     def test_first_deliverable_lives_in_store(self):
         fd = self.brief["first_deliverable"]
         path = self.out / fd["link"].split("stores/", 1)[-1] if "stores/" in fd["link"] else None
