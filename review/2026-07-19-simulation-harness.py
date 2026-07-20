@@ -211,7 +211,7 @@ for turn in range(1, TURNS + 1):
             door.propose_schedule(INBOX, f"sched-{turn}", "0 9 * * *", "run digest")
             door.propose_skill(INBOX, f"skill-{turn}", "auto summarize", tools=["Read"])
             door.propose_corpus_entry(INBOX, f"note-{turn}", [{"text": "a fact"}])
-            res = gate_processor.process_inbox(INBOX, REPO, LED)
+            res = gate_processor.process_inbox(INBOX, SB, LED)  # repo_root=SANDBOX (never the real repo)
             plan_committed = any("sched" in c or "skill" in c for c in res["committed"])
             mark("door-proposals", not plan_committed,
                  f"committed={res['committed']} pending={res['pending']} rejected={res['rejected']}")
