@@ -1,0 +1,415 @@
+<style>
+  :root{
+    --paper:#FCFCFD; --surface:#FFFFFF; --surface-2:#F6F7F9; --inset:#F1F2F5;
+    --ink:#15171B; --ink-soft:#5C626B; --ink-faint:#9AA0A9; --ink-ghost:#C2C7CE;
+    --line:#EBEDF0; --line-strong:#DCDFE4;
+    --accent:#3D46E0; --accent-soft:rgba(61,70,224,.07); --accent-line:rgba(61,70,224,.28);
+    --permit:#2E7D52; --permit-bg:rgba(46,125,82,.08);
+    --ask:#9A7113;   --ask-bg:rgba(154,113,19,.09);
+    --deny:#B23A31;  --deny-bg:rgba(178,58,49,.08);
+    --taint:#7A4F9E; --taint-bg:rgba(122,79,158,.08); --taint-line:rgba(122,79,158,.32);
+    --shadow:none; --shadow-sm:none;
+    --radius:10px; --radius-sm:7px;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0B0C0E; --surface:#101114; --surface-2:#16181C; --inset:#0E0F12;
+    --ink:#ECEEF1; --ink-soft:#969CA6; --ink-faint:#5F6670; --ink-ghost:#3A3F47;
+    --line:#1D1F24; --line-strong:#2A2D33;
+    --accent:#8791FF; --accent-soft:rgba(135,145,255,.1); --accent-line:rgba(135,145,255,.32);
+    --permit:#4FB07E; --permit-bg:rgba(79,176,126,.1);
+    --ask:#D0A24A; --ask-bg:rgba(208,162,74,.1);
+    --deny:#E0685E; --deny-bg:rgba(224,104,94,.1);
+    --taint:#B084D6; --taint-bg:rgba(176,132,214,.1); --taint-line:rgba(176,132,214,.35);
+    --shadow:none; --shadow-sm:none;
+  }}
+  :root[data-theme="light"]{
+    --paper:#FCFCFD; --surface:#FFFFFF; --surface-2:#F6F7F9; --inset:#F1F2F5;
+    --ink:#15171B; --ink-soft:#5C626B; --ink-faint:#9AA0A9; --ink-ghost:#C2C7CE; --line:#EBEDF0; --line-strong:#DCDFE4;
+    --accent:#3D46E0; --accent-soft:rgba(61,70,224,.07); --accent-line:rgba(61,70,224,.28);
+    --permit:#2E7D52; --permit-bg:rgba(46,125,82,.08); --ask:#9A7113; --ask-bg:rgba(154,113,19,.09);
+    --deny:#B23A31; --deny-bg:rgba(178,58,49,.08); --taint:#7A4F9E; --taint-bg:rgba(122,79,158,.08); --taint-line:rgba(122,79,158,.32);
+    --shadow:none; --shadow-sm:none;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B0C0E; --surface:#101114; --surface-2:#16181C; --inset:#0E0F12;
+    --ink:#ECEEF1; --ink-soft:#969CA6; --ink-faint:#5F6670; --ink-ghost:#3A3F47; --line:#1D1F24; --line-strong:#2A2D33;
+    --accent:#8791FF; --accent-soft:rgba(135,145,255,.1); --accent-line:rgba(135,145,255,.32);
+    --permit:#4FB07E; --permit-bg:rgba(79,176,126,.1); --ask:#D0A24A; --ask-bg:rgba(208,162,74,.1);
+    --deny:#E0685E; --deny-bg:rgba(224,104,94,.1); --taint:#B084D6; --taint-bg:rgba(176,132,214,.1); --taint-line:rgba(176,132,214,.35);
+    --shadow:none; --shadow-sm:none;
+  }
+
+  *{box-sizing:border-box;} body{background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.55; margin:0; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1140px; margin:0 auto; padding:clamp(26px,5vw,60px) clamp(16px,4vw,40px);}
+  .eyebrow{font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin:0;}
+  h1{font-size:clamp(1.7rem,4vw,2.5rem); line-height:1.1; letter-spacing:-.025em; font-weight:560; margin:.5rem 0 0; text-wrap:balance; max-width:22ch;}
+  .lede{font-size:clamp(1rem,1.6vw,1.14rem); color:var(--ink-soft); max-width:64ch; margin:1rem 0 0;} .lede b{color:var(--ink); font-weight:560;}
+  h2.sec{font-size:clamp(1.3rem,2.6vw,1.6rem); letter-spacing:-.02em; font-weight:540; margin:0 0 .3rem; text-wrap:balance;}
+  .sec-sub{color:var(--ink-soft); font-size:.98rem; max-width:66ch; margin:0 0 1.3rem;}
+  hr.rule{border:none; border-top:1px solid var(--line); margin:clamp(36px,6vw,58px) 0;}
+
+  /* legend */
+  .keys{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:1.6rem; padding:12px 15px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-sm);}
+  .keys .kt{font-size:.68rem; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; align-self:center;}
+  .keys .k{display:flex; align-items:center; gap:7px; font-size:.82rem; color:var(--ink-soft);}
+  .swatch{width:13px; height:13px; border-radius:4px; flex:none;}
+  .sw-flow{background:var(--accent);} .sw-taint{background:var(--taint);} .sw-record{background:var(--permit);}
+  .sw-signal{background:var(--ask);} .sw-guard{background:var(--deny);}
+
+  /* ================= SCHEMATIC ================= */
+  .schem{display:flex; flex-direction:column; gap:0;}
+  .lane{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-sm); overflow:hidden;}
+  .lane-h{display:flex; align-items:center; gap:11px; padding:10px 15px; background:var(--surface-2); border-bottom:1px solid var(--line);}
+  .lane-h .lo{font-family:var(--mono); font-weight:700; font-size:.95rem; color:var(--ink-faint); width:22px; text-align:center;}
+  .lane-h h4{margin:0; font-size:.96rem; font-weight:640;} .lane-h .desc{font-size:.8rem; color:var(--ink-faint); margin-left:2px;}
+  .lane-h .side{margin-left:auto; font-family:var(--mono); font-size:.68rem; color:var(--ink-faint);}
+  .lane-b{padding:13px 15px;}
+  .nrow{display:flex; flex-wrap:wrap; gap:8px;}
+  .n{font-size:.8rem; background:var(--surface-2); border:1px solid var(--line-strong); border-radius:8px; padding:6px 11px; display:flex; flex-direction:column; gap:1px;}
+  .n b{font-weight:600;} .n em{font-style:normal; font-size:.71rem; color:var(--ink-faint);}
+  .n.mono b{font-family:var(--mono); font-size:.77rem; font-weight:500;}
+  .n.off{opacity:.55; border-style:dashed;}
+  .n.acc{border-color:var(--accent-line); background:var(--accent-soft);}
+  .n.led{border-color:color-mix(in srgb,var(--permit) 30%,transparent);}
+  .n.led b{color:var(--permit);}
+
+  .chev{display:flex; align-items:center; justify-content:center; gap:10px; height:32px; position:relative;}
+  .chev::before,.chev::after{content:""; height:2px; width:26px; border-radius:2px;}
+  .chev.flow::before,.chev.flow::after{background:var(--accent);} .chev.flow i{color:var(--accent);}
+  .chev i{font-style:normal; font-size:1rem; font-weight:700;}
+  .chev span{font-family:var(--mono); font-size:.68rem; color:var(--ink-faint); position:absolute; right:calc(50% + 40px); white-space:nowrap;}
+  .chev span.r{right:auto; left:calc(50% + 40px);}
+
+  /* the gate lane emphasized */
+  .lane.gate{border-color:var(--accent-line); box-shadow:0 0 0 1px var(--accent-line), var(--shadow);}
+  .lane.gate .lane-h{background:var(--accent-soft);} .lane.gate .lane-h .lo{color:var(--accent);}
+  .gaterow{display:grid; grid-template-columns:1fr; gap:11px;}
+  .gpipe{display:flex; flex-wrap:wrap; align-items:center; gap:8px;}
+  .gstage{font-size:.8rem; background:var(--surface-2); border:1px solid var(--line-strong); border-radius:8px; padding:7px 11px; font-weight:500;}
+  .gpipe .arr{color:var(--ink-faint);}
+  .vout{display:inline-flex; gap:6px;}
+  .vv{font-family:var(--mono); font-size:.7rem; font-weight:700; padding:3px 9px; border-radius:6px;}
+  .vv.p{color:var(--permit); background:var(--permit-bg);} .vv.a{color:var(--ask); background:var(--ask-bg);} .vv.d{color:var(--deny); background:var(--deny-bg);}
+  .ginputs{display:flex; flex-wrap:wrap; gap:8px; padding-top:11px; border-top:1px dashed var(--line);}
+  .gi{display:inline-flex; align-items:center; gap:7px; font-size:.78rem; color:var(--ink-soft); background:var(--inset); border:1px solid var(--line); border-radius:8px; padding:6px 10px;}
+  .gi b{color:var(--ink); font-weight:600;} .gi.guard{color:var(--deny); border-color:color-mix(in srgb,var(--deny) 26%,transparent); background:var(--deny-bg);} .gi.guard b{color:var(--deny);}
+  .gi.taint{color:var(--taint); border-color:var(--taint-line); background:var(--taint-bg);} .gi.taint b{color:var(--taint);}
+
+  /* side callouts on planes / inference */
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:11px;} @media (max-width:720px){ .split{grid-template-columns:1fr;} }
+  .subcard{background:var(--surface-2); border:1px solid var(--line); border-radius:9px; padding:11px 13px;}
+  .subcard .sh{font-size:.8rem; font-weight:640; margin-bottom:3px; display:flex; align-items:center; gap:7px;}
+  .subcard .sh .tag{font-family:var(--mono); font-size:.62rem; color:var(--accent); border:1px solid var(--accent-line); border-radius:4px; padding:1px 5px; text-transform:uppercase; letter-spacing:.04em;}
+  .subcard .sh .tag.sec{color:var(--ink-faint); border-color:var(--line-strong);}
+  .subcard p{margin:0; font-size:.79rem; color:var(--ink-soft);}
+
+  .loopback{margin-top:14px; text-align:center; font-size:.83rem; color:var(--ink-soft); background:var(--surface); border:1px dashed var(--ask); border-radius:100px; padding:9px 18px;}
+  .loopback b{color:var(--ask);}
+
+  .callout{margin-top:22px; background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:var(--radius); padding:16px 18px;}
+  .callout h4{margin:0 0 5px; font-size:.98rem; font-weight:660;} .callout p{margin:0; font-size:.9rem; color:var(--ink-soft);} .callout b{color:var(--ink);}
+
+  /* ================= ATLAS ================= */
+  .pchip{display:inline-flex; align-items:center; gap:5px; font-size:.68rem; font-weight:600; padding:2px 9px; border-radius:100px; white-space:nowrap;}
+  .p-must{color:#fff; background:var(--accent);} .p-high{color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-line);}
+  .p-nice{color:var(--ink-soft); background:var(--surface-2); border:1px solid var(--line-strong);} .p-defer{color:var(--ink-faint); background:transparent; border:1px dashed var(--line-strong);}
+  .p-built{color:var(--permit); background:var(--permit-bg); border:1px solid color-mix(in srgb,var(--permit) 30%,transparent);}
+  .group{margin-bottom:24px;}
+  .group-head{display:flex; align-items:baseline; gap:11px; margin-bottom:11px; padding-bottom:8px; border-bottom:1px solid var(--line);}
+  .group-head .gk{font-family:var(--mono); font-size:.72rem; color:var(--accent); font-weight:700;} .group-head h3{margin:0; font-size:1.1rem; font-weight:640;} .group-head .gs{margin-left:auto; font-size:.78rem; color:var(--ink-faint);}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(256px,1fr)); gap:11px;}
+  .idea{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 13px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:8px;}
+  .idea h5{margin:0; font-size:.94rem; font-weight:620;} .idea p{margin:0; font-size:.82rem; color:var(--ink-soft); flex:1;}
+  .idea .tags{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .aud{font-family:var(--mono); font-size:.64rem; color:var(--ink-faint); border:1px solid var(--line-strong); border-radius:5px; padding:1px 6px; text-transform:uppercase;}
+  .where{font-family:var(--mono); font-size:.66rem; color:var(--ink-faint);}
+  .idea.core{border-color:var(--accent-line); box-shadow:0 0 0 1px var(--accent-line);}
+  .idea.core h5::after{content:" ↗ prototyped"; font-size:.64rem; font-weight:600; color:var(--accent);}
+
+  .take{display:grid; grid-template-columns:1fr 1fr; gap:16px;} @media (max-width:720px){ .take{grid-template-columns:1fr;} }
+  .take .col{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow-sm);}
+  .take .col.stop{border-color:color-mix(in srgb,var(--deny) 26%,transparent);}
+  .take h4{margin:0 0 12px; font-size:1rem; font-weight:640;} .take ol,.take ul{margin:0; padding:0; list-style:none; display:grid; gap:11px;}
+  .take li{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start; font-size:.9rem;} .take li .n2{font-family:var(--mono); font-weight:700; color:var(--accent); font-size:.82rem;} .take li .x{color:var(--deny); font-weight:700;}
+  .take li em{font-style:normal; color:var(--ink-soft); font-size:.83rem; display:block; margin-top:1px;} .take li b{font-weight:620;}
+
+  .foot{margin-top:clamp(36px,6vw,60px); padding-top:20px; border-top:1px solid var(--line); font-size:.84rem; color:var(--ink-faint);} .foot b{color:var(--ink-soft); font-weight:600;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Team OS · System schematic &amp; UI atlas</p>
+    <h1>How the machine is wired — and where a screen plugs in</h1>
+    <p class="lede">An engineering-grade view of the whole loop: the two planes, the ledger stack L1–L9, the mechanisms, the taint path, and the routed inference portfolio. Then a ranked atlas of every place a UI earns its keep. <b>Ideation, not a build spec.</b></p>
+    <div class="keys">
+      <span class="kt">Edges</span>
+      <span class="k"><span class="swatch sw-flow"></span> action flow</span>
+      <span class="k"><span class="swatch sw-signal"></span> learning signal (return)</span>
+      <span class="k"><span class="swatch sw-taint"></span> untrusted / taint path</span>
+      <span class="k"><span class="swatch sw-record"></span> the record</span>
+      <span class="k"><span class="swatch sw-guard"></span> guard</span>
+    </div>
+  </header>
+
+  <hr class="rule" />
+
+  <!-- ================= SCHEMATIC ================= -->
+  <section>
+    <h2 class="sec">The system, wired</h2>
+    <p class="sec-sub">Read top-to-bottom as one turn of the loop. Everything that acts funnels through <b>lane 3 — the gate</b>. Files are the floor; databases and indexes are derived from them and rebuildable. The loop closes at the bottom.</p>
+
+    <div class="schem">
+
+      <!-- 1 SENSE -->
+      <div class="lane">
+        <div class="lane-h"><span class="lo">1</span><h4>Sense</h4><span class="desc">the world enters — under your grants</span><span class="side">ingress</span></div>
+        <div class="lane-b">
+          <div class="split">
+            <div class="subcard">
+              <div class="sh"><span class="tag">Plane A</span> Team OS as MCP client</div>
+              <p>Holds its own connections; pulls &amp; acts ambiently on your behalf. <b>Full-trust, primary.</b> The proactive identity lives here.</p>
+            </div>
+            <div class="subcard">
+              <div class="sh"><span class="tag sec">Plane B</span> The door (MCP server)</div>
+              <p>Other harnesses reach <em>in</em> and query. <b>Propose-only, secondary</b> — never a writer. An API, no screen of its own.</p>
+            </div>
+          </div>
+          <div class="nrow" style="margin-top:11px;">
+            <span class="n"><b>Slack</b><em>channels · DMs (opt-in)</em></span>
+            <span class="n"><b>GitHub</b><em>PRs · issues · CI</em></span>
+            <span class="n off"><b>Gmail</b><em>opt-in · ledgered</em></span>
+            <span class="n off"><b>Drive</b><em>opt-in · ledgered</em></span>
+            <span class="n"><b>External client / A2A</b><em>untrusted →</em></span>
+          </div>
+        </div>
+      </div>
+      <div class="chev flow"><span>sources in</span><i>▼</i></div>
+
+      <!-- 2 REASON -->
+      <div class="lane">
+        <div class="lane-h"><span class="lo">2</span><h4>Reason &amp; propose</h4><span class="desc">the agent decides what to do</span><span class="side">compute</span></div>
+        <div class="lane-b">
+          <div class="nrow">
+            <span class="n acc"><b>Agent (harness)</b><em>plans, drafts</em></span>
+            <span class="n mono"><b>compile_footprint</b><em>cold start (C2)</em></span>
+            <span class="n mono"><b>loop.py + checkpoint</b><em>world's clock · FR4 resume</em></span>
+            <span class="n mono"><b>discovery.py</b><em>scout · ≤2/run</em></span>
+            <span class="n mono"><b>measurement.py</b><em>proxies · micro-pulse</em></span>
+          </div>
+          <div class="nrow" style="margin-top:8px;">
+            <span class="n taint" style="border-color:var(--taint-line); background:var(--taint-bg); color:var(--taint)"><b>taint filter §7.7</b><em>untrusted → values only, never plan structure</em></span>
+            <span class="n"><b>proposals → inbox</b><em>never corpus</em></span>
+          </div>
+        </div>
+      </div>
+      <div class="chev flow"><span>proposes an action</span><i>▼</i></div>
+
+      <!-- 3 GATE -->
+      <div class="lane gate">
+        <div class="lane-h"><span class="lo">3</span><h4>The gate</h4><span class="desc">deterministic · model-free (SE-1) · fail-closed · payload-inspecting</span><span class="side">hooks/gate.py · 300-line budget</span></div>
+        <div class="lane-b">
+          <div class="gaterow">
+            <div class="gpipe">
+              <span class="gstage">inspect payload</span><span class="arr">→</span>
+              <span class="gstage">classify: <b>class × reversibility</b></span><span class="arr">→</span>
+              <span class="gstage">match rules</span><span class="arr">→</span>
+              <span class="gstage">verdict</span>
+              <span class="vout" style="margin-left:4px;"><span class="vv p">permit</span><span class="vv a">ask</span><span class="vv d">deny</span></span>
+            </div>
+            <div class="ginputs">
+              <span class="gi">◀ input <b>Envelope</b> — interior dial (earned levels)</span>
+              <span class="gi">◀ input <b>Allow-policy</b> — exterior dial (deny-by-default)</span>
+              <span class="gi taint">◀ <b>taint verdict</b> — untrusted can't add a step</span>
+              <span class="gi guard">⛨ guard <b>safety agent + circuit breaker</b> — halt &amp; latch</span>
+              <span class="gi">⚿ <b>principal-auth (CN-1)</b> — signed · single-use · fresh</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chev flow"><span>writes BEFORE it acts</span><i>▼</i></div>
+
+      <!-- 4 RECORD -->
+      <div class="lane">
+        <div class="lane-h"><span class="lo">4</span><h4>Record &amp; stores</h4><span class="desc">files are the system of record · exit = clone</span><span class="side">hash-chained · per-principal crypto</span></div>
+        <div class="lane-b">
+          <div class="nrow">
+            <span class="n led mono"><b>L1</b><em>compiled memory</em></span>
+            <span class="n led mono"><b>L2</b><em>gate decisions</em></span>
+            <span class="n led mono"><b>L3</b><em>tool calls</em></span>
+            <span class="n led mono"><b>L7</b><em>loop runs</em></span>
+            <span class="n led mono"><b>L8</b><em>acceptance signals</em></span>
+            <span class="n led mono"><b>L9</b><em>deletion / erasure</em></span>
+          </div>
+          <div class="nrow" style="margin-top:8px;">
+            <span class="n mono"><b>stores/corpus</b><em>lineage-required</em></span>
+            <span class="n mono"><b>stores/skills</b><em>the registry</em></span>
+            <span class="n mono"><b>stores/profile</b><em>who you are</em></span>
+            <span class="n mono"><b>git</b><em>truth · rebuildable indexes</em></span>
+            <span class="n mono"><b>crypto_store</b><em>per-principal, never cross-readable</em></span>
+          </div>
+        </div>
+      </div>
+      <div class="chev flow"><span>act</span><i>▼</i></div>
+
+      <!-- 5 ACT -->
+      <div class="lane">
+        <div class="lane-h"><span class="lo">5</span><h4>Act &amp; deliver</h4><span class="desc">the work reaches the world — only what the gate permitted</span><span class="side">egress</span></div>
+        <div class="lane-b">
+          <div class="split">
+            <div class="subcard">
+              <div class="sh"><span class="tag">Inference</span> routed portfolio</div>
+              <p><b>primary sub · secondary subs · closed APIs · local.</b> Each model a role. Hooks fire locally, not who bills the tokens — <em>unless</em> a residency tier binds the endpoint (routing×disclosure seam, §14.4).</p>
+            </div>
+            <div class="subcard">
+              <div class="sh"><span class="tag sec">Egress</span> gated side-effects</div>
+              <p>Slack DM delivery · sends · mutations. Every one already carries an L2 pre-act record. The Day One Brief and digests land here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chev flow"><span>deliver → human</span><i>▼</i></div>
+
+      <!-- 6 REACT -->
+      <div class="lane">
+        <div class="lane-h"><span class="lo">6</span><h4>React &amp; learn</h4><span class="desc">the human answers; the system improves — deterministically</span><span class="side">no LM in the evidence path (CN-2)</span></div>
+        <div class="lane-b">
+          <div class="nrow">
+            <span class="n" style="border-color:color-mix(in srgb,var(--ask) 34%,transparent); background:var(--ask-bg)"><b>✓ / ✗ / edit</b><em>signal — edit-depth, not a rating</em></span>
+            <span class="n mono"><b>envelope.py</b><em>slow-widen · fast-narrow · on earned+signed accept</em></span>
+            <span class="n mono"><b>transfer.py</b><em>skill → person 2 (A-P3)</em></span>
+            <span class="n mono"><b>deletion.py</b><em>tombstone · shred · keeps chain</em></span>
+            <span class="n mono"><b>promotion_gate</b><em>default-deny sharing · PII/eval floor</em></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chev" style="height:26px;"><span class="r" style="left:calc(50% + 30px); color:var(--ask)">signals return ↑</span><i style="color:var(--ask)">▲</i></div>
+      <div class="loopback">↺ acceptance widens the envelope for the <b>next</b> turn — the loop closes back to lane 1</div>
+    </div>
+
+    <div class="callout">
+      <h4>What the schematic makes obvious</h4>
+      <p>There is exactly <b>one</b> place everything that acts must pass: <b>lane 3, the gate</b> — and exactly one floor everything lands on: <b>lane 4, the record</b>. That's why the two must-build screens are the <b>approval prompt</b> (decide, at the gate) and the <b>ledger explorer</b> (trust, at the record). The dials feed the gate from the side; the door is an API off lane 1; the mechanisms in lanes 2 &amp; 6 mostly run headless. A screen earns its place where a <b>human</b> has to touch the loop — nowhere else.</p>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- ================= ATLAS ================= -->
+  <section>
+    <h2 class="sec">The atlas — every place a screen could help</h2>
+    <p class="sec-sub">The schematic is the machine's loop; this is <b>your</b> jobs, grouped by intent. Each carries who it's for, where it lives, and how much it matters. The ↗ prototyped ones are clickable in the companion prototype.</p>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">A</span><h3>Get started</h3><span class="gs">cold start · one-time</span></div>
+      <div class="cards">
+        <div class="idea core"><h5>Connect-sources wizard</h5><p>Grant Slack / GitHub / opt-in Gmail &amp; Drive; each toggle ledgered. First thing a new user touches.</p><div class="tags"><span class="pchip p-must">Must</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Footprint review</h5><p>“Here's what I learned about you.” Correct the compiled model before it drives anything — the &lt;40% gate, visible.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea"><h5>First-brief &amp; posture pick</h5><p>Read the Day One Brief; choose a starting posture from command-and-control to lab.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">reuse: Slack</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">B</span><h3>Live with it day to day</h3><span class="gs">the initiative surface</span></div>
+      <div class="cards">
+        <div class="idea core"><h5>Delivery inbox</h5><p>Where drafts, briefs, proposals land — accept / reject / edit in one tap. The passive daily surface.</p><div class="tags"><span class="pchip p-built">Built</span><span class="aud">Principal</span><span class="where">reuse: Slack</span></div></div>
+        <div class="idea core"><h5>Catch-up view</h5><p>“Here's what moved while you were out” — windowed digest that respects the interrupt budget.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">reuse: Slack</span></div></div>
+        <div class="idea core"><h5>Interrupt-budget control</h5><p>Dial how often the agent may reach you. Guards against notification fatigue &amp; noise-driven over-trust.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">config UI</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">C</span><h3>Decide on the irreversible</h3><span class="gs">the gate</span></div>
+      <div class="cards">
+        <div class="idea core"><h5>Approval prompt</h5><p>The one screen the thesis can't skip: pre-act record read-only, principal-signed, approve / add-rule / deny.</p><div class="tags"><span class="pchip p-must">Must</span><span class="aud">Principal</span><span class="where">reuse: Slack / desktop</span></div></div>
+        <div class="idea core"><h5>Approval queue</h5><p>Several held at once — triage, batch-approve trusted patterns, deny the rest. For heavier days.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Taint / quarantine review</h5><p>Untrusted content that tried to add a step or recipient — see what was stripped and why.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Breaker status &amp; reset</h5><p>When the breaker trips and latches — see why, and re-arm deliberately, never silently.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">CLI / screen</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">D</span><h3>Steer the autonomy</h3><span class="gs">the dials</span></div>
+      <div class="cards">
+        <div class="idea core"><h5>The dials editor</h5><p>Interior envelope + exterior allow-policy + connectors + loops + posture, in one panel.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">UI over files</span></div></div>
+        <div class="idea core"><h5>Schedules / loops manager</h5><p>What fires, when, on the world's clock. Pause, edit, retire; see next run &amp; accept-rate.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">UI over files</span></div></div>
+        <div class="idea"><h5>Envelope trajectory</h5><p>How autonomy widened over time, per class — the earned-trust curve. Catches ratchet or oscillation.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">E</span><h3>Trust &amp; prove what happened</h3><span class="gs">the record</span></div>
+      <div class="cards">
+        <div class="idea core"><h5>Ledger / timeline explorer</h5><p>Every action, verdict, edit — searchable. Click a decision → full pre-act record + lineage.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Compliance export</h5><p>Reconstruct any AI-assisted decision for an auditor — EU AI Act Art. 12 shape, from records you own.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Compliance</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Lineage / provenance graph</h5><p>For any corpus fact: source → evidence → transformation → confidence.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Chain-integrity status</h5><p>A single honest badge: the hash-chain verifies (or where it broke). Tamper-evidence at a glance.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">CLI / widget</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">F</span><h3>See it get better</h3><span class="gs">skills &amp; transfer</span></div>
+      <div class="cards">
+        <div class="idea"><h5>Skill registry</h5><p>What skills exist, each with its own accept-rate &amp; edit-depth. Per-skill only — never a per-person leaderboard.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+        <div class="idea"><h5>Promotion review</h5><p>PR-style: promote a personal skill to shared. PII / eval-floor checks shown; default-deny sharing.</p><div class="tags"><span class="pchip p-defer">Defer</span><span class="aud">Team</span><span class="where">reuse: GitHub PR</span></div></div>
+        <div class="idea"><h5>Transfer measurement</h5><p>Does a skill improvement help a second person's agent? The A-P3 thesis, per pre-registered rule — no individuation.</p><div class="tags"><span class="pchip p-defer">Defer</span><span class="aud">Team</span><span class="where">new screen</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">G</span><h3>Keep it running &amp; honest</h3><span class="gs">cross-cutting</span></div>
+      <div class="cards">
+        <div class="idea core"><h5>Health / doctor</h5><p>One glance: connectors up, chain intact, breaker state, loops firing, last brief. Watches the whole loop.</p><div class="tags"><span class="pchip p-high">High</span><span class="aud">Principal</span><span class="where">CLI + widget</span></div></div>
+        <div class="idea core"><h5>Coverage / seam map</h5><p>What fraction of your fleet routes through the gate — the “govern the seam” honesty check, incl. shadow agents.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Admin</span><span class="where">new screen</span></div></div>
+        <div class="idea core"><h5>Model portfolio &amp; routing</h5><p>Which model plays which role, cost, and where a residency tier held a task to an attested endpoint.</p><div class="tags"><span class="pchip p-nice">Nice</span><span class="aud">Principal</span><span class="where">new screen</span></div></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-head"><span class="gk">H</span><h3>When the team joins</h3><span class="gs">growth — same surfaces, multiplied</span></div>
+      <div class="cards">
+        <div class="idea"><h5>Co-approval</h5><p>The gate, shared: any of N humans can veto before an action fires. The approval prompt, made multiplayer.</p><div class="tags"><span class="pchip p-defer">Defer</span><span class="aud">Team</span><span class="where">new screen</span></div></div>
+        <div class="idea"><h5>Shared ledger</h5><p>Team accountability over the same hash-chained record — who did what, on the record, together.</p><div class="tags"><span class="pchip p-defer">Defer</span><span class="aud">Team</span><span class="where">new screen</span></div></div>
+        <div class="idea"><h5>Team autonomy policy</h5><p>Envelope + allow-policy at team scope. The dials, shared — set once, respected by every member's agent.</p><div class="tags"><span class="pchip p-defer">Defer</span><span class="aud">Admin</span><span class="where">UI over files</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <section>
+    <h2 class="sec">So — what actually gets a screen</h2>
+    <p class="sec-sub">Idea generation is generous; the build is disciplined. The honest read from the schematic.</p>
+    <div class="take">
+      <div class="col">
+        <h4>Build, in this order</h4>
+        <ol>
+          <li><span class="n2">1</span><span><b>Approval prompt</b> (gate — lane 3)<em>The thesis made visible; weakest today. ↗ prototyped.</em></span></li>
+          <li><span class="n2">2</span><span><b>The dials editor</b><em>A UI over policy files that already exist. ↗ prototyped.</em></span></li>
+          <li><span class="n2">3</span><span><b>Ledger explorer + compliance export</b> (record — lane 4)<em>“Trust me” → “inspect it.” Unlocks the regulated buyer. ↗ prototyped.</em></span></li>
+          <li><span class="n2">4</span><span><b>Connect-sources wizard + footprint review</b><em>Cold start; the first hour decides adoption. ↗ prototyped.</em></span></li>
+          <li><span class="n2">5</span><span><b>Health / doctor</b><em>Cheap, high-trust; watches the whole loop. ↗ prototyped.</em></span></li>
+        </ol>
+      </div>
+      <div class="col stop">
+        <h4>Deliberately <span style="color:var(--deny)">not</span> a screen</h4>
+        <ul>
+          <li><span class="x">✕</span><span><b>The door (Plane B)</b><em>An API off lane 1 — propose-only. No screen to own.</em></span></li>
+          <li><span class="x">✕</span><span><b>Ledger writes &amp; commit path</b><em>Deterministic, hook-gated code (SE-1/CN-2). A model never decides; a UI never writes.</em></span></li>
+          <li><span class="x">✕</span><span><b>Any per-person comparison</b><em>No individuation surface — per-skill only, never a leaderboard. Invariant, not preference.</em></span></li>
+          <li><span class="x">✕</span><span><b>A big central console</b><em>Files are truth; screens are thin, rebuildable views. Don't build state that breaks exit = clone.</em></span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p><b>Grounded in</b> positioning v0.9 and the frozen architecture — §7.3 reversibility, §7.5 the two planes, §7.7 taint, §14.4 routing×disclosure, the no-individuation &amp; files-as-truth invariants, ledger schema L1–L9. <b>Companion:</b> the clickable prototype (`team-os-surfaces.html`) walks the seven screens live. This page is the map, not the build.</p>
+  </footer>
+
+</div>

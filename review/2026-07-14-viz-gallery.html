@@ -1,0 +1,269 @@
+<title>Team OS — Four Ways to See the System</title>
+<style>
+  :root {
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg:#e9ecee; --surface:#f7f8f9; --surface-2:#eef1f2; --plot:#fcfcfb;
+    --ink:#161c21; --soft:#4d5960; --faint:#859299; --line:#d3d9dc; --grid:rgba(20,25,29,.08);
+    --amber:#b0761c; --permit:#2f7d4f; --ask:#b0761c; --deny:#a8442c;
+    --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 10px 26px -18px rgba(20,25,29,.4);
+    --r0:#f2e7d4; --r1:#e8c78a; --r2:#d9a04a; --r3:#bd7c1e; --r4:#8a5510;
+  }
+  @media (prefers-color-scheme: dark){
+    :root {
+      --bg:#0c1013; --surface:#141a1f; --surface-2:#182027; --plot:#101619;
+      --ink:#e7edf0; --soft:#93a3ac; --faint:#63727b; --line:#26313a; --grid:rgba(232,238,241,.07);
+      --amber:#e7ab4d; --permit:#5fb488; --ask:#e7ab4d; --deny:#e5735a;
+      --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 14px 30px -20px rgba(0,0,0,.7);
+      --r0:#20211a; --r1:#463719; --r2:#755a21; --r3:#b0842f; --r4:#e7ab4d;
+    }
+  }
+  :root[data-theme="light"]{--bg:#e9ecee;--surface:#f7f8f9;--surface-2:#eef1f2;--plot:#fcfcfb;--ink:#161c21;--soft:#4d5960;--faint:#859299;--line:#d3d9dc;--grid:rgba(20,25,29,.08);--amber:#b0761c;--permit:#2f7d4f;--ask:#b0761c;--deny:#a8442c;--shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 26px -18px rgba(20,25,29,.4);--r0:#f2e7d4;--r1:#e8c78a;--r2:#d9a04a;--r3:#bd7c1e;--r4:#8a5510;}
+  :root[data-theme="dark"]{--bg:#0c1013;--surface:#141a1f;--surface-2:#182027;--plot:#101619;--ink:#e7edf0;--soft:#93a3ac;--faint:#63727b;--line:#26313a;--grid:rgba(232,238,241,.07);--amber:#e7ab4d;--permit:#5fb488;--ask:#e7ab4d;--deny:#e5735a;--shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -20px rgba(0,0,0,.7);--r0:#20211a;--r1:#463719;--r2:#755a21;--r3:#b0842f;--r4:#e7ab4d;}
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px;margin:0 auto;padding:clamp(1.4rem,4vw,3rem) clamp(1rem,4vw,2.4rem) 5rem;}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin:0 0 .7rem;}
+  h1{font-weight:660;letter-spacing:-.02em;font-size:clamp(1.5rem,3.6vw,2.2rem);margin:0 0 .5rem;text-wrap:balance;}
+  .dek{color:var(--soft);margin:0;max-width:64ch;}
+  .dek b{color:var(--ink);}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin:1.6rem 0 .4rem;}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.8rem 1rem;box-shadow:var(--shadow);}
+  .kpi .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .kpi .v{font-size:1.7rem;font-weight:680;letter-spacing:-.01em;margin-top:.15rem;font-variant-numeric:tabular-nums;}
+  .kpi .v small{font-size:.8rem;color:var(--soft);font-weight:600;}
+  .kpi .n{font-size:.74rem;color:var(--soft);}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1.6rem;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.15rem 1.2rem;box-shadow:var(--shadow);display:flex;flex-direction:column;}
+  .panel h2{font-size:1rem;margin:0;font-weight:640;display:flex;align-items:baseline;gap:.5rem;}
+  .panel h2 .form{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);border:1px solid var(--line);border-radius:5px;padding:.12rem .4rem;}
+  .panel .what{font-size:.82rem;color:var(--soft);margin:.35rem 0 .9rem;}
+  .plot{background:var(--plot);border:1px solid var(--line);border-radius:10px;padding:.6rem;position:relative;flex:1;min-height:0;}
+  svg{display:block;width:100%;height:auto;}
+  .cap{font-size:.76rem;color:var(--soft);margin:.8rem 0 0;}
+  .cap b{color:var(--ink);font-weight:620;}
+  .lg{display:flex;gap:.9rem;flex-wrap:wrap;font-family:var(--mono);font-size:.66rem;color:var(--soft);margin-top:.55rem;}
+  .lg span{display:inline-flex;align-items:center;gap:.35rem;}
+  .lg i{width:.7rem;height:.7rem;border-radius:3px;display:inline-block;}
+  .axl{font-family:var(--mono);font-size:10px;fill:var(--faint);}
+  .gridline{stroke:var(--grid);stroke-width:1;}
+
+  /* heatmap */
+  .hm{display:grid;gap:2px;overflow-x:auto;padding-bottom:.3rem;}
+  .hm .row{display:grid;grid-template-columns:34px repeat(24,1fr);gap:2px;align-items:center;}
+  .hm .rl{font-family:var(--mono);font-size:.62rem;color:var(--faint);}
+  .hm .cell{aspect-ratio:1;border-radius:2.5px;min-width:11px;background:var(--r0);border:1px solid var(--line);cursor:default;}
+  .hm .hdr{font-family:var(--mono);font-size:.54rem;color:var(--faint);text-align:center;}
+
+  .tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-120%);background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.68rem;padding:.34rem .5rem;border-radius:6px;white-space:nowrap;z-index:5;transition:opacity .08s;}
+
+  footer{margin-top:2.4rem;padding-top:1.1rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.7rem;color:var(--faint);}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
+  @media (max-width:760px){.grid{grid-template-columns:1fr;}.kpis{grid-template-columns:1fr;}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Team OS · visualization study</p>
+  <h1>Four ways to see the same system</h1>
+  <p class="dek">Same week of the agent's activity, four different data forms — <b>a heatmap of when it works, a flow of how the gate ruled, a distribution of how its drafts landed, and small multiples of each skill improving.</b> Pick the one that reads. Synthetic data, real ledger shapes (L1 / L2 / L7 / L8).</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="k">Unprompted deliverables</div><div class="v">37 <small>this week</small></div><div class="n">floor is 3 accepted / week</div></div>
+    <div class="kpi"><div class="k">Gate permitted</div><div class="v">82<small>%</small></div><div class="n">240 actions · 30 asked · 12 denied</div></div>
+    <div class="kpi"><div class="k">Accepted unedited or light</div><div class="v">73<small>%</small></div><div class="n">of delivered drafts</div></div>
+  </div>
+
+  <div class="grid">
+
+    <div class="panel">
+      <h2>When it works <span class="form">heatmap · day × hour</span></h2>
+      <p class="what">Deliverables land on the world's schedule, not yours — dense at dawn, quiet at night. This is the "unprompted" thesis, drawn.</p>
+      <div class="plot"><div class="hm" id="hm"></div><div class="tip" id="hmtip"></div></div>
+      <div class="lg" id="hmlg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>How the gate ruled <span class="form">flow · sankey</span></h2>
+      <p class="what">Every action the agent proposed, split by verdict — and every permitted <em>send</em> re-scanned before it left.</p>
+      <div class="plot"><svg id="sankey" viewBox="0 0 460 260" role="img" aria-label="Flow of 240 proposed actions into permit, ask, and deny."></svg></div>
+      <div class="lg">
+        <span style="color:var(--permit)"><i style="background:var(--permit)"></i>permit 198</span>
+        <span style="color:var(--ask)"><i style="background:var(--ask)"></i>ask 30</span>
+        <span style="color:var(--deny)"><i style="background:var(--deny)"></i>deny 12</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>How drafts landed <span class="form">distribution · beeswarm</span></h2>
+      <p class="what">Every delivered draft is one dot, placed by how much you edited it. Honest spread — not a single confident bar.</p>
+      <div class="plot"><svg id="swarm" viewBox="0 0 460 210" role="img" aria-label="Beeswarm of edit distance per deliverable."></svg><div class="tip" id="swtip"></div></div>
+      <div class="lg">
+        <span style="color:var(--permit)"><i style="background:var(--permit)"></i>accepted</span>
+        <span style="color:var(--ask)"><i style="background:var(--ask)"></i>light edit</span>
+        <span style="color:var(--deny)"><i style="background:var(--deny)"></i>heavy / rejected</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Each skill improving <span class="form">small multiples</span></h2>
+      <p class="what">Quality per skill across versions. The dashed line is the promotion floor — clear it and the skill can be shared.</p>
+      <div class="plot"><div id="sm" style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;"></div></div>
+      <p class="cap">Six skills, one <b>below floor</b> (invoices) — held back from the shared repo by CI, exactly as designed.</p>
+    </div>
+
+  </div>
+
+  <footer>Synthetic data, real ledger shapes · per-skill, never per-person · a study to pick a direction, not a finished surface.</footer>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  var ramp=['var(--r0)','var(--r1)','var(--r2)','var(--r3)','var(--r4)'];
+
+  // ---------- 1. HEATMAP (day x hour) ----------
+  var days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  // deterministic-ish: mornings busy weekdays, light weekends
+  function cnt(d,h){
+    var base=0;
+    if(h>=6&&h<=9) base=3+((d*7+h)%3);           // dawn briefs
+    else if(h>=11&&h<=14) base=1+((d+h)%2);        // midday
+    else if(h>=17&&h<=19) base=1+((d*h)%2);        // evening
+    else if(h>=1&&h<=5) base=0;                     // night quiet
+    else base=(d+h)%2? 0:1;
+    if(d>=5) base=Math.max(0, base-2);              // weekend calmer
+    return base;
+  }
+  var maxc=0, all=[];
+  for(var d=0;d<7;d++)for(var h=0;h<24;h++){var c=cnt(d,h);all.push(c);if(c>maxc)maxc=c;}
+  function bucket(c){ if(c<=0) return 0; return Math.min(4, 1+Math.floor((c-1)/Math.max(1,maxc-1)*3.99)); }
+  var hm=document.getElementById('hm'), hmtip=document.getElementById('hmtip');
+  var hdr=document.createElement('div'); hdr.className='row';
+  hdr.appendChild(Object.assign(document.createElement('div'),{className:'rl'}));
+  for(var h=0;h<24;h++){var hd=document.createElement('div');hd.className='hdr';hd.textContent=(h%6===0)?h:'';hdr.appendChild(hd);}
+  hm.appendChild(hdr);
+  days.forEach(function(dn,di){
+    var row=document.createElement('div'); row.className='row';
+    var rl=document.createElement('div'); rl.className='rl'; rl.textContent=dn; row.appendChild(rl);
+    for(var hh=0;hh<24;hh++){ var c=cnt(di,hh), b=bucket(c);
+      var cell=document.createElement('div'); cell.className='cell'; cell.style.background=ramp[b];
+      if(b>=3) cell.style.borderColor='transparent';
+      (function(dn,hh,c){ cell.addEventListener('pointermove',function(e){ var r=hm.getBoundingClientRect();
+        hmtip.style.opacity=1; hmtip.style.left=(e.clientX-r.left)+'px'; hmtip.style.top=(e.clientY-r.top)+'px';
+        hmtip.textContent=dn+' '+String(hh).padStart(2,'0')+':00 — '+c+(c===1?' deliverable':' deliverables'); });
+        cell.addEventListener('pointerleave',function(){hmtip.style.opacity=0;});
+      })(dn,hh,c);
+      row.appendChild(cell);
+    }
+    hm.appendChild(row);
+  });
+  var lg=document.getElementById('hmlg'); lg.innerHTML='<span>less</span>'+ramp.map(function(r){return '<i style="background:'+r+'"></i>';}).join('')+'<span>more</span>';
+
+  // ---------- 2. SANKEY ----------
+  (function(){
+    var svg=document.getElementById('sankey'), W=460,H=260, x0=20, x1=200, x2=250, x3=430;
+    var total=240, permit=198, ask=30, deny=12, sends=44;
+    var top=20, colH=H-40, scale=colH/total;
+    // source bar
+    svg.appendChild(el('rect',{x:x0,y:top,width:14,height:colH,rx:3,fill:'var(--amber)',opacity:.85}));
+    var st=el('text',{x:x0,y:top-6,class:'axl'}); st.textContent='proposed 240'; svg.appendChild(st);
+    var groups=[{n:'permit',v:permit,c:'var(--permit)'},{n:'ask',v:ask,c:'var(--ask)'},{n:'deny',v:deny,c:'var(--deny)'}];
+    var sy=top, ty=top;
+    groups.forEach(function(g){
+      var th=g.v*scale;
+      // target bar
+      svg.appendChild(el('rect',{x:x3-14,y:ty,width:14,height:th,rx:3,fill:g.c}));
+      var tl=el('text',{x:x3-20,y:ty+th/2+3,'text-anchor':'end',class:'axl'}); tl.textContent=g.n+' '+g.v; tl.style.fill=g.c; svg.appendChild(tl);
+      // link
+      var y1a=sy, y1b=sy+th, y2a=ty, y2b=ty+th, mid=(x1+x3-14)/2;
+      var d='M '+(x0+14)+' '+y1a+' C '+mid+' '+y1a+' '+mid+' '+y2a+' '+(x3-14)+' '+y2a+
+            ' L '+(x3-14)+' '+y2b+' C '+mid+' '+y2b+' '+mid+' '+y1b+' '+(x0+14)+' '+y1b+' Z';
+      svg.appendChild(el('path',{d:d,fill:g.c,opacity:.16}));
+      sy+=th; ty+=th;
+    });
+    // send re-scan sub-note under permit
+    var yScan=top+permit*scale+14;
+    var sc=el('text',{x:x3-14,y:top+permit*scale-6,'text-anchor':'end',class:'axl'}); sc.textContent='↳ '+sends+' sends re-scanned, 0 leaked'; sc.style.fill='var(--soft)'; svg.appendChild(sc);
+  })();
+
+  // ---------- 3. BEESWARM ----------
+  (function(){
+    var svg=document.getElementById('swarm'), tip=document.getElementById('swtip'), W=460,H=210, mL=14,mR=14,mT=18,mB=34;
+    var pw=W-mL-mR, axisY=H-mB;
+    // synthetic edit distances: many near 0, a tail
+    var skills=['digest','release-notes','triage','standup','pr-summary','invoices'];
+    var vals=[0,0,0,0.01,0.02,0.02,0.03,0.03,0.04,0.05,0.05,0.06,0.07,0.08,0.09,0.11,0.12,0.14,0.16,0.18,0.19,0.21,0.24,0.27,0.3,0.33,0.38,0.42,0.05,0.01,0,0.02,0.06,0.1,0.15,0.22,0.44,0.55];
+    var XMAX=0.6;
+    function sx(v){return mL+(v/XMAX)*pw;}
+    // axis + threshold lines
+    svg.appendChild(el('line',{x1:mL,y1:axisY,x2:W-mR,y2:axisY,class:'gridline'}));
+    [0,0.1,0.2,0.3,0.4,0.5,0.6].forEach(function(t){ var x=sx(t);
+      svg.appendChild(el('line',{x1:x,y1:mT,x2:x,y2:axisY,class:'gridline'}));
+      var lb=el('text',{x:x,y:axisY+14,'text-anchor':'middle',class:'axl'}); lb.textContent=t.toFixed(1); svg.appendChild(lb);
+    });
+    var xlab=el('text',{x:W/2,y:H-4,'text-anchor':'middle',class:'axl'}); xlab.textContent='edit distance  (0 = accepted unedited  →  1 = fully rewritten)'; svg.appendChild(xlab);
+    // threshold markers
+    [{v:0.05,t:'accept'},{v:0.2,t:'light'}].forEach(function(m){ var x=sx(m.v);
+      svg.appendChild(el('line',{x1:x,y1:mT-4,x2:x,y2:axisY,stroke:'var(--faint)','stroke-dasharray':'2 3','stroke-width':1,opacity:.6}));
+    });
+    // beeswarm stacking
+    var placed=[];
+    vals.slice().sort(function(a,b){return a-b;}).forEach(function(v,i){
+      var x=sx(v), r=4.2, y=axisY-8;
+      // find a y that doesn't collide
+      var tries=0;
+      while(tries<40){ var ok=true;
+        for(var p=0;p<placed.length;p++){ var dx=placed[p].x-x, dy=placed[p].y-y; if(dx*dx+dy*dy<(r*2+1)*(r*2+1)){ok=false;break;} }
+        if(ok) break; y-= (tries%2? -1:1)*(6+tries*0.4); y=Math.min(axisY-8,Math.max(mT+2,y)); tries++;
+      }
+      placed.push({x:x,y:y});
+      var col = v<=0.05?'var(--permit)': v<=0.2?'var(--ask)':'var(--deny)';
+      var c=el('circle',{cx:x,cy:y,r:r,fill:col,stroke:'var(--plot)','stroke-width':1.2});
+      var sk=skills[i%skills.length];
+      c.addEventListener('pointermove',function(e){ var rr=svg.getBoundingClientRect();
+        tip.style.opacity=1; tip.style.left=(e.clientX-rr.left)+'px'; tip.style.top=(e.clientY-rr.top)+'px';
+        tip.textContent=sk+' · edit '+v.toFixed(2)+' — '+(v<=0.05?'accepted':v<=0.2?'light edit':'heavy'); });
+      c.addEventListener('pointerleave',function(){tip.style.opacity=0;});
+      svg.appendChild(c);
+    });
+  })();
+
+  // ---------- 4. SMALL MULTIPLES ----------
+  (function(){
+    var sm=document.getElementById('sm');
+    var data=[
+      {n:'digest',       q:[.62,.7,.76,.82,.86]},
+      {n:'release-notes',q:[.55,.63,.71,.78,.84]},
+      {n:'triage',       q:[.68,.72,.75,.79,.81]},
+      {n:'standup',      q:[.6,.66,.69,.74,.77]},
+      {n:'pr-summary',   q:[.7,.74,.8,.83,.88]},
+      {n:'invoices',     q:[.5,.55,.58,.6,.63]}
+    ];
+    var FLOOR=0.7, W=180,H=64, mT=8,mB=12,mL=6,mR=24;
+    data.forEach(function(s){
+      var wrap=document.createElement('div'); wrap.style.cssText='background:var(--plot);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem;';
+      var svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':s.n+' quality trend'}); svg.style.width='100%'; svg.style.height='auto';
+      var pw=W-mL-mR, ph=H-mT-mB, n=s.q.length;
+      function X(i){return mL+(i/(n-1))*pw;} function Y(v){return mT+(1-(v-0.4)/0.6)*ph;}
+      // floor
+      svg.appendChild(el('line',{x1:mL,y1:Y(FLOOR),x2:mL+pw,y2:Y(FLOOR),stroke:'var(--faint)','stroke-dasharray':'3 3','stroke-width':1,opacity:.7}));
+      var fl=el('text',{x:mL+pw+3,y:Y(FLOOR)+3,class:'axl'}); fl.textContent='.70'; svg.appendChild(fl);
+      // line
+      var dpath=''; s.q.forEach(function(v,i){ dpath+=(i?' L ':'M ')+X(i)+' '+Y(v); });
+      svg.appendChild(el('path',{d:dpath,fill:'none',stroke:'var(--amber)','stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'}));
+      // endpoint
+      var last=s.q[n-1], below=last<FLOOR;
+      svg.appendChild(el('circle',{cx:X(n-1),cy:Y(last),r:3.4,fill:below?'var(--deny)':'var(--amber)',stroke:'var(--plot)','stroke-width':1.5}));
+      var vt=el('text',{x:X(n-1)+3,y:Y(last)-4,class:'axl'}); vt.textContent=last.toFixed(2); vt.style.fill=below?'var(--deny)':'var(--ink)'; svg.appendChild(vt);
+      var head=document.createElement('div'); head.style.cssText='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.2rem;';
+      head.innerHTML='<span style="font-family:var(--mono);font-size:.66rem;font-weight:640;color:var(--ink)">'+s.n+'</span>'+
+        (below?'<span style="font-family:var(--mono);font-size:.56rem;color:var(--deny)">below floor</span>':'<span style="font-family:var(--mono);font-size:.56rem;color:var(--permit)">shareable</span>');
+      wrap.appendChild(head); wrap.appendChild(svg); sm.appendChild(wrap);
+    });
+  })();
+})();
+</script>

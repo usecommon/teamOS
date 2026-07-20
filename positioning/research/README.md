@@ -2,6 +2,8 @@
 
 Market/competitive research feeding the positioning docs (`../positioning-v*.md`). Each entry: the question, the verdict, and where the full findings live. Conducted 2026-07-12 (model: Claude Fable 5) via web research; treat 2026-dated events as best-effort current, some unverifiable.
 
+**➡️ Synthesis:** all 14 threads consolidated into eight named industry trends in [`2026-07-industry-trends.md`](2026-07-industry-trends.md) — the standalone industry-trend read, with a "verify before quoting" list for the soft numbers.
+
 ## Threads
 
 | # | Question | Verdict (one line) | Full findings |
