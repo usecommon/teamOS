@@ -8,9 +8,10 @@ protected paths the gate can only READ.
 
     onboarding / run:
       python3 scripts/teamos.py doctor
-      python3 scripts/teamos.py compile  --footprint <dir> [--cc ~/.claude] [--out stores]
+      python3 scripts/teamos.py compile  --footprint <dir> [--cc ~/.claude] [--out stores] [--extract]
       python3 scripts/teamos.py brief     [--out stores]
       python3 scripts/teamos.py deliver   [--out stores]   # live brief (dry-run until configured)
+      python3 scripts/teamos.py harvest                    # ✓/✗ reactions on last brief -> L8
       python3 scripts/teamos.py loop      [--out stores]
       python3 scripts/teamos.py verify
 
@@ -84,8 +85,15 @@ def cmd_doctor(args):
 
 def cmd_compile(args):
     import compile_footprint as cf
+    import extract
     out = Path(args.out)
-    items = cf.load_footprint(args.footprint)
+    if args.extract and not extract.available():
+        print("  note: --extract set but markitdown not installed; run "
+              "`pip install markitdown` for real-footprint extraction. Markdown only for now.")
+    items = cf.load_footprint(args.footprint, extract_nonmd=args.extract)
+    n_extracted = sum(1 for i in items if i["provenance"].get("extracted_via", "").startswith("markitdown"))
+    if args.extract:
+        print(f"  extracted {n_extracted} non-markdown file(s) via markitdown (local, deterministic)")
     cc = Path(args.cc).expanduser() if args.cc else None
     result = cf.compile_footprint(
         items, out, REPO / "ledgers",
@@ -147,6 +155,43 @@ def cmd_deliver(args):
     except brief.GateBlocked as gb:
         print(f"gate blocked the send (breaker/envelope): {gb}")
         return 1
+
+
+def cmd_harvest(args):
+    """Harvest ✓/✗ reactions on the most recently delivered brief -> L8.
+    Deterministic (reactions.get only, no model, SE-1) and principal-authenticated
+    (only the principal's reactions count, CN-1). No-op in dry-run / no reactions."""
+    import day_one_brief as brief
+    import connectors
+    import slack_client
+    ch = connectors.notification_channel()
+    if not ch or str(ch.get("target", "")).startswith("SET_"):
+        print("(no enabled Slack DM target — nothing to harvest)")
+        return 0
+    principal = ch.get("principal_user_id") or ch["target"]
+    l2 = _ledger_dir(args) / "l2.jsonl"
+    channel_ts = None
+    if l2.exists():
+        for line in reversed(l2.read_text().splitlines()):
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if r.get("rule_id") == "send-receipt" and r.get("outcome") == "send_succeeded":
+                tgt = r["proposed_action"].get("target", "")
+                if "/" in tgt:
+                    channel_ts = tgt.rsplit("/", 1)
+                    break
+    if not channel_ts:
+        print("(no delivered brief found in the ledger to harvest)")
+        return 0
+    channel, ts = channel_ts
+    client = slack_client.from_env_or_dry()
+    recs = brief.harvest_reactions(channel, ts, principal, client, _ledger_dir(args))
+    accepted = brief.count_accepted(recs)
+    print(f"harvested {len(recs)} reaction(s) from {channel}/{ts}; "
+          f"{accepted} principal-authenticated ✓ recorded to L8")
+    return 0
 
 
 # --- operator controls: the incident surface (principal-invoked, direct) ------
@@ -249,9 +294,12 @@ def main():
     sub.add_parser("doctor").set_defaults(fn=cmd_doctor)
     c = sub.add_parser("compile"); c.add_argument("--footprint", required=True)
     c.add_argument("--cc", default="~/.claude"); c.add_argument("--out", default="stores")
+    c.add_argument("--extract", action="store_true",
+                   help="also ingest non-markdown files (pdf/docx/…) via local markitdown")
     c.set_defaults(fn=cmd_compile)
     b = sub.add_parser("brief"); b.add_argument("--out", default="stores"); b.set_defaults(fn=cmd_brief)
     dv = sub.add_parser("deliver"); dv.add_argument("--out", default="stores"); dv.set_defaults(fn=cmd_deliver)
+    hv = sub.add_parser("harvest"); hv.set_defaults(fn=cmd_harvest)
     l = sub.add_parser("loop"); l.add_argument("--out", default="stores")
     l.add_argument("--run-id", default="loop-1"); l.set_defaults(fn=cmd_loop)
     sub.add_parser("verify").set_defaults(fn=cmd_verify)

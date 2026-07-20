@@ -35,6 +35,22 @@ class CLISmoke(unittest.TestCase):
             self.assertEqual(b.returncode, 0, b.stderr)
             self.assertIn("Day One Brief", b.stdout)
 
+    def test_compile_extract_flag_runs(self):
+        # --extract is backward-safe on a markdown-only footprint
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "stores"
+            c = run("compile", "--footprint", str(FOOTPRINT), "--cc", str(CC),
+                    "--out", str(out), "--extract")
+            self.assertEqual(c.returncode, 0, c.stderr)
+            self.assertIn("extracted", c.stdout)
+
+    def test_harvest_noop_without_target(self):
+        # no enabled DM target in shipped config -> graceful no-op, exit 0
+        with tempfile.TemporaryDirectory() as tmp:
+            r = run("--ledger-dir", tmp, "harvest")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("nothing to harvest", r.stdout)
+
 
 class OperatorControls(unittest.TestCase):
     """The incident surface: breaker/envelope/inbox reachable from the CLI, and
