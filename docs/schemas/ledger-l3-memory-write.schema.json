@@ -19,6 +19,7 @@
     },
     "transformation": { "type": "string", "description": "Load-bearing lineage field: the operation that produced this content from its sources (e.g. adapter-translation, compilation-distill, verbatim-copy)" },
     "confidence": { "type": "string", "description": "Load-bearing lineage field: writer's confidence in the content (graded label or 'unrated')" },
+    "basis": { "type": "string", "enum": ["extracted", "inferred", "ambiguous"], "description": "Derivation basis (Graphify-borrow): weakest edge among the write's sources — extracted (read directly) / inferred (agent-resolved) / ambiguous (untrusted or uncertain → routes to human review). Optional; missing reads as ambiguous." },
     "update_history_ref": { "$ref": "ledger-common.schema.json#/$defs/ref", "description": "Load-bearing lineage field: reference to prior versions of the target (fork: git history, L6)" },
     "trust_label": { "type": "string", "description": "Cryptographic trust label surviving derivation and cross-session persistence (MemLineage)" },
     "parent_ids": {

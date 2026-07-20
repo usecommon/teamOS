@@ -32,6 +32,17 @@ class DeliveryClients(unittest.TestCase):
         self.assertEqual(c.sent, [("DM_X", "hello")])
         self.assertEqual(c.reactions_get("DM_X", ts), [])
 
+    def test_reactions_get_raises_on_api_error(self):
+        # a swallowed error would deflate the A-A4 floor — must raise, not [].
+        c = slack_client.HttpSlackClient("xoxb-test")
+        c._call = lambda method, payload: {"ok": False, "error": "invalid_auth"}
+        with self.assertRaises(RuntimeError):
+            c.reactions_get("C1", "1.0")
+        c._call = lambda method, payload: {"ok": True, "message": {
+            "reactions": [{"name": "white_check_mark", "users": ["U1"]}]}}
+        self.assertEqual(c.reactions_get("C1", "1.0"),
+                         [{"name": "white_check_mark", "users": ["U1"]}])
+
 
 if __name__ == "__main__":
     unittest.main()

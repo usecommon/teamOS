@@ -80,6 +80,10 @@ class HttpSlackClient(SlackClient):
 
     def reactions_get(self, channel, ts):
         resp = self._call("reactions.get", {"channel": channel, "timestamp": ts})
+        if not resp.get("ok"):
+            # raise, don't return [] — a swallowed auth/rate-limit error would be
+            # indistinguishable from "no reactions" and silently deflate the floor.
+            raise RuntimeError(f"slack reactions.get error: {resp.get('error')}")
         msg = resp.get("message", {})
         return [{"name": r["name"], "users": r.get("users", [])} for r in msg.get("reactions", [])]
 

@@ -17,6 +17,18 @@ import measurement  # noqa: E402
 import promotion_gate as pg  # noqa: E402
 import transfer  # noqa: E402
 
+
+class RestoreConfinement(unittest.TestCase):
+    def test_escape_and_symlink_refused(self):
+        d = Path(tempfile.mkdtemp())
+        # an escaping relative path never reaches the git call or a write
+        with self.assertRaises(ValueError):
+            transfer.restore_version(str(d), "../escape.txt", "HEAD")
+        # a symlink at the target is refused (would redirect the write outside)
+        (d / "link").symlink_to("/etc/hosts")
+        with self.assertRaises(ValueError):
+            transfer.restore_version(str(d), "link", "HEAD")
+
 SIGNED = {"signed_commit": True, "reproducible_build": True, "hook_diff_reviewed": True}
 
 

@@ -139,6 +139,7 @@ groups:
       construction.
     fields:
       - ledger-l3-memory-write.schema.json#/authoring_agent
+      - ledger-l3-memory-write.schema.json#/basis
       - ledger-l3-memory-write.schema.json#/confidence
       - ledger-l3-memory-write.schema.json#/parent_ids
       - ledger-l3-memory-write.schema.json#/transformation

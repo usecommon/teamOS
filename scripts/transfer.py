@@ -14,6 +14,7 @@ Design (pre-registered before any data):
 
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -116,9 +117,20 @@ def passes_preregistered_rule(receiver_deltas):
 # --- rollback (git-backed L6, byte-identical) ---------------------------------
 
 def restore_version(repo_dir, rel_path, sha):
-    """Restore a file to a prior git version byte-identically (rollback)."""
+    """Restore a file to a prior git version byte-identically (rollback).
+
+    Defense-in-depth: confine the write to under repo_dir (git already rejects
+    ../ and absolute tree paths, but a committed symlink at rel_path could
+    otherwise redirect the write outside the repo). Mirrors deletion._shred."""
+    root = Path(repo_dir).resolve()
+    raw = root / rel_path                       # unresolved: symlink check must see the leaf
+    if raw.is_symlink():
+        raise ValueError(f"restore target is a symlink (refused): {rel_path}")
+    resolved = raw.resolve()                    # follows any parent-dir symlink
+    if resolved != root and not str(resolved).startswith(str(root) + os.sep):
+        raise ValueError(f"restore target escapes repo: {rel_path}")
     content = subprocess.run(
         ["git", "-C", str(repo_dir), "show", f"{sha}:{rel_path}"],
         capture_output=True, check=True).stdout
-    (Path(repo_dir) / rel_path).write_bytes(content)
+    raw.write_bytes(content)
     return content

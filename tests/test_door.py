@@ -115,6 +115,13 @@ class GateProcessor(unittest.TestCase):
         self.assertTrue((sd / "SKILL.md").exists())
         self.assertTrue((sd / "skill.json").exists())
         self.assertTrue((sd / "SKILL.lineage.json").exists())
+        # basis: door-originated skill is untrusted -> ambiguous, and the on-disk
+        # sidecar must AGREE with the L3 ledger (no overstated persisted basis).
+        sidecar = json.loads((sd / "SKILL.lineage.json").read_text())
+        self.assertEqual(sidecar["basis"], "ambiguous")
+        self.assertEqual(sidecar["sources"][0]["basis"], "ambiguous")
+        l3_last = json.loads((self.d / "l3.jsonl").read_text().splitlines()[-1])
+        self.assertEqual(l3_last["basis"], sidecar["basis"])
 
     def test_skill_proposal_missing_purpose_rejected(self):
         d = self.inbox / "proposals"
