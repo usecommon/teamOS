@@ -2,3 +2,6 @@ jsonschema>=4.20
 referencing>=0.30
 PyYAML>=6.0
 cryptography>=42
+
+# optional (FK4 real-footprint extraction, local-only): pip install markitdown
+# markitdown

@@ -10,6 +10,7 @@ protected paths the gate can only READ.
       python3 scripts/teamos.py doctor
       python3 scripts/teamos.py compile  --footprint <dir> [--cc ~/.claude] [--out stores]
       python3 scripts/teamos.py brief     [--out stores]
+      python3 scripts/teamos.py deliver   [--out stores]   # live brief (dry-run until configured)
       python3 scripts/teamos.py loop      [--out stores]
       python3 scripts/teamos.py verify
 
@@ -121,6 +122,33 @@ def cmd_verify(args):
     return verify_chains.main()
 
 
+def cmd_deliver(args):
+    """Deliver the Day One Brief live (FK5/FK6): assemble -> gated send. Dry-run
+    until config/connectors.json has an enabled Slack DM target AND SLACK_BOT_TOKEN
+    is set. The send traverses the FK2 gate before any post (breaker/envelope/
+    payload-scan apply). This is how the A-A4 streak starts on a real footprint."""
+    import day_one_brief as brief
+    import connectors
+    import slack_client
+    out = Path(args.out)
+    jg = json.loads((out / "job_graph.json").read_text())
+    b = brief.assemble_brief(jg, out)
+    ch = connectors.notification_channel()
+    if not ch or str(ch.get("target", "")).startswith("SET_"):
+        print(brief.render_dm(b))
+        print("\n(dry run — set an enabled Slack DM target in config/connectors.json to deliver live)")
+        return 0
+    client = slack_client.from_env_or_dry()
+    dry = isinstance(client, slack_client.DryRunSlack)
+    try:
+        ts, _ = brief.deliver(b, ch["target"], client, _ledger_dir(args))
+        print(f"delivered to {ch['target']} (ts={ts}){' [dry-run — no SLACK_BOT_TOKEN]' if dry else ''}")
+        return 0
+    except brief.GateBlocked as gb:
+        print(f"gate blocked the send (breaker/envelope): {gb}")
+        return 1
+
+
 # --- operator controls: the incident surface (principal-invoked, direct) ------
 
 def cmd_status(args):
@@ -223,6 +251,7 @@ def main():
     c.add_argument("--cc", default="~/.claude"); c.add_argument("--out", default="stores")
     c.set_defaults(fn=cmd_compile)
     b = sub.add_parser("brief"); b.add_argument("--out", default="stores"); b.set_defaults(fn=cmd_brief)
+    dv = sub.add_parser("deliver"); dv.add_argument("--out", default="stores"); dv.set_defaults(fn=cmd_deliver)
     l = sub.add_parser("loop"); l.add_argument("--out", default="stores")
     l.add_argument("--run-id", default="loop-1"); l.set_defaults(fn=cmd_loop)
     sub.add_parser("verify").set_defaults(fn=cmd_verify)

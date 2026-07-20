@@ -27,6 +27,7 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import hashchain  # noqa: E402
+import extract  # noqa: E402
 from adapter import adapter  # noqa: E402
 
 COMPILER_AGENT_ID = "teamos-compiler/0.1"
@@ -58,16 +59,30 @@ def _parse_frontmatter(text):
     return adapter._parse_frontmatter(text)
 
 
-def load_footprint(artifacts_dir, provenance=None):
-    """Read files into ingest items: [{path, content, provenance}]."""
+def load_footprint(artifacts_dir, provenance=None, extract_nonmd=False, converter=None):
+    """Read files into ingest items: [{path, content, provenance}].
+
+    Default: markdown only (unchanged). With extract_nonmd=True, local doc
+    formats (pdf/docx/xlsx/html/...) are converted to markdown via the LOCAL,
+    deterministic markitdown adapter (no LLM, no network) and tagged
+    extracted_via=markitdown-<ext>. Extraction failures are skipped, never a
+    silent bad exemplar."""
+    base = provenance or {"source_id": "footprint", "type": "local-folder",
+                          "workspace": str(artifacts_dir)}
     items = []
-    for path in sorted(Path(artifacts_dir).glob("*.md")):
-        items.append({
-            "path": str(path),
-            "content": path.read_text(),
-            "provenance": provenance or {"source_id": "footprint", "type": "local-folder",
-                                         "workspace": str(artifacts_dir)},
-        })
+    for path in sorted(Path(artifacts_dir).iterdir()):
+        if not path.is_file():
+            continue
+        suf = path.suffix.lower()
+        if suf == ".md":
+            items.append({"path": str(path), "content": path.read_text(), "provenance": base})
+        elif extract_nonmd and suf in extract.LOCAL_EXTS:
+            try:
+                content = extract.extract(path, converter=converter)
+            except Exception:
+                continue
+            items.append({"path": str(path), "content": content,
+                          "provenance": {**base, "extracted_via": extract.transformation_for(path)}})
     return items
 
 
