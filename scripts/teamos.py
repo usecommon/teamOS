@@ -8,6 +8,7 @@ protected paths the gate can only READ.
 
     onboarding / run:
       python3 scripts/teamos.py doctor
+      python3 scripts/teamos.py onboard   [--footprint <dir>] [--extract]   # readiness preflight
       python3 scripts/teamos.py install   [--apply]        # activate the gate hook (preview by default)
       python3 scripts/teamos.py compile  --footprint <dir> [--cc ~/.claude] [--out stores] [--extract]
       python3 scripts/teamos.py brief     [--out stores]
@@ -130,6 +131,87 @@ def cmd_loop(args):
 def cmd_verify(args):
     import verify_chains
     return verify_chains.main()
+
+
+def cmd_onboard(args):
+    """FK6c readiness preflight: deps + gate + connectors + a compile-once smoke,
+    all READ-ONLY (temp dirs; no real stores/ledgers/.claude touched). Reports
+    what's ready and exactly what's missing to start the A-A4 streak."""
+    import shutil as _sh
+    import tempfile
+    import compile_footprint as cf
+    import connectors
+    import extract
+    import install
+    import schedule
+    checks = []  # (label, status: True ok / False blocker / None warn, detail)
+
+    checks.append(("python >=3.10", sys.version_info >= (3, 10), sys.version.split()[0]))
+    for mod in ("jsonschema", "yaml", "cryptography"):
+        try:
+            __import__(mod); checks.append((f"dep {mod}", True, ""))
+        except ImportError:
+            checks.append((f"dep {mod}", False, "pip install -r requirements.txt"))
+    checks.append(("git", bool(_sh.which("git")), ""))
+
+    res = install.activate(REPO / ".claude", REPO / "hooks" / "settings-fragment.json", apply=False)
+    checks.append(("gate activated", not res["changed"],
+                   "" if not res["changed"] else "run: teamos install --apply"))
+
+    # compile-once acceptance (the FK6c 'fires compile once' gate) into a temp dir
+    fp = Path(args.footprint) if args.footprint else REPO / "fixtures" / "footprint" / "artifacts"
+    tmp = Path(tempfile.mkdtemp(prefix="teamos-onboard-"))
+    try:
+        items = cf.load_footprint(fp, extract_nonmd=args.extract)
+        r = cf.compile_footprint(items, tmp / "stores", tmp / "ledgers")
+        n = len(r["job_graph"].get("nodes", []))
+        checks.append((f"compile fires ({fp.name})", n >= 1,
+                       f"{n} recurring task(s), {len(r.get('quarantined', []))} quarantined"))
+    except Exception as e:  # noqa: BLE001
+        checks.append(("compile fires", False, str(e)))
+    finally:
+        _sh.rmtree(tmp, ignore_errors=True)
+
+    # warnings — needed for LIVE delivery, not for a governed dry-run
+    checks.append(("markitdown (for --extract)", extract.available() or None,
+                   "" if extract.available() else "pip install markitdown"))
+    checks.append(("claude harness", bool(_sh.which("claude")) or None,
+                   "" if _sh.which("claude") else "not found (needed to run live)"))
+    try:
+        cfg = connectors.load_config()
+        on = [s["source_id"] for s in cfg["sources"] if s["enabled"]]
+        checks.append(("sources enabled", bool(on) or None,
+                       ", ".join(on) or "none — enable in config/connectors.json"))
+        ch = connectors.notification_channel()
+        tgt = bool(ch and not str(ch.get("target", "")).startswith("SET_"))
+        checks.append(("Slack DM target", tgt or None,
+                       "" if tgt else "set target + enabled:true in config/connectors.json"))
+    except Exception as e:  # noqa: BLE001
+        checks.append(("connectors.json", False, str(e)))
+    checks.append(("SLACK_BOT_TOKEN", bool(os.environ.get("SLACK_BOT_TOKEN")) or None,
+                   "" if os.environ.get("SLACK_BOT_TOKEN") else "export for live sends (dry-run without)"))
+    checks.append(("TEAMOS_KEYDIR", bool(os.environ.get("TEAMOS_KEYDIR")) or None,
+                   "" if os.environ.get("TEAMOS_KEYDIR") else "set for principal-authenticated ✓ (CN-1)"))
+    try:
+        st = schedule.load(REPO / "plugin" / "schedule-templates" / "local-schedules.json")
+        checks.append(("schedule template", True, ", ".join(t["args"] for t in st)))
+    except Exception as e:  # noqa: BLE001
+        checks.append(("schedule template", False, str(e)))
+
+    sym = {True: "✓", False: "✗", None: "⚠"}
+    print("teamos onboard — readiness preflight\n")
+    for label, ok, detail in checks:
+        print(f"  {sym[ok]} {label}" + (f" — {detail}" if detail else ""))
+    blockers = [l for l, ok, _ in checks if ok is False]
+    warns = [l for l, ok, _ in checks if ok is None]
+    print()
+    if blockers:
+        print(f"NOT READY — fix {len(blockers)} blocker(s): {', '.join(blockers)}")
+    else:
+        print("READY (governed). The tool installs, is gated, and compiles.")
+    if warns:
+        print(f"For full LIVE delivery, also set: {', '.join(warns)}")
+    return 0 if not blockers else 1
 
 
 def cmd_install(args):
@@ -327,6 +409,8 @@ def main():
     p.add_argument("--inbox", default=str(REPO / "inbox"))
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("doctor").set_defaults(fn=cmd_doctor)
+    ob = sub.add_parser("onboard"); ob.add_argument("--footprint", default=None)
+    ob.add_argument("--extract", action="store_true"); ob.set_defaults(fn=cmd_onboard)
     ins = sub.add_parser("install"); ins.add_argument("--apply", action="store_true")
     ins.set_defaults(fn=cmd_install)
     c = sub.add_parser("compile"); c.add_argument("--footprint", required=True)

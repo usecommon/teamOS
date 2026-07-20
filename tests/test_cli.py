@@ -44,6 +44,13 @@ class CLISmoke(unittest.TestCase):
             self.assertEqual(c.returncode, 0, c.stderr)
             self.assertIn("extracted", c.stdout)
 
+    def test_onboard_preflight_runs_and_fires_compile(self):
+        r = run("onboard")
+        self.assertIn("readiness preflight", r.stdout)
+        self.assertIn("compile fires", r.stdout)
+        self.assertIn("recurring task", r.stdout)   # the FK6c compile-once acceptance
+        self.assertIn(r.returncode, (0, 1))
+
     def test_harvest_noop_without_target(self):
         # no enabled DM target in shipped config -> graceful no-op, exit 0
         with tempfile.TemporaryDirectory() as tmp:
