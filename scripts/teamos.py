@@ -8,6 +8,7 @@ protected paths the gate can only READ.
 
     onboarding / run:
       python3 scripts/teamos.py doctor
+      python3 scripts/teamos.py install   [--apply]        # activate the gate hook (preview by default)
       python3 scripts/teamos.py compile  --footprint <dir> [--cc ~/.claude] [--out stores] [--extract]
       python3 scripts/teamos.py brief     [--out stores]
       python3 scripts/teamos.py deliver   [--out stores]   # live brief (dry-run until configured)
@@ -79,7 +80,7 @@ def cmd_doctor(args):
         print(f"  connectors.json: ERROR {e}"); ok = False
     settings = REPO / ".claude" / "settings.json"
     active = settings.exists() and "PreToolUse" in settings.read_text()
-    print(f"  gate activated: {'yes' if active else 'NO — merge hooks/settings-fragment.json into .claude/settings.json after reviewing hooks/gate.py vs hooks/BEHAVIOR.md'}")
+    print(f"  gate activated: {'yes' if active else 'NO — review hooks/gate.py vs hooks/BEHAVIOR.md, then run: teamos install --apply'}")
     print("  keys: store your per-principal key dir OUTSIDE this repo (see docs/INSTALL.md)")
     return 0 if ok else 1
 
@@ -129,6 +130,29 @@ def cmd_loop(args):
 def cmd_verify(args):
     import verify_chains
     return verify_chains.main()
+
+
+def cmd_install(args):
+    """Activate the FK2 gate hook by merging hooks/settings-fragment.json into
+    .claude/settings.json. Previews by default; --apply writes (keeps a .bak).
+    Review hooks/gate.py against hooks/BEHAVIOR.md before applying (X-1)."""
+    import install
+    res = install.activate(REPO / ".claude", REPO / "hooks" / "settings-fragment.json",
+                           apply=args.apply)
+    if not res["changed"]:
+        print(f"gate already active in {res['path']} — nothing to do.")
+        return 0
+    if not args.apply:
+        print(f"Would activate the Team OS gate hook in {res['path']}:\n")
+        print(json.dumps(res["merged"].get("hooks", {}), indent=2))
+        print("\nReview hooks/gate.py vs hooks/BEHAVIOR.md first (X-1), then re-run with --apply.")
+        return 0
+    print(f"Activated the gate hook in {res['path']} (backup: settings.json.bak).")
+    print("\nNext:")
+    print("  1) enable a Slack DM target in config/connectors.json + export SLACK_BOT_TOKEN")
+    print("  2) teamos compile --footprint <your folder> --extract")
+    print("  3) teamos schedule >> mycron && crontab mycron   # start the A-A4 streak")
+    return 0
 
 
 def cmd_schedule(args):
@@ -303,6 +327,8 @@ def main():
     p.add_argument("--inbox", default=str(REPO / "inbox"))
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("doctor").set_defaults(fn=cmd_doctor)
+    ins = sub.add_parser("install"); ins.add_argument("--apply", action="store_true")
+    ins.set_defaults(fn=cmd_install)
     c = sub.add_parser("compile"); c.add_argument("--footprint", required=True)
     c.add_argument("--cc", default="~/.claude"); c.add_argument("--out", default="stores")
     c.add_argument("--extract", action="store_true",
