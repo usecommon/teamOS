@@ -21,6 +21,24 @@ class LineageRejected(ValueError):
     pass
 
 
+# Graphify-borrow: every derivation edge is EXTRACTED / INFERRED / AMBIGUOUS — you
+# always know what was read directly vs guessed. A missing edge basis is read as
+# the most cautious value (ambiguous). The entity basis is the weakest edge.
+_BASIS_RANK = {"extracted": 0, "inferred": 1, "ambiguous": 2}
+
+
+def edge_basis(source):
+    b = source.get("basis", "ambiguous")
+    return b if b in _BASIS_RANK else "ambiguous"
+
+
+def entity_basis(sources):
+    """Weakest basis across all derivation edges; no sources → ambiguous."""
+    if not sources:
+        return "ambiguous"
+    return max((edge_basis(s) for s in sources), key=lambda b: _BASIS_RANK[b])
+
+
 def write_with_lineage(entry_path, content, sidecar, ledger_dir=None, parent_ids=()):
     """Write `content` to `entry_path` + its sidecar + one L3 record.
 
@@ -73,11 +91,13 @@ def write_with_lineage(entry_path, content, sidecar, ledger_dir=None, parent_ids
                     "store": "sources",
                     "path": s["locator"],
                     "content_hash": s["content_hash"],
+                    "basis": edge_basis(s),
                 }
                 for s in sidecar["sources"]
             ],
             "transformation": sidecar["generated_by"]["transformation"],
             "confidence": sidecar["confidence"],
+            "basis": entity_basis(sidecar["sources"]),
             "update_history_ref": {
                 "store": "git",
                 "path": str(entry_path.relative_to(REPO_ROOT))

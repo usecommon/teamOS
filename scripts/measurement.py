@@ -163,5 +163,26 @@ def proxy_behavior_correlation(pairs):
     return out
 
 
+# --- Graphify-borrow: an honest efficiency number alongside the thesis gates ---
+# Graphify claims "71.5x token reduction" for querying a compiled graph vs reading
+# source. Our analogue: a consumer reading the compiled brief/graph spends far
+# fewer tokens than reading every raw exemplar. Reported as an ESTIMATE (char/4),
+# never a benchmark — an efficiency proxy, not one of the pre-registered gates.
+
+def estimate_tokens(text):
+    """~4 chars/token, a deliberately rough, deterministic estimate."""
+    return max(1, len(text) // 4)
+
+
+def context_efficiency(raw_texts, compiled_text):
+    """How many fewer tokens a consumer spends on the compiled artifact than on
+    reading all raw sources. Deterministic; labelled an estimate, not a gate."""
+    raw = sum(estimate_tokens(t) for t in raw_texts)
+    comp = estimate_tokens(compiled_text)
+    return {"raw_tokens": raw, "compiled_tokens": comp,
+            "reduction_x": round(raw / comp, 1) if comp else 0.0,
+            "basis": "estimate (~4 chars/token), not a benchmark"}
+
+
 def _utc():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")

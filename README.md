@@ -16,8 +16,15 @@ docs in `docs/`; the fork spec is `docs/team-os-fork-harness-native.md`, the
 gates are `docs/team-os-fork-validation-plan.md`. Onboarding:
 `docs/INSTALL.md` and `docs/onboarding.html`.
 
+**No language model sits in the trust path.** The gate, the acceptance-signal
+harvest, and the commit are deterministic, inspectable code — a model *drafts*,
+it never decides what gets recorded, widened, or sent (SE-1/CN-2). Every write
+carries lineage tagged `extracted` / `inferred` / `ambiguous`, so you always know
+what was read directly versus resolved by the agent. Nothing "learns" by updating
+weights; adaptation is a ledgered number in a file you can read and revert.
+
 **One test command:** `make test` (schemas + FR1 mapping gate + hook budget +
-240 unit tests + chain verification). CI runs the same on every push.
+250 unit tests + chain verification). CI runs the same on every push.
 
 ## Build status — FK1..FK8 mechanisms complete
 

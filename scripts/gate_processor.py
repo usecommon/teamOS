@@ -114,8 +114,9 @@ def _commit(proposal, resolved, repo_root, ledger_dir, kind):
             "generated_by": {"transformation": "skill-proposal", "at": "2026-07-11T00:00:00Z"},
             "agent": PROC_AGENT_ID,
             "sources": [{"source_type": "agent-derivation", "locator": proposal["proposal_id"],
-                         "content_hash": hashchain.sha256_str(purpose)}],
-            "evidence": [proposal["proposal_id"]], "confidence": "medium", "update_history": []}))
+                         "content_hash": hashchain.sha256_str(purpose), "basis": "inferred"}],
+            "evidence": [proposal["proposal_id"]], "confidence": "medium",
+            "basis": "inferred", "update_history": []}))
     else:
         resolved.write_text(json.dumps(
             {k: proposal[k] for k in ("name", "cron", "prompt")}, indent=2))
@@ -125,9 +126,13 @@ def _commit(proposal, resolved, repo_root, ledger_dir, kind):
         "source_type": lin.get("source_type", "door"),
         "authoring_agent": PROC_AGENT_ID,
         "evidence": [{"store": "inbox", "path": proposal["proposal_id"],
-                      "content_hash": hashchain.sha256_str(json.dumps(proposal, sort_keys=True))}],
+                      "content_hash": hashchain.sha256_str(json.dumps(proposal, sort_keys=True)),
+                      "basis": lin.get("basis", "ambiguous")}],
         "transformation": lin.get("transformation", "door-proposal"),
         "confidence": lin.get("confidence", "medium"),
+        # door content is untrusted → ambiguous unless the proposal declares otherwise;
+        # the human-approval step IS the ambiguous→review route (T9).
+        "basis": lin.get("basis", "ambiguous"),
         "update_history_ref": {"store": "git", "path": str(resolved), "content_hash": "sha256:0"},
         "parent_ids": [],
     }, PROC_AGENT_ID)
