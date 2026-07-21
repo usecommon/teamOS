@@ -16,6 +16,7 @@ protected paths the gate can only READ.
       python3 scripts/teamos.py harvest                    # ✓/✗ reactions on last brief -> L8
       python3 scripts/teamos.py loop      [--out stores]
       python3 scripts/teamos.py schedule                   # print path-(a) crontab (deliver/harvest/loop)
+      python3 scripts/teamos.py synth     --list | --persona <id> --out <dir> [--weeks N]  # synthetic test data
       python3 scripts/teamos.py verify
 
     operator controls (the frightened-user surface):
@@ -131,6 +132,31 @@ def cmd_loop(args):
 def cmd_verify(args):
     import verify_chains
     return verify_chains.main()
+
+
+def cmd_synth(args):
+    """Generate synthetic test data / list persona + actor types. No real data
+    (CLAUDE.md hygiene); deterministic, reproducible. Use the generated footprint
+    with `teamos compile --footprint <dir>`."""
+    import synth
+    if args.list:
+        print("Principal personas (agent types under test):")
+        for pid, role in synth.list_personas().items():
+            print(f"  {pid:<12} {role}")
+        print("\nNon-principal actor types (multi-actor scenarios):")
+        for aid, role in synth.list_actors().items():
+            print(f"  {aid:<12} {role}")
+        return 0
+    if not args.persona or not args.out:
+        print("usage: teamos synth --list | --persona <id> --out <dir> [--weeks N]")
+        return 2
+    try:
+        paths = synth.generate_footprint(args.persona, args.out, weeks=args.weeks)
+    except KeyError as e:
+        print(str(e)); return 2
+    print(f"wrote {len(paths)} synthetic artifact(s) for '{args.persona}' to {args.out}")
+    print(f"next: python3 scripts/teamos.py compile --footprint {args.out} --out <stores>")
+    return 0
 
 
 def cmd_onboard(args):
@@ -425,6 +451,9 @@ def main():
     l.add_argument("--run-id", default="loop-1"); l.set_defaults(fn=cmd_loop)
     sub.add_parser("verify").set_defaults(fn=cmd_verify)
     sub.add_parser("schedule").set_defaults(fn=cmd_schedule)
+    sy = sub.add_parser("synth"); sy.add_argument("--list", action="store_true")
+    sy.add_argument("--persona"); sy.add_argument("--out"); sy.add_argument("--weeks", type=int, default=6)
+    sy.set_defaults(fn=cmd_synth)
 
     # operator controls
     sub.add_parser("status").set_defaults(fn=cmd_status)
