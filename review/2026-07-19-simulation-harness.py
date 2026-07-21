@@ -28,6 +28,7 @@ import hashchain, compile_footprint as cf, day_one_brief as brief, l8_capture
 import envelope, measurement, transfer, deletion, circuit_breaker, safety_agent
 import gate_processor, door, dashboard, principal_auth
 import gate
+import synth  # single source of truth for personas + synthetic data + behavior
 from l3_writer import write_with_lineage
 from slack_client import FakeSlack
 
@@ -37,12 +38,13 @@ def rnd(*parts):
     h = hashlib.sha256("|".join(str(p) for p in parts).encode()).hexdigest()
     return (int(h[:8], 16) % 100000) / 100000.0
 
+# principals map to synth persona types (single source of truth)
 PRINCIPALS = [
-    {"id": "U_ENG",  "name": "Engineer", "types": ["standup", "release-notes"], "accept": 0.72},
-    {"id": "U_PM",   "name": "PM",       "types": ["status-update", "meeting-summary"], "accept": 0.55},
-    {"id": "U_OPS",  "name": "Ops",      "types": ["incident-note", "escalation"], "accept": 0.60},
+    {"id": "U_ENG", "persona": "engineer", "name": "Engineer"},
+    {"id": "U_PM",  "persona": "pm",       "name": "PM"},
+    {"id": "U_OPS", "persona": "ops",      "name": "Ops"},
 ]
-RED = "U_REDTEAM"; COLLEAGUE = "U_COLLEAGUE"
+RED = "U_REDTEAM"; COLLEAGUE = "U_COLLEAGUE"  # synth.ACTORS: red-team + colleague
 
 transcript = open(SIMD / "transcript.jsonl", "w")
 def rec(**kw): transcript.write(json.dumps(kw) + "\n"); transcript.flush()
@@ -80,12 +82,8 @@ CHAN = {p["id"]: f"DM_{p['id']}" for p in PRINCIPALS}
 # ---- Phase A: synthetic footprints + compile (cold-start, A-C4) ----
 job_graphs = {}
 for p in PRINCIPALS:
-    art = SB / "footprints" / p["id"]; art.mkdir(parents=True, exist_ok=True)
-    for t in p["types"]:
-        for wk in range(6):  # weekly cadence across 6 weeks (valid dates)
-            (art / f"{t}-2026-06-{(wk*5+1):02d}.md").write_text(
-                f"---\ndeliverable_type: {t}\nsource: {t}-src\n---\n"
-                f"{p['name']} {t} week {wk}: shipped X, next Y.\n")
+    art = SB / "footprints" / p["id"]
+    synth.generate_footprint(p["persona"], art, weeks=6)   # deterministic synthetic footprint
     items = cf.load_footprint(art, provenance={"source_id": f"fp-{p['id']}", "type": "local-folder", "workspace": str(art)})
     try:
         out = STORES / p["id"]
@@ -139,16 +137,22 @@ for turn in range(1, TURNS + 1):
             metrics["exceptions"] += 1
             finding("HIGH", "deliver", turn, f"deliver crashed: {e}", traceback.format_exc()[-300:])
 
-        # 2. human reacts (deterministic persona) ------------------------------
-        roll = rnd(pid, turn)
+        # 2. human reacts (deterministic persona behavior, from synth) ---------
+        d = synth.decision(p["persona"], turn)
         cat = "send"
         if delivered_ts and b.get("first_deliverable"):
             draft_path = out / "deliverables" / f"{b['first_deliverable']['task_type']}-draft.md"
-            if roll < p["accept"]:
-                # accept via LIGHT EDIT -> signed endorsement the envelope consumes
+            if d["action"] == "accept":
+                # edit sized by the persona's target distance; the REAL code (capture_edit)
+                # classifies endorsement vs engagement — we only drive the input.
                 edited = out / "deliverables" / f"edit-{turn}.md"
                 txt = draft_path.read_text() if draft_path.exists() else "draft\n"
-                edited.write_text(txt + ("" if rnd("tweak", pid, turn) < 0.5 else "ok.\n"))  # light
+                if d["edit_distance"] <= 0.1:
+                    edited.write_text(txt)                                  # ~0 -> accepted
+                elif d["edit_distance"] <= 0.2:
+                    edited.write_text(txt + "ok.\n")                        # light -> endorsement
+                else:
+                    edited.write_text(txt + "\nrevised: " + ("x" * 40) + "\n")  # heavier -> engagement
                 try:
                     # loop/brief deliverables are UNPROMPTED (the initiative claim)
                     r8 = l8_capture.capture_edit(draft_path, edited, pid, ledger_dir=LED, keydir=KEYS, unprompted=True)
@@ -164,7 +168,7 @@ for turn in range(1, TURNS + 1):
                 except Exception as e:
                     metrics["exceptions"] += 1
                     finding("HIGH", "acceptance-signals", turn, f"capture_edit crashed: {e}", traceback.format_exc()[-300:])
-            elif roll < p["accept"] + 0.22:
+            elif d["action"] == "reject":
                 # reject via ✗ reaction -> narrows
                 slack.add_reaction(CHAN[pid], delivered_ts, "x", pid)
                 r8s = brief.harvest_reactions(CHAN[pid], delivered_ts, pid, slack, LED)
