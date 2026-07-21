@@ -17,6 +17,7 @@ protected paths the gate can only READ.
       python3 scripts/teamos.py loop      [--out stores]
       python3 scripts/teamos.py schedule                   # print path-(a) crontab (deliver/harvest/loop)
       python3 scripts/teamos.py synth     --list | --persona <id> --out <dir> [--weeks N]  # synthetic test data
+      python3 scripts/teamos.py dashboard [--html out.html] # live system-health from the real ledgers
       python3 scripts/teamos.py verify
 
     operator controls (the frightened-user surface):
@@ -132,6 +133,22 @@ def cmd_loop(args):
 def cmd_verify(args):
     import verify_chains
     return verify_chains.main()
+
+
+def cmd_dashboard(args):
+    """Live system-health readout from the REAL ledgers (gate/accept/envelope/
+    breaker/safety/skill-quality/chains). Per-skill, never per-person. Text by
+    default; --html <path> writes a self-contained page."""
+    import observe
+    from datetime import datetime, timezone
+    h = observe.gather(_ledger_dir(args))
+    if args.html:
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+        Path(args.html).write_text(observe.render_html(h, now))
+        print(f"wrote live dashboard to {args.html} (reads {h['ledger_dir']})")
+    else:
+        print(observe.render_text(h))
+    return 0
 
 
 def cmd_synth(args):
@@ -450,6 +467,8 @@ def main():
     l = sub.add_parser("loop"); l.add_argument("--out", default="stores")
     l.add_argument("--run-id", default="loop-1"); l.set_defaults(fn=cmd_loop)
     sub.add_parser("verify").set_defaults(fn=cmd_verify)
+    db = sub.add_parser("dashboard"); db.add_argument("--html", default=None)
+    db.set_defaults(fn=cmd_dashboard)
     sub.add_parser("schedule").set_defaults(fn=cmd_schedule)
     sy = sub.add_parser("synth"); sy.add_argument("--list", action="store_true")
     sy.add_argument("--persona"); sy.add_argument("--out"); sy.add_argument("--weeks", type=int, default=6)
