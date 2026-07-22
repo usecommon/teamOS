@@ -139,6 +139,110 @@ def _body(persona_id, dtype, occ, r):
     return f"{v} {o}. Owner: me. Next: follow up on item {occ + 1}."
 
 
+# ---- REALISTIC footprint (the fidelity fix, per the 2026-07-20 audit) --------
+# De-labeled (no deliverable_type frontmatter), opaque varied filenames (type NOT
+# in the stem), noised/irregular cadence, and junk at a realistic ratio. This is
+# what a real footprint looks like — and it deliberately denies the deterministic
+# compiler the clean signals (labels, type-in-filename, regular dated stems) that
+# the clean generator hands it. Expect compile to struggle: that IS the finding.
+
+def _hex(*parts, n=6):
+    return hashlib.sha256("|".join(str(p) for p in parts).encode()).hexdigest()[:n]
+
+# realistic content per type — the type is INFERABLE from phrasing, never labeled
+_CONTENT = {
+    "standup": ["Yesterday: closed the {o}. Today: pick up the {o2}. Blockers: none.",
+                "Y'day wrapped {o}. Today {o2}. No blockers, will sync w/ team."],
+    "pr-summary": ["Merged the {o} change. Reviewed by a teammate, CI green, deploying today.",
+                   "PR for {o} is in — squashed 3 commits, tests pass."],
+    "release-notes": ["This release: {o} landed, {o2} fixed. Upgrade notes in the doc.",
+                      "Shipping {o}. Breaking: none. Highlights: {o2}."],
+    "status-update": ["This week: progressed {o}; {o2} at risk, need a decision.",
+                      "Update: {o} on track, {o2} slipping to next sprint."],
+    "meeting-summary": ["Discussed {o}. Decision: proceed. Owner: me. Follow-up: {o2}.",
+                        "Sync notes: {o} agreed, {o2} parked."],
+    "stakeholder-update": ["For leadership: {o} shipped, {o2} in progress, no red flags.",
+                           "Exec summary: {o} done; watching {o2}."],
+    "incident-note": ["SEV2 on the {o}. Impact ~12m. Mitigated by rollback; RCA to follow.",
+                      "Page: {o} degraded. Contained, monitoring {o2}."],
+    "oncall-handoff": ["Handoff: {o} noisy overnight, {o2} stable. Nothing open.",
+                       "Passing on-call: watch the {o}, {o2} resolved."],
+    "postmortem": ["RCA for the {o} outage: cause was {o2}. Action items filed.",
+                   "Postmortem: {o} failed under load; adding backpressure."],
+    "experiment-log": ["Ran the {o} sweep. {o2} looks promising, rerunning to confirm.",
+                       "Log: {o} experiment, mixed results on {o2}."],
+    "lit-review": ["Read three papers on {o}. Relevant to {o2}; notes attached.",
+                   "Survey of {o}: consensus is unclear, {o2} worth trying."],
+    "weekly-digest": ["This week across the repo: {o} merged, {o2} discussed.",
+                      "Digest: activity centered on {o} and {o2}."],
+    "investor-update": ["MRR up, {o} shipped, hiring for {o2}. Ask: intros.",
+                        "Monthly: {o} traction, {o2} is the focus."],
+    "hiring-note": ["Interviewed for {o}. Strong on {o2}; moving to onsite.",
+                    "Candidate for the {o} role — good {o2}, some gaps."],
+    "strategy-memo": ["Proposal: lean into {o}, deprioritize {o2}. Rationale inside.",
+                      "Memo: our edge is {o}; {o2} is a distraction."],
+}
+_OBJ = ["cache layer", "auth flow", "ingest job", "billing bug", "dashboard", "retry logic",
+        "schema migration", "rate limiter", "search index", "webhook"]
+_JUNK = [
+    ("reply", ["Thanks!", "+1", "Sounds good, will do.", "lgtm", "ok ship it"]),
+    ("notify", ["[GitHub] pushed 2 commits to main", "Calendar: standup at 9:00",
+                "[CI] build #4821 passed", "You were mentioned in a thread"]),
+    ("offtopic", ["Anyone up for lunch at 12?", "Who has the wifi password?",
+                  "Reminder: office closed Monday", "Coffee machine is broken again"]),
+    ("newsletter", ["This week in tech: three things you missed…",
+                    "Weekly roundup: funding, launches, and drama"]),
+]
+
+
+def _fname(seed, persona_id, i, iso):
+    """Opaque, varied filename — type NEVER in the stem, date only sometimes."""
+    style = int(rnd(seed, persona_id, i, "fname") * 6)
+    hx = _hex(seed, persona_id, i)
+    slug = _OBJ[int(rnd(seed, persona_id, i, "slug") * len(_OBJ))].split()[0]
+    return [f"msg-{hx}.md", f"{iso}-{hx[:4]}.md", f"thread-{hx}.md",
+            f"Re-{slug}.md", f"note-{iso}.md", f"export-{i}.md"][style]
+
+
+def generate_realistic_footprint(persona_id, out_dir, weeks=6, junk_ratio=4, seed="synthetic"):
+    """Realistic footprint: de-labeled, opaque names, noised cadence, + junk.
+    Returns the list of paths. NO deliverable_type frontmatter anywhere."""
+    if persona_id not in PERSONAS:
+        raise KeyError(f"unknown persona '{persona_id}' (have: {', '.join(PERSONAS)})")
+    p = PERSONAS[persona_id]
+    out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
+    written = []
+    span = weeks * 7
+    idx = 0
+    for d in p["deliverables"]:
+        day = 0
+        while day < span:
+            r = rnd(seed, persona_id, d["type"], idx)
+            if r < 0.2:                          # ~20% missed occurrences (skips)
+                day += d["cadence_days"]; idx += 1; continue
+            n_here = 3 if r > 0.93 else 1        # occasional burst (multiple same day)
+            for k in range(n_here):
+                jit = int(rnd(seed, idx, k, "jit") * 5) - 2      # ±2 day jitter
+                dt = BASE_DATE + timedelta(days=max(0, min(span - 1, day + jit)))
+                tmpl = _CONTENT.get(d["type"], ["Notes on {o}."])
+                body = tmpl[int(rnd(seed, idx, k) * len(tmpl))]
+                o = _OBJ[int(rnd(seed, idx, k, "o") * len(_OBJ))]
+                o2 = _OBJ[int(rnd(seed, idx, k, "o2") * len(_OBJ))]
+                fn = _fname(seed, persona_id, idx * 10 + k, dt.isoformat())
+                (out / fn).write_text(body.format(o=o, o2=o2) + "\n")   # NO frontmatter
+                written.append(out / fn)
+            day += d["cadence_days"]; idx += 1
+    # junk at junk_ratio × the deliverable volume
+    n_junk = int(len(written) * junk_ratio)
+    for j in range(n_junk):
+        kind, msgs = _JUNK[int(rnd(seed, persona_id, j, "jk") * len(_JUNK))]
+        dt = BASE_DATE + timedelta(days=int(rnd(seed, persona_id, j, "jd") * span))
+        fn = _fname(seed, persona_id, 100000 + j, dt.isoformat())
+        (out / fn).write_text(msgs[int(rnd(seed, persona_id, j) * len(msgs))] + "\n")
+        written.append(out / fn)
+    return written
+
+
 def decision(persona_id, turn, seed="synthetic"):
     """Deterministic human response for the sim: accept (with an edit distance) /
     reject / ignore. Reproducible per (persona, turn)."""

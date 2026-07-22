@@ -52,6 +52,37 @@ class FootprintGeneration(unittest.TestCase):
             synth.generate_footprint("nobody", tempfile.gettempdir())
 
 
+class RealisticFootprint(unittest.TestCase):
+    def test_is_delabeled_and_noised_with_junk(self):
+        with tempfile.TemporaryDirectory() as t:
+            paths = synth.generate_realistic_footprint("engineer", t, weeks=6, junk_ratio=4)
+            # NO deliverable_type frontmatter anywhere (the whole point)
+            for p in paths:
+                self.assertNotIn("deliverable_type", p.read_text())
+            # opaque filenames: type never in the stem
+            for typ in ("standup", "pr-summary", "release-notes"):
+                self.assertFalse(any(typ in p.name for p in paths), typ)
+            # junk inflates volume well beyond the deliverable count
+            self.assertGreater(len(paths), 4 * 3)
+
+    def test_compiler_cannot_recover_true_types_from_realistic_data(self):
+        # THE FINDING: clean data -> 3 true tasks; realistic -> the compiler
+        # recovers none of the true deliverable types (needs the model layer).
+        with tempfile.TemporaryDirectory() as t:
+            clean = Path(t) / "clean"
+            synth.generate_footprint("ops", clean, weeks=6)
+            n_clean = len(cf.compile_footprint(cf.load_footprint(clean),
+                          Path(t) / "cs", Path(t) / "cl")["job_graph"]["nodes"])
+            real = Path(t) / "real"
+            synth.generate_realistic_footprint("ops", real, weeks=6)
+            nodes = cf.compile_footprint(cf.load_footprint(real),
+                        Path(t) / "rs", Path(t) / "rl")["job_graph"]["nodes"]
+            true_types = {d["type"] for d in synth.PERSONAS["ops"]["deliverables"]}
+            found = {n["task_type"] for n in nodes}
+            self.assertEqual(n_clean, 3)                       # labeled: works
+            self.assertEqual(true_types & found, set())         # realistic: recovers 0 true types
+
+
 class Behavior(unittest.TestCase):
     def test_decision_deterministic_and_varied(self):
         d1 = synth.decision("engineer", 5)
