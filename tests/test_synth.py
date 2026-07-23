@@ -83,6 +83,36 @@ class RealisticFootprint(unittest.TestCase):
             self.assertEqual(true_types & found, set())         # realistic: recovers 0 true types
 
 
+class RealisticBehavior(unittest.TestCase):
+    def test_acceptance_is_quality_coupled(self):
+        # high-quality drafts accepted far more often than low-quality ones
+        hi = sum(synth.realistic_decision("engineer", t, 0.9)["action"] == "accept" for t in range(300))
+        lo = sum(synth.realistic_decision("engineer", t, 0.15)["action"] == "accept" for t in range(300))
+        self.assertGreater(hi, lo + 60)
+
+    def test_downstream_use_tracks_quality(self):
+        hi = sum(synth.downstream_use(0.9, "e", t) for t in range(300))
+        lo = sum(synth.downstream_use(0.15, "e", t) for t in range(300))
+        self.assertGreater(hi, lo + 60)
+
+    def test_instrument_separates_coupled_from_null(self):
+        import measurement
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "aa4exp", REPO / "review" / "2026-07-23-aa4-behavior-experiment.py")
+        exp = importlib.util.module_from_spec(spec); spec.loader.exec_module(exp)
+        coupled, null = exp.run("engineer", 2000)
+        # THE FINDING: quality-coupled -> instrument detects it; coin-flip -> not
+        self.assertEqual(coupled["result"], "correlated")
+        self.assertGreater(coupled["interval"][0], 0)      # interval excludes zero
+        self.assertEqual(null["result"], "inconclusive")
+
+    def test_trust_is_nonstationary_asymmetric(self):
+        # earned slowly, dropped fast (OB-1)
+        self.assertLess(synth.update_trust(0.5, "accept") - 0.5,
+                        0.5 - synth.update_trust(0.5, "reject"))
+
+
 class Behavior(unittest.TestCase):
     def test_decision_deterministic_and_varied(self):
         d1 = synth.decision("engineer", 5)

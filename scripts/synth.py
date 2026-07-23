@@ -244,8 +244,9 @@ def generate_realistic_footprint(persona_id, out_dir, weeks=6, junk_ratio=4, see
 
 
 def decision(persona_id, turn, seed="synthetic"):
-    """Deterministic human response for the sim: accept (with an edit distance) /
-    reject / ignore. Reproducible per (persona, turn)."""
+    """UNREALISTIC baseline (2/10, per the 07-20 audit): a coin flip DECOUPLED
+    from draft quality. Kept for the A-A4 experiment as the null model — it
+    correctly yields NO proxy<->use correlation. Use realistic_decision instead."""
     p = PERSONAS.get(persona_id) or {"accept": 0.6, "edit_style": "mixed"}
     roll = rnd(seed, persona_id, turn, "decide")
     if roll < p["accept"]:
@@ -255,3 +256,48 @@ def decision(persona_id, turn, seed="synthetic"):
     if roll < p["accept"] + 0.22:
         return {"action": "reject", "edit_distance": None}
     return {"action": "ignore", "edit_distance": None}
+
+
+# ---- REALISTIC behavior model (the fidelity fix for A-A4) --------------------
+# Real acceptance is COUPLED to draft quality and NON-STATIONARY (trust ramps
+# with success, drops on rejection). And A-A4's headline needs a downstream-USE
+# signal (ME-1) that is separate from the acceptance proxy. All three modeled
+# here so A-A4 (does the proxy correlate with real use?) is actually testable.
+
+def draft_quality(persona_id, turn, seed="synthetic"):
+    """Latent ground-truth quality [0,1] of the agent's draft this turn — with
+    real variance and a trust-ramp trend (the agent improves over ~40 turns)."""
+    ramp = 0.35 + 0.40 * min(1.0, turn / 40.0)
+    noise = (rnd(seed, persona_id, turn, "q") - 0.5) * 0.5
+    return max(0.0, min(1.0, ramp + noise))
+
+
+def downstream_use(quality, persona_id, turn, seed="synthetic"):
+    """ME-1 primary behavior: was the deliverable actually USED (forwarded /
+    clicked / referenced later)? Quality-coupled + independent noise — the
+    SECOND series A-A4 correlates the acceptance proxy against."""
+    return 1 if rnd(seed, persona_id, turn, "use") < (0.1 + 0.8 * quality) else 0
+
+
+def realistic_decision(persona_id, turn, quality, trust=0.5, seed="synthetic"):
+    """Accept/reject/ignore COUPLED to draft quality and modulated by trust.
+    Edit distance is content-tied (worse draft -> bigger edit). Returns the same
+    shape as decision() plus the latent quality."""
+    p_acc = min(0.98, max(0.02, 0.15 + 0.65 * quality + 0.20 * (trust - 0.5)))
+    roll = rnd(seed, persona_id, turn, "racc")
+    if roll < p_acc:
+        dist = round(max(0.0, (1.0 - quality) * 0.4) * rnd(seed, persona_id, turn, "rd"), 4)
+        return {"action": "accept", "edit_distance": dist, "quality": quality}
+    if rnd(seed, persona_id, turn, "rrej") < 0.5:
+        return {"action": "reject", "edit_distance": None, "quality": quality}
+    return {"action": "ignore", "edit_distance": None, "quality": quality}
+
+
+def update_trust(trust, action):
+    """Non-stationary trust: earned slowly on acceptance, dropped fast on
+    rejection (OB-1 asymmetry) — so the envelope tracks a MOVING level."""
+    if action == "accept":
+        return min(1.0, trust + 0.03)
+    if action == "reject":
+        return max(0.0, trust - 0.08)
+    return trust
