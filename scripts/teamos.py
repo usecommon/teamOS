@@ -168,10 +168,17 @@ def cmd_synth(args):
         print("usage: teamos synth --list | --persona <id> --out <dir> [--weeks N]")
         return 2
     try:
-        paths = synth.generate_footprint(args.persona, args.out, weeks=args.weeks)
+        if args.realistic:
+            paths = synth.generate_realistic_footprint(args.persona, args.out, weeks=args.weeks)
+        else:
+            paths = synth.generate_footprint(args.persona, args.out, weeks=args.weeks)
     except KeyError as e:
         print(str(e)); return 2
-    print(f"wrote {len(paths)} synthetic artifact(s) for '{args.persona}' to {args.out}")
+    kind = "REALISTIC (de-labeled, noised, +junk)" if args.realistic else "clean (labeled)"
+    print(f"wrote {len(paths)} {kind} artifact(s) for '{args.persona}' to {args.out}")
+    if args.realistic:
+        print("  note: realistic data has NO deliverable_type labels — the deterministic compiler "
+              "cannot infer type from it (see review/2026-07-21-realistic-generator-finding.md).")
     print(f"next: python3 scripts/teamos.py compile --footprint {args.out} --out <stores>")
     return 0
 
@@ -472,6 +479,8 @@ def main():
     sub.add_parser("schedule").set_defaults(fn=cmd_schedule)
     sy = sub.add_parser("synth"); sy.add_argument("--list", action="store_true")
     sy.add_argument("--persona"); sy.add_argument("--out"); sy.add_argument("--weeks", type=int, default=6)
+    sy.add_argument("--realistic", action="store_true",
+                    help="de-labeled, noised, +junk footprint (what real data looks like)")
     sy.set_defaults(fn=cmd_synth)
 
     # operator controls
